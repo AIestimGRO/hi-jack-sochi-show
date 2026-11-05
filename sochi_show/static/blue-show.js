@@ -95,7 +95,7 @@ window.BlueShow=(()=>{
               <div class="bs-ranking-list" style="--rank-count:${count}">
                 ${[...visible].sort((a,b)=>a.place-b.place||b.total-a.total||a.team_id-b.team_id).map(rankingRow).join('')}
               </div>`:
-              `<div class="bs-hero-label">${winner?'НОВЫЙ ЛИДЕР ПО ИТОГАМ BLUE':'РАСКРЫВАЕМ МЕСТО'}</div>
+              `<div class="bs-hero-label">${winner?(latest?.green_place===1?'ЛИДЕР СОХРАНИЛ ПЕРВОЕ МЕСТО':'НОВЫЙ ЛИДЕР ПО ИТОГАМ BLUE'):'РАСКРЫВАЕМ МЕСТО'}</div>
                 <div class="bs-hero">
                   <span class="bs-hero-icon">${rankArt(latest?.place)}</span>
                   <span class="bs-hero-place">${latest?.place||'—'}<small>МЕСТО</small></span>
