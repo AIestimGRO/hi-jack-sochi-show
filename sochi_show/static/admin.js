@@ -196,7 +196,7 @@ async function bulkStage(stage){
     }
     return `№${t.team_id} · ${t.display_name}: ${fmt(score)} очков [${detail}]`;
   }).join('\n');
-  previewText(`<p>Проверь расчёты. После подтверждения данные этого этапа сохранятся и опубликуются на проекторе.</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
+  previewText(`<p>${stage==='blue'?'Проверь очки BLUE. После сохранения на проекторе появится только вступление BLUE. Все места будут скрыты до раскрытия кнопками «Далее» в пульте BLUE SHOW.':stage==='green'?'Проверь очки GREEN. После сохранения начнётся вступление GREEN без раскрытия команд. Далее управляй показом в GREEN SHOW.':'Проверь расчёты. После подтверждения данные этапа будут опубликованы на проекторе.'}</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
   $('confirm-pub-stage').onclick=async()=>{
     try{
       await api('/sochi/api/admin/stages/bulk','POST',{phase:stage,teams:rows});
