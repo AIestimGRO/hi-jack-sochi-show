@@ -79,9 +79,18 @@ window.GreenShow=(()=>{
     const stops=[['START',true],['GREEN ✓',true],['SUMMIT',false],['BOARD',false]];
     return `<div class="gs-route-markers">${stops.map(([label,done])=>`<div class="gs-route-marker ${done?'lit':''}"><i></i><span>${label}</span></div>`).join('')}</div>`;
   }
+  function rankIcon(place){
+    // The same mascot follows each *place* through the reveal and the final standings.
+    return window.SochiRankMascots?.render(place)||
+      '<span class="gs-rank-symbol" aria-label="Место '+String(place)+'">★</span>';
+  }
+  function rankCaption(place){
+    return window.SochiRankMascots?.label(place)||'Участник восхождения';
+  }
   function rankingRow(r){
     const podium=r.place<=3?' gs-rank-'+r.place:'';
     return `<div class="gs-ranking-row${podium}">
+      <div class="gs-ranking-mascot">${rankIcon(r.place)}</div>
       <div class="gs-ranking-place"><b>${r.place}</b><span>МЕСТО</span></div>
       <div class="gs-ranking-name">${esc(r.name)}</div>
       <div class="gs-ranking-score"><b>${fmt(r.green)}</b><span>ОЧКОВ</span></div>
@@ -112,7 +121,15 @@ window.GreenShow=(()=>{
           ${isIntro?`<div class="gs-intro-text">Первые итоги командного восхождения.<br>Каждая фишка — ещё один шаг к Сочи.</div><div class="gs-intro-cta">11 КОМАНД · ОДНА ВЕРШИНА</div>`.replace('11 КОМАНД',n+' КОМАНД')
            :board?`<div class="gs-overview"><div class="gs-ranking-list" style="--rank-count:${n}">${[...shown].sort((a,b)=>a.place-b.place||b.green-a.green||a.team_id-b.team_id).map(r=>rankingRow(r)).join('')}</div></div>`
            :`<div class="gs-reveal-label">${leader?'ЛИДЕР ПЕРВОГО ЭТАПА':latest&&latest.place<=3?'НА ПОДИУМЕ':'ОТКРЫТО МЕСТО'}</div>
-              <div class="gs-hero"><span class="gs-hero-place">${latest?.place||'—'}<small>МЕСТО</small></span><div class="gs-hero-team"><div class="gs-hero-name">${esc(latest?.name||'')}</div><div class="gs-hero-points">${fmt(latest?.green)} <span>ОЧКОВ</span></div></div></div>
+              <div class="gs-hero">
+                <div class="gs-hero-mascot">${rankIcon(latest?.place)}</div>
+                <span class="gs-hero-place">${latest?.place||'—'}<small>МЕСТО</small></span>
+                <div class="gs-hero-team">
+                  <div class="gs-hero-name">${esc(latest?.name||'')}</div>
+                  <div class="gs-hero-points">${fmt(latest?.green)} <span>ОЧКОВ</span></div>
+                </div>
+              </div>
+              <div class="gs-rank-caption">${esc(rankCaption(latest?.place))}</div>
               ${lastThree.length&&top||leader?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
               <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(n,shown.length)} / ${n}</div>`}
         </div>
