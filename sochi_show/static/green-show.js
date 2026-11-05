@@ -24,7 +24,19 @@ window.GreenShow=(()=>{
     const visible=data.demo_ranking?[...all].reverse().slice(0,Math.min(n,count)):all;
     return {count,step:n,max_step:count+2,revealed:visible};
   }
-  function alpineArt(){
+  // ONE visible cable and ONE burgundy cabin, positioned on the same Bezier path.
+  // At step 0 the cable car is attached to the bottom START station.
+  const cable={start:[730,790],control1:[930,652],control2:[1170,427],end:[1440,245]};
+  function cabinPoint(step,count){
+    const t=Math.max(0,Math.min(1,step/(count+1)));
+    const u=1-t, p=cable;
+    return [
+      u*u*u*p.start[0]+3*u*u*t*p.control1[0]+3*u*t*t*p.control2[0]+t*t*t*p.end[0],
+      u*u*u*p.start[1]+3*u*u*t*p.control1[1]+3*u*t*t*p.control2[1]+t*t*t*p.end[1]
+    ];
+  }
+  function alpineArt(step=0,count=11){
+    const [cabinX,cabinY]=cabinPoint(step,count);
     return `<svg class="alpine-art" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="alpineSky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d464d"/><stop offset=".43" stop-color="#347773"/><stop offset=".75" stop-color="#b0b9a5"/><stop offset="1" stop-color="#e2b17b"/></linearGradient>
@@ -41,12 +53,22 @@ window.GreenShow=(()=>{
       <path d="M-80 850 L170 770 380 805 630 644 745 718 940 583 1116 710 1305 498 1460 654 1702 460 1980 740 2000 1080H-80Z" fill="url(#alpineBurgundy)" opacity=".6"/>
       <path d="M0 918 L170 830 335 875 512 760 705 902 858 744 1045 865 1278 654 1488 856 1690 721 1920 840 1920 1080H0Z" fill="url(#alpineNear)"/>
       <path d="M0 990 C380 916 536 1118 823 971 S1423 1015 1920 932L1920 1080H0Z" fill="#153941" opacity=".78"/>
-      <path d="M850 1070 C978 888 1050 911 1155 804 S1308 642 1432 456" fill="none" stroke="#f2b77e" stroke-width="5" stroke-dasharray="13 16" opacity=".62"/>
-      <path d="M850 1070 C978 888 1050 911 1155 804 S1308 642 1432 456" fill="none" stroke="#ffe6c6" stroke-width="1.6" opacity=".8"/>
-      <circle cx="1432" cy="456" r="9" fill="#fff0d1"/><circle cx="1155" cy="804" r="8" fill="#ffcd93"/><circle cx="850" cy="1070" r="8" fill="#ffcd93"/>
-      <path d="M1140 285L1780 440" stroke="#d5e3d7" stroke-width="2.5" opacity=".54"/>
-      <g transform="translate(1515 372) rotate(14)"><path d="M0-8v45" stroke="#ded9c4" stroke-width="4"/><path d="M-40 32h80l-7 51h-66Z" fill="#823f50" stroke="#e3c6aa" stroke-width="3"/><rect x="-26" y="44" width="21" height="20" rx="3" fill="#a5c6bc"/><rect x="3" y="44" width="21" height="20" rx="3" fill="#a5c6bc"/></g>
-      <g transform="translate(1780 460) rotate(14) scale(.7)"><path d="M0-8v45" stroke="#ded9c4" stroke-width="4"/><path d="M-40 32h80l-7 51h-66Z" fill="#7e8d54" stroke="#e3c6aa" stroke-width="3"/></g>
+      <!-- One actual cable. START is its lower end; the cabin is attached to it. -->
+      <path id="sochi-cable" d="M730 790 C930 652 1170 427 1440 245" fill="none" stroke="#102c37" stroke-width="8" opacity=".45"/>
+      <path d="M730 790 C930 652 1170 427 1440 245" fill="none" stroke="#e8d5b5" stroke-width="3.2" opacity=".92"/>
+      <circle class="alpine-start-halo" cx="730" cy="790" r="27" fill="#f1c28e" opacity=".19"/>
+      <circle cx="730" cy="790" r="10" fill="#f7d3a1" stroke="#244e54" stroke-width="4"/>
+      <circle cx="1440" cy="245" r="10" fill="#fff0d1" stroke="#36585a" stroke-width="4"/>
+      <text x="677" y="847" fill="#fff0da" font-size="23" font-weight="850" letter-spacing="4">START</text>
+      <g class="alpine-cabin" transform="translate(${cabinX.toFixed(1)} ${cabinY.toFixed(1)})">
+        <circle cx="0" cy="0" r="7" fill="#f8e5c8" stroke="#264950" stroke-width="2"/>
+        <path d="M0 4v45" fill="none" stroke="#f0ddbe" stroke-width="5"/>
+        <path d="M-47 49h94l-8 62h-78Z" fill="#843d50" stroke="#f2c08c" stroke-width="4"/>
+        <path d="M-42 55h84l-7 43h-70Z" fill="#aa5660" opacity=".45"/>
+        <rect x="-32" y="60" width="25" height="25" rx="4" fill="#b6d8d3" stroke="#e8c5a5" stroke-width="2"/>
+        <rect x="7" y="60" width="25" height="25" rx="4" fill="#b6d8d3" stroke="#e8c5a5" stroke-width="2"/>
+        <path d="M-27 107h54" stroke="#e6bb90" stroke-width="4" stroke-linecap="round"/>
+      </g>
       <g opacity=".2" stroke="#fff6e5" fill="none"><path d="M-30 860Q510 600 720 730T1460 470"/><path d="M90 975Q490 740 760 800T1660 655"/></g>
     </svg>`;
   }
@@ -54,11 +76,12 @@ window.GreenShow=(()=>{
     const stops=[['START',0],['GREEN',1],['SUMMIT',max-1],['BOARD',max]];
     return `<div class="gs-route-markers">${stops.map(([label,val])=>`<div class="gs-route-marker ${step>=val?'lit':''}"><i></i><span>${label}</span></div>`).join('')}</div>`;
   }
-  function card(r,small=false){
-    return `<div class="gs-team-tile ${r.place<=3?'gs-podium-rank gs-podium-'+r.place:''} ${small?'gs-tile-small':''}">
-      <div class="gs-team-place">${r.place}<span>МЕСТО</span></div>
-      <div class="gs-team-name">${esc(r.name)}</div>
-      <div class="gs-team-score">${fmt(r.green)}<span>ОЧКОВ</span></div>
+  function rankingRow(r){
+    const podium=r.place<=3?' gs-rank-'+r.place:'';
+    return `<div class="gs-ranking-row${podium}">
+      <div class="gs-ranking-place"><b>${r.place}</b><span>МЕСТО</span></div>
+      <div class="gs-ranking-name">${esc(r.name)}</div>
+      <div class="gs-ranking-score"><b>${fmt(r.green)}</b><span>ОЧКОВ</span></div>
     </div>`;
   }
   function render(host,data){
@@ -75,7 +98,7 @@ window.GreenShow=(()=>{
     const lastThree=shown.filter(r=>r.place<=3).sort((a,b)=>a.place-b.place);
     host.className='scene green-show-stage';
     host.innerHTML=`<div class="green-experience gs-${mode}" data-step="${step}">
-      ${alpineArt()}
+      ${alpineArt(step,n)}
       <div class="gs-atmosphere"></div>
       <header class="gs-header"><div class="gs-brand"><img src="/sochi/static/hi-jack-logo.svg" alt=""><div><small>HI, JACK CLUB · 07.11.2026</small><strong>HI, JACK <em>— HI, SOCHI</em></strong></div></div><div class="gs-step-label"><span class="gs-live-dot"></span> STAGE 01 / GREEN</div></header>
       <div class="gs-content">
@@ -84,7 +107,7 @@ window.GreenShow=(()=>{
           <h1 class="gs-title">${isIntro?'ПЕРВАЯ<br><em>ВЫСОТА</em>':board?'РЕЗУЛЬТАТЫ<br><em>GREEN</em>':leader?'НА ВЕРШИНЕ<br><em>GREEN</em>':'ВОСХОЖДЕНИЕ<br><em>ПРОДОЛЖАЕТСЯ</em>'}</h1>
           <div class="gs-section-rule"></div>
           ${isIntro?`<div class="gs-intro-text">Первые итоги командного восхождения.<br>Каждая фишка — ещё один шаг к Сочи.</div><div class="gs-intro-cta">11 КОМАНД · ОДНА ВЕРШИНА</div>`.replace('11 КОМАНД',n+' КОМАНД')
-           :board?`<div class="gs-overview"><div class="gs-overview-cards">${[...shown].sort((a,b)=>a.place-b.place).map(r=>card(r,true)).join('')}</div></div>`
+           :board?`<div class="gs-overview"><div class="gs-ranking-list" style="--rank-count:${n}">${[...shown].sort((a,b)=>a.place-b.place||b.green-a.green||a.team_id-b.team_id).map(r=>rankingRow(r)).join('')}</div></div>`
            :`<div class="gs-reveal-label">${leader?'ЛИДЕР ПЕРВОГО ЭТАПА':latest&&latest.place<=3?'НА ПОДИУМЕ':'ОТКРЫТО МЕСТО'}</div>
               <div class="gs-hero"><span class="gs-hero-place">${latest?.place||'—'}<small>МЕСТО</small></span><div class="gs-hero-team"><div class="gs-hero-name">${esc(latest?.name||'')}</div><div class="gs-hero-points">${fmt(latest?.green)} <span>ОЧКОВ</span></div></div></div>
               ${lastThree.length&&top||leader?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
