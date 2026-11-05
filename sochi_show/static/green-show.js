@@ -24,19 +24,18 @@ window.GreenShow=(()=>{
     const visible=data.demo_ranking?[...all].reverse().slice(0,Math.min(n,count)):all;
     return {count,step:n,max_step:count+2,revealed:visible};
   }
-  // ONE visible cable and ONE burgundy cabin, positioned on the same Bezier path.
-  // At step 0 the cable car is attached to the bottom START station.
+  // The single cabin marks GREEN completion, NOT the rank currently revealed.
+  // It always stays at the first reached station; only future tournament phases move it.
   const cable={start:[730,790],control1:[930,652],control2:[1170,427],end:[1440,245]};
-  function cabinPoint(step,count){
-    const t=Math.max(0,Math.min(1,step/(count+1)));
-    const u=1-t, p=cable;
+  function cablePoint(t){
+    const u=1-t,p=cable;
     return [
       u*u*u*p.start[0]+3*u*u*t*p.control1[0]+3*u*t*t*p.control2[0]+t*t*t*p.end[0],
       u*u*u*p.start[1]+3*u*u*t*p.control1[1]+3*u*t*t*p.control2[1]+t*t*t*p.end[1]
     ];
   }
-  function alpineArt(step=0,count=11){
-    const [cabinX,cabinY]=cabinPoint(step,count);
+  function alpineArt(){
+    const [cabinX,cabinY]=cablePoint(.28);
     return `<svg class="alpine-art" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="alpineSky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d464d"/><stop offset=".43" stop-color="#347773"/><stop offset=".75" stop-color="#b0b9a5"/><stop offset="1" stop-color="#e2b17b"/></linearGradient>
@@ -60,6 +59,10 @@ window.GreenShow=(()=>{
       <circle cx="730" cy="790" r="10" fill="#f7d3a1" stroke="#244e54" stroke-width="4"/>
       <circle cx="1440" cy="245" r="10" fill="#fff0d1" stroke="#36585a" stroke-width="4"/>
       <text x="677" y="847" fill="#fff0da" font-size="23" font-weight="850" letter-spacing="4">START</text>
+      <!-- GREEN is the first reached station, fixed during the entire ranking reveal. -->
+      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="23" fill="#c9d895" opacity=".28"/>
+      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="11" fill="#dce6ad" stroke="#32565b" stroke-width="3"/>
+      <text x="${(cabinX+67).toFixed(1)}" y="${(cabinY+45).toFixed(1)}" fill="#eff8d1" font-size="23" font-weight="900" letter-spacing="3">GREEN ✓</text>
       <g class="alpine-cabin" transform="translate(${cabinX.toFixed(1)} ${cabinY.toFixed(1)})">
         <circle cx="0" cy="0" r="7" fill="#f8e5c8" stroke="#264950" stroke-width="2"/>
         <path d="M0 4v45" fill="none" stroke="#f0ddbe" stroke-width="5"/>
@@ -72,9 +75,9 @@ window.GreenShow=(()=>{
       <g opacity=".2" stroke="#fff6e5" fill="none"><path d="M-30 860Q510 600 720 730T1460 470"/><path d="M90 975Q490 740 760 800T1660 655"/></g>
     </svg>`;
   }
-  function progressMarkup(step,max){
-    const stops=[['START',0],['GREEN',1],['SUMMIT',max-1],['BOARD',max]];
-    return `<div class="gs-route-markers">${stops.map(([label,val])=>`<div class="gs-route-marker ${step>=val?'lit':''}"><i></i><span>${label}</span></div>`).join('')}</div>`;
+  function progressMarkup(){
+    const stops=[['START',true],['GREEN ✓',true],['SUMMIT',false],['BOARD',false]];
+    return `<div class="gs-route-markers">${stops.map(([label,done])=>`<div class="gs-route-marker ${done?'lit':''}"><i></i><span>${label}</span></div>`).join('')}</div>`;
   }
   function rankingRow(r){
     const podium=r.place<=3?' gs-rank-'+r.place:'';
@@ -98,7 +101,7 @@ window.GreenShow=(()=>{
     const lastThree=shown.filter(r=>r.place<=3).sort((a,b)=>a.place-b.place);
     host.className='scene green-show-stage';
     host.innerHTML=`<div class="green-experience gs-${mode}" data-step="${step}">
-      ${alpineArt(step,n)}
+      ${alpineArt()}
       <div class="gs-atmosphere"></div>
       <header class="gs-header"><div class="gs-brand"><img src="/sochi/static/hi-jack-logo.svg" alt=""><div><small>HI, JACK CLUB · 07.11.2026</small><strong>HI, JACK <em>— HI, SOCHI</em></strong></div></div><div class="gs-step-label"><span class="gs-live-dot"></span> STAGE 01 / GREEN</div></header>
       <div class="gs-content">
@@ -113,7 +116,7 @@ window.GreenShow=(()=>{
               ${lastThree.length&&top||leader?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
               <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(n,shown.length)} / ${n}</div>`}
         </div>
-        <aside class="gs-side"><div class="gs-mountain-badge"><span>♠</span><strong>HI,<br>SOCHI</strong><small>ВЫСОТА · ВОЛЯ · ПОБЕДА</small></div><div class="gs-route">${progressMarkup(step,n+2)}</div><div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div></aside>
+        <aside class="gs-side"><div class="gs-mountain-badge"><span>♠</span><strong>HI,<br>SOCHI</strong><small>ВЫСОТА · ВОЛЯ · ПОБЕДА</small></div><div class="gs-route">${progressMarkup()}</div><div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div></aside>
       </div>
       <footer class="gs-footer"><span>GREEN / ${esc(ordinal)}</span><span>${esc(secondary)}</span><span>${step} / ${n+2}</span></footer>
     </div>`;
