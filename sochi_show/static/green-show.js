@@ -15,14 +15,14 @@ window.GreenShow=(()=>{
     const ranked=names.slice(0,count).map((name,i)=>({team_id:i+1,name,green:demoScores[i],total:demoScores[i]}))
       .sort((a,b)=>b.green-a.green||a.team_id-b.team_id)
       .map((t,i)=>({...t,place:i+1}));
-    return {count,step:0,max_step:count+2,revealed:[],demo_ranking:ranked};
+    return {count,step:0,max_step:count+1,revealed:[],demo_ranking:ranked};
   }
   function frame(data,step){
     const all=data.demo_ranking||data.revealed||[];
     const count=Number(data.count||all.length);
-    const n=Math.max(0,Math.min(count+2,Number(step)));
+    const n=Math.max(0,Math.min(count+1,Number(step)));
     const visible=data.demo_ranking?[...all].reverse().slice(0,Math.min(n,count)):all;
-    return {count,step:n,max_step:count+2,revealed:visible};
+    return {count,step:n,max_step:count+1,revealed:visible};
   }
   // The single cabin marks GREEN completion, NOT the rank currently revealed.
   // It always stays at the first reached station; only future tournament phases move it.
@@ -101,12 +101,13 @@ window.GreenShow=(()=>{
     const shown=data.revealed||[];
     const latest=shown.length?shown[shown.length-1]:null;
     const isIntro=step===0;
-    const leader=step===n+1;
-    const board=step===n+2;
+    // First place already gets a hero reveal at step N.
+    // Next step is the final ranking, without another copy of first place.
+    const board=step===n+1;
     const top=latest&&latest.place<=3;
-    const mode=isIntro?'intro':leader?'summit':board?'overview':top?'top':'reveal';
-    const ordinal=step===0?'ПЕРВАЯ ВЫСОТА':step<=n?'ОТКРЫВАЕМ ПОЗИЦИИ':leader?'ЛИДЕР GREEN':'ИТОГИ GREEN';
-    const secondary=isIntro?'ПУТЬ К ВЕРШИНЕ НАЧИНАЕТСЯ':leader?'ВПЕРЕДИ ЕЩЁ ВОСХОЖДЕНИЕ':'ПЕРВЫЙ ЭТАП ПРОЙДЕН';
+    const mode=isIntro?'intro':board?'overview':top?'top':'reveal';
+    const ordinal=step===0?'ПЕРВАЯ ВЫСОТА':step<=n?'ОТКРЫВАЕМ ПОЗИЦИИ':'ИТОГИ GREEN';
+    const secondary=isIntro?'ПУТЬ К ВЕРШИНЕ НАЧИНАЕТСЯ':board?'ПЕРВЫЙ ЭТАП ПРОЙДЕН':'ВПЕРЕДИ ЕЩЁ ВОСХОЖДЕНИЕ';
     const lastThree=shown.filter(r=>r.place<=3).sort((a,b)=>a.place-b.place);
     host.className='scene green-show-stage';
     host.innerHTML=`<div class="green-experience gs-${mode}" data-step="${step}">
@@ -116,11 +117,11 @@ window.GreenShow=(()=>{
       <div class="gs-content">
         <div class="gs-main">
           <div class="gs-kicker">ПУТЬ К ВЕРШИНЕ / ЭТАП 01</div>
-          <h1 class="gs-title">${isIntro?'ПЕРВАЯ<br><em>ВЫСОТА</em>':board?'РЕЗУЛЬТАТЫ<br><em>GREEN</em>':leader?'НА ВЕРШИНЕ<br><em>GREEN</em>':'ВОСХОЖДЕНИЕ<br><em>ПРОДОЛЖАЕТСЯ</em>'}</h1>
+          <h1 class="gs-title">${isIntro?'ПЕРВАЯ<br><em>ВЫСОТА</em>':board?'РЕЗУЛЬТАТЫ<br><em>GREEN</em>':'ВОСХОЖДЕНИЕ<br><em>ПРОДОЛЖАЕТСЯ</em>'}</h1>
           <div class="gs-section-rule"></div>
           ${isIntro?`<div class="gs-intro-text">Первые итоги командного восхождения.<br>Каждая фишка — ещё один шаг к Сочи.</div><div class="gs-intro-cta">11 КОМАНД · ОДНА ВЕРШИНА</div>`.replace('11 КОМАНД',n+' КОМАНД')
            :board?`<div class="gs-overview"><div class="gs-ranking-list" style="--rank-count:${n}">${[...shown].sort((a,b)=>a.place-b.place||b.green-a.green||a.team_id-b.team_id).map(r=>rankingRow(r)).join('')}</div></div>`
-           :`<div class="gs-reveal-label">${leader?'ЛИДЕР ПЕРВОГО ЭТАПА':latest&&latest.place<=3?'НА ПОДИУМЕ':'ОТКРЫТО МЕСТО'}</div>
+           :`<div class="gs-reveal-label">${latest?.place===1?'ЛИДЕР ПЕРВОГО ЭТАПА':latest&&latest.place<=3?'НА ПОДИУМЕ':'ОТКРЫТО МЕСТО'}</div>
               <div class="gs-hero">
                 <div class="gs-hero-mascot">${rankIcon(latest?.place)}</div>
                 <span class="gs-hero-place">${latest?.place||'—'}<small>МЕСТО</small></span>
@@ -130,12 +131,12 @@ window.GreenShow=(()=>{
                 </div>
               </div>
               <div class="gs-rank-caption">${esc(rankCaption(latest?.place))}</div>
-              ${lastThree.length&&top||leader?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
+              ${lastThree.length&&top?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
               <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(n,shown.length)} / ${n}</div>`}
         </div>
-        <aside class="gs-side"><div class="gs-mountain-badge"><span>♠</span><strong>HI,<br>SOCHI</strong><small>ВЫСОТА · ВОЛЯ · ПОБЕДА</small></div><div class="gs-route">${progressMarkup()}</div><div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div></aside>
+        <aside class="gs-side"><div class="gs-mountain-badge"><span>♠</span><strong>HI,<br>SOCHI</strong><small>БЛЕФ · СТЕК · ОЛЛ-ИН</small></div><div class="gs-route">${progressMarkup()}</div><div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div></aside>
       </div>
-      <footer class="gs-footer"><span>GREEN / ${esc(ordinal)}</span><span>${esc(secondary)}</span><span>${step} / ${n+2}</span></footer>
+      <footer class="gs-footer"><span>GREEN / ${esc(ordinal)}</span><span>${esc(secondary)}</span><span>${step} / ${n+1}</span></footer>
     </div>`;
   }
   return {render,demo,frame};
