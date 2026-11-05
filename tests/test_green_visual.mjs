@@ -1,35 +1,68 @@
-/* Browser-free smoke tests for the SVG route and 10/11 team GREEN scoreboard. */
+/* Visual smoke tests for static GREEN station and unique rank-character SVGs. */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source=fs.readFileSync('sochi_show/static/green-show.js','utf8');
 const context={window:{},Intl};
-vm.runInNewContext(source,context);
+vm.runInNewContext(fs.readFileSync('sochi_show/static/rank-mascots.js','utf8'),context);
+vm.runInNewContext(fs.readFileSync('sochi_show/static/green-show.js','utf8'),context);
 const {demo,frame,render}=context.window.GreenShow;
+const mascots=context.window.SochiRankMascots;
 const host={className:'',innerHTML:''};
+const cabinPosition=html=>{
+  const m=html.match(/class="alpine-cabin" transform="translate\((\d+\.\d+) (\d+\.\d+)\)"/);
+  assert.ok(m,'one visible cable car has a reproducible location');
+  return m[0];
+};
 
 for(const count of [10,11]){
   const data=demo(count);
   render(host,frame(data,0));
-  assert.match(host.innerHTML, /class="alpine-cabin"/, 'a cabin must be visible at the start');
-  assert.equal((host.innerHTML.match(/class="alpine-cabin"/g)||[]).length,1, 'only one cable car');
-  assert.match(host.innerHTML, /transform="translate\(730\.0 790\.0\)"/, 'cabin is attached at START');
-  assert.match(host.innerHTML, /d="M730 790 C930 652 1170 427 1440 245"/, 'cable starts where cabin is');
-  assert.equal((host.innerHTML.match(/id="sochi-cable"/g)||[]).length,1, 'one named cable');
-  assert.doesNotMatch(host.innerHTML, /fill="#7e8d54"/, 'remove the second green car');
-  assert.doesNotMatch(host.innerHTML, /M1140 285L1780 440/, 'remove disconnected cable');
-  render(host,frame(data,Math.floor(count/2)));
-  assert.equal((host.innerHTML.match(/class="alpine-cabin"/g)||[]).length,1,'one car throughout reveal');
+  const station=cabinPosition(host.innerHTML);
+  assert.equal((host.innerHTML.match(/class="alpine-cabin"/g)||[]).length,1,'single cabin');
+  assert.match(host.innerHTML,/GREEN ✓/,'GREEN checkpoint is marked completed');
+  assert.match(host.innerHTML,/d="M730 790 C930 652 1170 427 1440 245"/,'one real cable');
+  assert.equal((host.innerHTML.match(/id="sochi-cable"/g)||[]).length,1);
+  assert.doesNotMatch(host.innerHTML,/fill="#7e8d54"/,'no second green cabin');
+  assert.doesNotMatch(host.innerHTML,/M1140 285L1780 440/,'no disconnected cable');
+  assert.notEqual(station,'class="alpine-cabin" transform="translate(730.0 790.0)"',
+    'cabin has finished the first phase and parks at GREEN, not START');
+
+  // Revealing the last, middle and first places never moves the cabin.
+  for(const step of [1,Math.floor(count/2),count,count+1,count+2]){
+    render(host,frame(data,step));
+    assert.equal(cabinPosition(host.innerHTML),station,'rank changes must not change cabin location');
+  }
+
+  // A new badge belongs to the place, not the team number or next step.
+  render(host,frame(data,1));
+  assert.match(host.innerHTML,new RegExp('aria-label="'+(count===11?'Улитка на старте':'Хромая бабушка с тростью')+'"'));
+  render(host,frame(data,count===11?3:2));
+  assert.match(host.innerHTML,/aria-label="Бабушка без трости"/);
+  render(host,frame(data,count));
+  assert.match(host.innerHTML,/aria-label="Зевс с молнией"/);
+  assert.match(host.innerHTML,/gs-hero-mascot/);
+
+  // Final GREEN is a 1..N classic list, with a unique badge in every row.
   render(host,frame(data,count+2));
-  assert.equal((host.innerHTML.match(/class="gs-ranking-row/g)||[]).length,count, 'all teams shown as rows');
-  assert.match(host.innerHTML, /class="gs-ranking-list"/,'classic vertical list');
-  assert.doesNotMatch(host.innerHTML,/gs-overview-cards|gs-team-tile/,'no grid tiles');
+  assert.equal((host.innerHTML.match(/class="gs-ranking-row/g)||[]).length,count);
+  assert.equal((host.innerHTML.match(/class="gs-ranking-mascot"/g)||[]).length,count);
+  assert.match(host.innerHTML,/class="gs-ranking-list"/);
+  assert.doesNotMatch(host.innerHTML,/gs-overview-cards|gs-team-tile/);
   const places=[...host.innerHTML.matchAll(/<div class="gs-ranking-place"><b>(\d+)<\/b>/g)].map(m=>Number(m[1]));
-  assert.equal(places.length,count);
-  assert.deepEqual(places,[...Array(count)].map((_,i)=>i+1),'ranking must descend 1 through N');
-  const firstRow=host.innerHTML.match(/<div class="gs-ranking-row gs-rank-1">([\s\S]*?)<\/div>\s*<div class="gs-ranking-row/);
-  assert.ok(firstRow,'1st place should have podium highlighting');
-  assert.match(firstRow[1],/Паса не имеем/,'1st team must be the demo leader');
+  assert.deepEqual(places,[...Array(count)].map((_,i)=>i+1));
+  assert.match(host.innerHTML,/gs-ranking-row gs-rank-1/);
+  assert.match(host.innerHTML,/Паса не имеем/);
+  assert.match(host.innerHTML,/aria-label="Зевс с молнией"/);
+  assert.match(host.innerHTML,/aria-label="Хромая бабушка с тростью"/);
+  assert.match(host.innerHTML,/aria-label="Бабушка без трости"/);
 }
-console.log('GREEN visuals PASS: single cabin, real cable, START, ranking 1→N (10/11 teams)');
+
+assert.equal(Object.keys(mascots).sort().join(','),'label,render');
+for(const rank of Array.from({length:11},(_,i)=>i+1)){
+  const svg=mascots.render(rank);
+  assert.match(svg,/viewBox="0 0 100 100"/);
+  assert.match(svg,new RegExp('gs-rank-symbol-'+rank));
+  assert.match(svg,new RegExp('aria-label="'+mascots.label(rank)+'"'));
+}
+console.log('GREEN visuals PASS: stationary cabin at GREEN + distinct rank mascots + ordered results (10/11 teams)');
