@@ -84,3 +84,30 @@ def test_green_show_cannot_start_before_green_or_after_blue(client):
     assert call(client, 'stages/bulk', h, {'phase': 'blue', 'teams': blue}).status_code == 200
     assert call(client, 'publish', h, {'action': 'blue'}).status_code == 200
     assert call(client, 'publish', h, {'action': 'green-show-start'}).status_code == 409
+
+
+def test_green_cinematic_publication_is_atomic_and_private(client):
+    h = auth(client)
+    prepare(client, h, 10)
+    assert call(client, 'chips-settings', h, {'reentry': 30000}).status_code == 200
+    rows = [{'team_id': i, 'green_stack': 100000 + 10000*i,
+             'reentry_count': 1 if i == 1 else 0} for i in range(1, 11)]
+    assert call(client, 'stages/bulk', h, {'phase': 'green', 'teams': rows}).status_code == 200
+    assert call(client, 'publish', h, {'action': 'teams'}).status_code == 200
+
+    # The organizer's GREEN publish button submits 'show_mode: cinematic'.
+    # One transaction freezes GREEN and opens an intro with no public scores.
+    response = call(client, 'publish', h, {'action': 'green', 'show_mode': 'cinematic'})
+    assert response.status_code == 200, response.text
+    p = client.get('/sochi/api/public/state').json()['state']
+    assert p['scene'] == 'green_show'
+    assert p['published_phases'] == ['green']
+    assert p['green_view']['revealed'] == []
+    assert p['ranking'] == []
+    assert p['stages'] == {}
+    assert 'green_stack_actual' not in str(p)
+    # No explicit GreenShow 'start' action is necessary to begin revealing.
+    assert call(client, 'publish', h, {'action': 'green-show-step', 'step': 1}).status_code == 200
+    v = client.get('/sochi/api/public/state').json()['state']['green_view']
+    assert len(v['revealed']) == 1
+    assert v['revealed'][0]['green'] == 80000
