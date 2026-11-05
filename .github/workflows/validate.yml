@@ -27,6 +27,7 @@ jobs:
           node --check sochi_show/static/screen.js
           node --check sochi_show/static/green-show.js
           node --check sochi_show/static/rank-mascots.js
+          node --check sochi_show/static/jack-sword-motion.js
           node --check sochi_show/static/green-preview.js
       - name: GREEN visual smoke tests
         run: node tests/test_green_visual.mjs
