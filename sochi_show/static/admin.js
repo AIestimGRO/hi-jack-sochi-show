@@ -92,6 +92,7 @@ function renderGreenDirector(){
   const current=show?.step??0;
   const max=show?.ranking?.length+2||((state.team_count||0)+2);
   $('green-show-start').disabled=!active||blue;
+  $('green-show-start').textContent=show?'↻ Начать GREEN сначала':'▶ Запустить шоу GREEN';
   $('green-show-back').disabled=!show||current===0;
   $('green-show-next').disabled=!show||current>=max;
   $('green-show-progress').textContent=show
@@ -183,7 +184,7 @@ async function bulkStage(stage){
   $('confirm-pub-stage').onclick=async()=>{
     try{
       await api('/sochi/api/admin/stages/bulk','POST',{phase:stage,teams:rows});
-      await api('/sochi/api/admin/publish','POST',{action:stage});
+      await api('/sochi/api/admin/publish','POST',{action:stage,...(stage==='green'?{show_mode:'cinematic'}:{})});
       $('preview-modal').close();
       toast(`Этап ${stage.toUpperCase()} опубликован`);
       await refresh();
