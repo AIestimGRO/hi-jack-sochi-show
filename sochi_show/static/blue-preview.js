@@ -1,0 +1,27 @@
+'use strict';
+/* Demo-only: synthetic teams and points, no network calls or DB writes. */
+const host=document.getElementById('blue-stage');
+const chooser=document.getElementById('demo-count');
+const prev=document.getElementById('demo-prev');
+const next=document.getElementById('demo-next');
+let data=window.BlueShow.demo(11),step=0;
+function refresh(){
+  window.BlueShow.render(host,window.BlueShow.frame(data,step));
+  document.getElementById('demo-step').textContent=step+' / '+data.max_step;
+  prev.disabled=step===0;
+  next.disabled=step===data.max_step;
+}
+chooser.addEventListener('change',()=>{data=window.BlueShow.demo(Number(chooser.value));step=0;refresh()});
+prev.addEventListener('click',()=>{step=Math.max(0,step-1);refresh()});
+next.addEventListener('click',()=>{step=Math.min(data.max_step,step+1);refresh()});
+document.getElementById('demo-reset').addEventListener('click',()=>{step=0;refresh()});
+document.getElementById('demo-full').addEventListener('click',()=>{
+  if(document.fullscreenElement)document.exitFullscreen();
+  else document.documentElement.requestFullscreen();
+});
+document.addEventListener('keydown',event=>{
+  if(event.target.matches('input,select,textarea'))return;
+  if(event.key==='ArrowRight'){step=Math.min(data.max_step,step+1);refresh()}
+  if(event.key==='ArrowLeft'){step=Math.max(0,step-1);refresh()}
+});
+refresh();
