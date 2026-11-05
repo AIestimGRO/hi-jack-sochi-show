@@ -5,6 +5,18 @@ import vm from 'node:vm';
 
 const context={window:{},Intl};
 vm.runInNewContext(fs.readFileSync('sochi_show/static/rank-mascots.js','utf8'),context);
+vm.runInNewContext(fs.readFileSync('sochi_show/static/jack-sword-motion.js','utf8'),context);
+const gifB64=context.window.JackSwordGifB64;
+assert.equal(gifB64.length,19412,'complete transparent GIF must be committed');
+let gifHash=2166136261;
+for(const ch of gifB64)gifHash=Math.imul(gifHash^ch.charCodeAt(0),16777619)>>>0;
+assert.equal(gifHash,0x2a6cdead,'GIF must match verified original-with-background-removed');
+const gifBytes=Buffer.from(gifB64,'base64');
+assert.equal(gifBytes.subarray(0,6).toString('ascii'),'GIF89a');
+assert.equal(gifBytes.readUInt16LE(6),200);
+assert.equal(gifBytes.readUInt16LE(8),200);
+assert.equal(gifBytes[gifBytes.length-1],0x3b,'GIF ends correctly');
+
 vm.runInNewContext(fs.readFileSync('sochi_show/static/green-show.js','utf8'),context);
 const {demo,frame,render}=context.window.GreenShow;
 const mascots=context.window.SochiRankMascots;
@@ -19,6 +31,11 @@ for(const count of [10,11]){
   const data=demo(count);
   render(host,frame(data,0));
   const station=cabinPosition(host.innerHTML);
+  assert.match(host.innerHTML,/class="gs-jack-animation-image"/,'transparent animated mascot appears in right-side place');
+  assert.match(host.innerHTML,/src="data:image\/gif;base64,R0lGODlh/,'inline GIF is used with no external dependency');
+  assert.doesNotMatch(host.innerHTML,/gs-mountain-badge/,'old circular HI SOCHI badge is gone');
+  assert.match(host.innerHTML,/gs-jack-animation-tagline/,'poker slogan remains beneath the mascot');
+
   assert.equal((host.innerHTML.match(/class="alpine-cabin"/g)||[]).length,1,'single cabin');
   assert.match(host.innerHTML,/GREEN ✓/,'GREEN checkpoint is marked completed');
   assert.match(host.innerHTML,/d="M730 790 C930 652 1170 427 1440 245"/,'one real cable');
