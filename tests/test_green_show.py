@@ -1,5 +1,5 @@
 """GREEN show staging and public spoiler protection without changing the running projector."""
-from .test_show import auth, call, prepare
+from test_show import auth, call, prepare
 
 
 def test_green_rehearsal_requires_login_and_is_read_only(client):
