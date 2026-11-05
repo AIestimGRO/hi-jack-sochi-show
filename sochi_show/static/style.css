@@ -159,3 +159,33 @@
   .admin .guide-link{margin-left:0}
   .admin .button-grid button{flex:1}
 }
+
+/* Fixed re-entry/add-on settings: count-only operator controls. */
+.admin .chip-rates{
+  margin:12px 0;
+  padding:11px 14px;
+  border:1px solid #e4d2be;
+  border-radius:9px;
+  background:#fff9f2;
+  color:#604425;
+  font-size:13px;
+  font-weight:750;
+}
+.admin .chips-derived{
+  display:block;
+  margin-top:5px;
+  color:#756857;
+  font-size:11px;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.admin #chips-settings-modal{width:min(92vw,560px)}
+.admin #chips-settings-modal form{display:grid;gap:18px}
+.admin #chips-settings-modal label{
+  font-size:14px;
+  color:#46362b;
+  font-weight:700;
+}
+.admin #chips-settings-modal input{width:100%;font-size:17px}
+.admin #chips-settings-modal label:has(input:disabled){opacity:.58}
+.admin #chips-settings-modal form button{justify-self:start}
