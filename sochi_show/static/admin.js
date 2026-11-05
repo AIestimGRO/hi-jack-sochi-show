@@ -3,6 +3,88 @@ let state=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>new Intl.NumberFormat('ru-RU').format(v??0);
+
+/* Progressive disclosure: keep the operator's next task visible without hiding controls permanently. */
+const MODULES=[
+  ['control-panel','ЭФИР','Пульт проектора','Показывай нужную сцену только когда она опубликована.'],
+  ['seating-panel','01','Рассадка','Начни с JSON, числа команд и распределения мест.'],
+  ['teams-panel','02','Игроки и команды','Имена, капитаны, фотографии и публикация команд.'],
+  ['scores-panel','03','Результаты GREEN / BLUE / RED','Заполняй этапы последовательно; перед публикацией будет расчёт.'],
+  ['secrets-panel','04','Secret Jacks','Три закрытых назначения и поочерёдное раскрытие.'],
+  ['votes-panel','05','Голоса команд','Один голос от каждой команды, затем публикация.'],
+  ['review-panel','06','Рейтинг и протокол','Итоговая проверка, история изменений, CSV.']
+];
+let guideOpened=false;
+function installModuleLayout(){
+  for(const [id,number,title,description] of MODULES){
+    const panel=$(id);
+    if(!panel)continue;
+    const module=document.createElement('details');
+    module.className='module-accordion';
+    module.id='module-'+id;
+    const head=document.createElement('summary');
+    head.innerHTML='<span class="module-number">'+number+'</span><span class="module-heading"><strong>'+title+'</strong><small>'+description+'</small></span><span class="module-state" id="state-'+id+'">Ожидание</span>';
+    panel.before(module);
+    module.append(head,panel);
+  }
+  $('expand-modules').onclick=()=>document.querySelectorAll('.module-accordion').forEach(el=>el.open=true);
+  $('collapse-modules').onclick=()=>document.querySelectorAll('.module-accordion').forEach(el=>el.open=false);
+  document.querySelectorAll('[data-open-panel]').forEach(a=>a.addEventListener('click',event=>{
+    event.preventDefault();
+    const dest=$('module-'+a.dataset.openPanel);
+    if(!dest)return;
+    dest.open=true;
+    dest.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+}
+function updateWorkflow(){
+  if(!state)return;
+  const pub=state.published||{};
+  const phases=pub.published_phases||[];
+  const teamTotal=Number(state.team_count||0);
+  const teamsDone=teamTotal>0&&Object.keys(pub.teams||{}).length===teamTotal;
+  const steps=[
+    teamTotal>0,teamsDone,phases.includes('green'),phases.includes('blue'),
+    phases.includes('red'),(pub.revealed_slots||[]).length===3,
+    !!pub.votes_published,['final','winner'].includes(pub.scene)
+  ];
+  const prompts=[
+    'Шаг 1: выбери 10 или 11 команд и импортируй файл рассадки.',
+    'Шаг 2: проверь имена и нажми «Опубликовать все названия».',
+    'Шаг 3: заполни GREEN для всех команд и нажми «Опубликовать GREEN».',
+    'Шаг 4: заполни BLUE и опубликуй результаты после GREEN.',
+    'Шаг 5: внеси уникальные места RED и опубликуй их.',
+    'Шаг 6: сохрани трёх Secret Jacks и раскрывай их по одному.',
+    'Шаг 7: запиши голоса всех команд и нажми «Раскрыть голоса».',
+    'Шаг 8: открой финальную таблицу через пульт эфира.'
+  ];
+  const done=steps.filter(Boolean).length;
+  $('guide-done').textContent=done+' из '+steps.length;
+  $('guide-progress-fill').style.width=(done/steps.length*100)+'%';
+  $('guide-next').textContent=done===steps.length
+    ?'Все этапы опубликованы. Проверь финальный рейтинг и протокол.'
+    :prompts[steps.findIndex(x=>!x)];
+  const assigned=state.seats.filter(s=>s.player_id).length;
+  const badges={
+    'control-panel':pub.scene?('Сцена: '+pub.scene.toUpperCase()):'Заставка',
+    'seating-panel':teamTotal?(teamTotal+' команд · '+assigned+'/'+teamTotal*3+' игроков'):'Не импортировано',
+    'teams-panel':teamsDone?'Названия опубликованы':'Не опубликованы',
+    'scores-panel':phases.length?(phases.join(' / ').toUpperCase()):'Нет результатов',
+    'secrets-panel':(pub.revealed_slots||[]).length+'/3 раскрыто',
+    'votes-panel':pub.votes_published?'Опубликованы':'Не опубликованы',
+    'review-panel':pub.ranking?.length?(pub.ranking.length+' команд в рейтинге'):'Пока пусто'
+  };
+  for(const [id,label] of Object.entries(badges)){
+    const el=$('state-'+id);
+    if(el)el.textContent=label;
+  }
+  if(!guideOpened){
+    const next=teamTotal===0?'seating-panel':!teamsDone?'teams-panel':!phases.includes('red')?'scores-panel':(pub.revealed_slots||[]).length<3?'secrets-panel':!pub.votes_published?'votes-panel':'control-panel';
+    const module=$('module-'+next);
+    if(module)module.open=true;
+    guideOpened=true;
+  }
+}
 let csrf='';
 function toast(message,bad=false){let t=$('toast');t.textContent=message;t.className=bad?'error':'';t.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display='none',6000)}
 async function api(path,method='GET',data=null,isFile=false){const opts={method,credentials:'same-origin',headers:{}};if(method!=='GET')opts.headers['X-CSRF-Token']=csrf;if(data!==null){if(isFile)opts.body=data;else{opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(data)}}const r=await fetch(path,opts);let out;try{out=await r.json()}catch{out={detail:await r.text()}}if(!r.ok)throw new Error(typeof out.detail==='string'?out.detail:JSON.stringify(out.detail||out));return out}
@@ -20,7 +102,7 @@ const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}">${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary">✓</button></div>`}).join('');
 let rk=pub.ranking;$('ranking-preview').innerHTML=rk.length?`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
 const ties=rk.length>1?rk.filter(r=>r.total===rk[0].total):[];$('tie-resolution').innerHTML=ties.length>1?`<span class="note">НИЧЬЯ НА ПЕРВОМ МЕСТЕ · решение организатора:</span><select id="tie-winner">${ties.map(t=>`<option value="${t.team_id}" ${pub.winner_decision===t.team_id?'selected':''}>${esc(t.name)}</option>`).join('')}</select><button id="save-tie" class="gold">Зафиксировать решение</button>`:'';
-$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');}
+$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();}
 $('login-form').onsubmit=async e=>{e.preventDefault();try{await api('/sochi/api/admin/login','POST',{password:$('password').value});$('password').value='';await refresh()}catch(err){toast(err.message,true)}};
 $('logout').onclick=async()=>{await change('/sochi/api/admin/logout',{});location.reload()};
 $('import').onclick=async()=>{const file=$('json-file').files[0];if(!file)return toast('Выберите файл JSON',true);let obj;try{obj=JSON.parse(await file.text())}catch{return toast('Неверный JSON',true)}let n=Number($('count').value);let assigned=state.seats.some(s=>s.player_id);let confirm_replace_cards=false;if(assigned){confirm_replace_cards=confirm(`ВНИМАНИЕ: у участников уже есть карточки. Смена схемы требует ФИЗИЧЕСКОЙ ЗАМЕНЫ карточек. Подтвердить?`);if(!confirm_replace_cards)return}await change('/sochi/api/admin/seating',{document:obj,team_count:n,confirm_replace_cards})};
@@ -38,4 +120,5 @@ $('confirm-pub-stage').onclick=async()=>{try{await api('/sochi/api/admin/stages/
 }
 
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить проектор: ${d.scene.toUpperCase()}?`)}if(d.stage){bulkStage(d.stage)}if(d.savePlayer){const s=state.seats.find(x=>x.card_id===d.savePlayer);const name=document.querySelector(`[data-seat-name="${CSS.escape(d.savePlayer)}"]`).value;await change('/sochi/api/admin/player',{card_id:d.savePlayer,name,confirm_rebind:!!s.player_id})}if(d.saveName){let id=Number(d.saveName);await change('/sochi/api/admin/team',{team_id:id,display_name:$(`name-${id}`).value})}if(d.publishName){await publish({action:'name',team_id:Number(d.publishName)},'Опубликовать новое название команды?')}if(d.saveCapt){let id=Number(d.saveCapt),value=$(`capt-${id}`).value;await change('/sochi/api/admin/team',{team_id:id,captain_player_id:value?Number(value):null})}if(d.savePhoto){let id=Number(d.savePhoto),capt=$(`capt-${id}`).value,file=$(`photo-${id}`).files[0];if(!capt||!file)return toast('Выберите капитана и фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+capt,'POST',fd,true);toast('Фото сохранено в закрытом хранилище. Опубликуйте капитанов для эфира.');await refresh()}catch(e){toast(e.message,true)}}if(d.saveStage){let obj=valsTeam(Number(d.saveStage));await change('/sochi/api/admin/stage',obj)}if(d.saveSecret){let slot=Number(d.saveSecret),pid=Number($(`secret-player-${slot}`).value),killer=$(`secret-killer-${slot}`).value,killerPlayer=$(`secret-knockout-player-${slot}`).value,confirmed=$(`secret-confirm-${slot}`).checked;if(!pid)return toast('Сначала привяжите Secret Jack к участнику',true);const data={slot,player_id:pid,knockout_team_id:killer?Number(killer):null,knockout_player_id:killerPlayer?Number(killerPlayer):null,confirmed};const shown=state.published.revealed_slots.includes(slot);if(shown){if(!confirm('ИСПРАВИТЬ уже раскрытого Secret Jack? Рейтинг будет пересчитан и опубликован.'))return;data.confirm_correction=true}await change(shown?'/sochi/api/admin/secret-correction':'/sochi/api/admin/secret',data)}if(d.seatPhoto){let pid=Number(d.seatPhoto),file=$(`seat-photo-${pid}`).files[0];if(!file)return toast('Выберите фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+pid,'POST',fd,true);toast('Фото в закрытом хранилище');await refresh()}catch(e){toast(e.message,true)}}if(d.refreshPhoto){await publish({action:'refresh-photo',player_id:Number(d.refreshPhoto)},'Опубликовать обновлённую фотографию игрока?')}if(d.saveVote){let id=Number(d.saveVote),target=Number($(`vote-${id}`).value);if(!target)return toast('Выберите команду',true);await change('/sochi/api/admin/vote',{voter_team_id:id,target_team_id:target})}});
+installModuleLayout();
 refresh();
