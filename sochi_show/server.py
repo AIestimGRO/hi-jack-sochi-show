@@ -651,6 +651,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if not count:
                 raise HTTPException(409, 'Сначала импортируйте утверждённую рассадку')
             show = p.get('green_show')
+            if show and action == 'green':
+                raise HTTPException(409, 'GREEN SHOW уже запущен: повторная публикация GREEN требует отдельной процедуры исправления')
             if show and show['step'] < len(show['ranking']) + 2:
                 if action in PHASES or (action == 'scene' and body.get('scene') in
                                         ('green', 'blue', 'red', 'final', 'winner')):
