@@ -78,17 +78,98 @@
   font-size:clamp(9px,.9vw,19px);font-weight:800;letter-spacing:.16em;color:#f6ecd9;
 }
 .green-experience .gs-footer span:nth-child(2){color:#d4dda7}
-.green-experience .gs-overview{margin-top:1vh;flex:1;min-height:0;max-width:95%;padding-bottom:2vh}
-.green-experience .gs-overview-cards{height:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:.9vh .8vw;align-content:stretch}
-.green-experience .gs-overview .gs-team-tile{background:#e4e7dbf5;color:#22434a;display:flex;flex-direction:row;align-items:center;gap:.8vw;border-radius:8px;min-width:0;padding:4px 10px;border:1px solid #fff6e6;box-shadow:0 10px 18px #091d2760}
-.green-experience .gs-overview .gs-team-place{font-family:Georgia,serif;font-size:clamp(17px,1.8vw,35px);font-weight:800;line-height:1;flex-shrink:0}
-.green-experience .gs-overview .gs-team-place span{display:block;font-family:Inter,system-ui,sans-serif;font-size:clamp(6px,.48vw,10px);font-weight:850;letter-spacing:.05em}
-.green-experience .gs-overview .gs-team-name{font-size:clamp(10px,1vw,20px);line-height:1.1;font-weight:850;flex:1;min-width:0;overflow-wrap:anywhere}
-.green-experience .gs-overview .gs-team-score{font-size:clamp(10px,1vw,21px);font-weight:900;flex-shrink:0;text-align:right}
-.green-experience .gs-overview .gs-team-score span{display:block;font-size:clamp(7px,.5vw,10px);color:#60777a;font-weight:850;letter-spacing:.08em}
-.green-experience .gs-overview .gs-podium-1{background:#e8c08df5;color:#3e3030}
-.green-experience .gs-overview .gs-podium-2{background:#c5d3c7f5}
-.green-experience .gs-overview .gs-podium-3{background:#cdb7a0f5}
+/* GREEN scoreboard: a single classic vertical ranking, never a card grid. */
+.green-experience .gs-overview{
+  display:flex;
+  flex:1;
+  min-height:0;
+  width:100%;
+  max-width:96%;
+  margin-top:.6vh;
+  padding-bottom:1.2vh;
+}
+.green-experience .gs-ranking-list{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:repeat(var(--rank-count,11),minmax(0,1fr));
+  gap:clamp(2px,.48vh,8px);
+  width:100%;
+  height:100%;
+  min-height:0;
+}
+.green-experience .gs-ranking-row{
+  display:grid;
+  grid-template-columns:clamp(40px,4vw,82px) minmax(0,1fr) clamp(96px,10vw,195px);
+  gap:clamp(6px,.75vw,16px);
+  align-items:center;
+  min-height:0;
+  padding:0 clamp(8px,.85vw,18px);
+  border-radius:clamp(5px,.5vw,10px);
+  background:rgba(234,239,231,.96);
+  border:1px solid #ffffffbe;
+  color:#153e49;
+  box-shadow:0 4px 18px #112e384a;
+  animation:gs-reveal .4s ease-out both;
+}
+.green-experience .gs-ranking-row.gs-rank-1{
+  background:linear-gradient(100deg,#f1c694,#e9d4b2);
+  border-color:#ffefd1;
+  color:#473126;
+  box-shadow:0 4px 24px #f9c58e59;
+}
+.green-experience .gs-ranking-row.gs-rank-2{
+  background:linear-gradient(100deg,#cbd8d6,#e1e7e1);
+  border-color:#effaf6;
+}
+.green-experience .gs-ranking-row.gs-rank-3{
+  background:linear-gradient(100deg,#d4b5a8,#e4d3c5);
+  border-color:#f4e3d8;
+}
+.green-experience .gs-ranking-place{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  line-height:1;
+  white-space:nowrap;
+}
+.green-experience .gs-ranking-place b{
+  font:700 clamp(18px,1.9vw,40px)/.94 Georgia,"Times New Roman",serif;
+  letter-spacing:-.03em;
+}
+.green-experience .gs-ranking-place span{
+  margin-top:1px;
+  font-size:clamp(7px,.52vw,11px);
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.green-experience .gs-ranking-name{
+  min-width:0;
+  font-size:clamp(12px,1.28vw,27px);
+  font-weight:850;
+  line-height:1.05;
+  overflow-wrap:anywhere;
+  text-align:left;
+}
+.green-experience .gs-ranking-score{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:center;
+  line-height:1.08;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.green-experience .gs-ranking-score b{
+  font-size:clamp(12px,1.42vw,30px);
+  font-weight:900;
+}
+.green-experience .gs-ranking-score span{
+  color:#55757a;
+  font-size:clamp(7px,.52vw,11px);
+  letter-spacing:.12em;
+  font-weight:850;
+}
+.green-experience .gs-ranking-row.gs-rank-1 .gs-ranking-score span{color:#805d45}
 .green-experience.gs-overview .gs-main{padding-top:2vh}
 .green-experience.gs-overview .gs-kicker{margin-bottom:.7vh}
 .green-experience.gs-overview .gs-title{font-size:clamp(32px,3.7vw,76px)}
@@ -108,5 +189,5 @@
 .green-preview-page .green-preview-controls select{background:#dce7d9}
 .green-preview-page .green-preview-count{font-size:13px;white-space:nowrap;font-weight:850;letter-spacing:.08em;min-width:76px;text-align:center}
 .green-preview-page .green-preview-watermark{position:fixed;z-index:4;top:8px;right:30%;font-size:11px;color:#fff7e5;background:#744050e0;border-radius:6px;padding:6px 10px;font-weight:800;letter-spacing:.09em}
-@media(max-width:850px){.green-experience .gs-title{font-size:clamp(28px,4.5vw,70px)}.green-experience .gs-mountain-badge{width:15vw}.green-experience .gs-side{padding-right:3vw}.green-experience .gs-main{padding-left:3vw}.green-experience .gs-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr))}.green-experience .gs-brand strong{font-size:2vw}}
+@media(max-width:850px){.green-experience .gs-title{font-size:clamp(28px,4.5vw,70px)}.green-experience .gs-mountain-badge{width:15vw}.green-experience .gs-side{padding-right:3vw}.green-experience .gs-main{padding-left:3vw}.green-experience .gs-ranking-row{grid-template-columns:clamp(36px,5vw,60px) minmax(0,1fr) clamp(85px,12vw,125px);gap:6px;padding:0 7px}.green-experience .gs-ranking-name{font-size:clamp(11px,1.5vw,15px)}.green-experience .gs-ranking-score b{font-size:clamp(11px,1.55vw,17px)}.green-experience .gs-brand strong{font-size:2vw}}
 @media(prefers-reduced-motion:reduce){.green-experience *{animation:none!important;transition:none!important}}
