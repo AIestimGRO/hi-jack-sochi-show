@@ -1,0 +1,11 @@
+# Temporary HTTP vhost ONLY for certificate issuance.
+# Intended for /etc/nginx/sites-available/sochi-bootstrap (enabled temporarily).
+server {
+    listen 80;
+    server_name sochi.hijackpoker.ru;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/sochi-certbot;
+        try_files $uri =404;
+    }
+    location / { return 404; }
+}
