@@ -34,8 +34,12 @@ window.GreenShow=(()=>{
       u*u*u*p.start[1]+3*u*u*t*p.control1[1]+3*u*t*t*p.control2[1]+t*t*t*p.end[1]
     ];
   }
-  function alpineArt(){
-    const [cabinX,cabinY]=cablePoint(.28);
+  function alpineArt(phase='green'){
+    // BLUE advances the expedition to the second camp exactly once,
+    // independent of individual ranking reveals.
+    const isBlue=phase==='blue';
+    const [greenX,greenY]=cablePoint(.28);
+    const [cabinX,cabinY]=isBlue?cablePoint(.64):[greenX,greenY];
     return `<svg class="alpine-art" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="alpineSky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d464d"/><stop offset=".43" stop-color="#347773"/><stop offset=".75" stop-color="#b0b9a5"/><stop offset="1" stop-color="#e2b17b"/></linearGradient>
@@ -60,9 +64,12 @@ window.GreenShow=(()=>{
       <circle cx="1440" cy="245" r="10" fill="#fff0d1" stroke="#36585a" stroke-width="4"/>
       <text x="677" y="847" fill="#fff0da" font-size="23" font-weight="850" letter-spacing="4">START</text>
       <!-- GREEN is the first reached station, fixed during the entire ranking reveal. -->
-      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="23" fill="#c9d895" opacity=".28"/>
-      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="11" fill="#dce6ad" stroke="#32565b" stroke-width="3"/>
-      <text x="${(cabinX+67).toFixed(1)}" y="${(cabinY+45).toFixed(1)}" fill="#eff8d1" font-size="23" font-weight="900" letter-spacing="3">GREEN ✓</text>
+      <circle cx="${greenX.toFixed(1)}" cy="${greenY.toFixed(1)}" r="23" fill="#c9d895" opacity=".28"/>
+      <circle cx="${greenX.toFixed(1)}" cy="${greenY.toFixed(1)}" r="11" fill="#dce6ad" stroke="#32565b" stroke-width="3"/>
+      <text x="${(greenX+67).toFixed(1)}" y="${(greenY+45).toFixed(1)}" fill="#eff8d1" font-size="23" font-weight="900" letter-spacing="3">GREEN ✓</text>
+      ${isBlue?`<circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="24" fill="#9fc7eb" opacity=".28"/>
+      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="10" fill="#b4d3ec" stroke="#37596d" stroke-width="3"/>
+      <text x="${(cabinX+55).toFixed(1)}" y="${(cabinY+47).toFixed(1)}" fill="#dceefe" font-size="23" font-weight="900" letter-spacing="3">BLUE ✓</text>`:''}
       <g class="alpine-cabin" transform="translate(${cabinX.toFixed(1)} ${cabinY.toFixed(1)})">
         <circle cx="0" cy="0" r="7" fill="#f8e5c8" stroke="#264950" stroke-width="2"/>
         <path d="M0 4v45" fill="none" stroke="#f0ddbe" stroke-width="5"/>
@@ -148,5 +155,5 @@ window.GreenShow=(()=>{
       <footer class="gs-footer"><span>GREEN / ${esc(ordinal)}</span><span>${esc(secondary)}</span><span>${step} / ${n+1}</span></footer>
     </div>`;
   }
-  return {render,demo,frame};
+  return {render,demo,frame,alpineArt};
 })();
