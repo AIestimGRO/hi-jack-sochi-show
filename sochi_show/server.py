@@ -136,6 +136,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         show = payload.get('green_show')
         if show:
             show['step'] = min(show['step'], len(show['ranking']) + 1)
+        blue_show = payload.get('blue_show')
+        if blue_show:
+            blue_show['step'] = min(blue_show['step'], len(blue_show['ranking']) + 1)
         return row['version'], payload
 
     def audit(c, action, data):
@@ -169,6 +172,31 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         ranked.sort(key=lambda x: (-x['green'], x['team_id']))
         for idx, row in enumerate(ranked):
             row['place'] = idx + 1 if idx == 0 or row['green'] != ranked[idx - 1]['green'] else ranked[idx - 1]['place']
+        return {'ranking': ranked, 'step': 0}
+
+    def blue_snapshot(p):
+        """Freeze BLUE cumulative ranking and movement from GREEN, without later bonuses."""
+        if 'green' not in p['published_phases'] or 'blue' not in p['published_phases']:
+            raise HTTPException(409, 'BLUE SHOW доступен только после публикации GREEN и BLUE')
+        green_ranked = p.get('green_show', {}).get('ranking') if p.get('green_show') else green_snapshot(p)['ranking']
+        green_places = {int(row['team_id']): row['place'] for row in green_ranked}
+        ranked = []
+        for team_id, name in p['teams'].items():
+            stage = p['stages'].get(team_id, {})
+            if 'green' not in stage or 'blue' not in stage:
+                raise HTTPException(409, 'Нет опубликованных GREEN / BLUE очков для всех команд')
+            green = stage['green']
+            blue = stage['blue']
+            ranked.append({'team_id': int(team_id), 'name': name,
+                           'green': green, 'blue': blue, 'total': green + blue,
+                           'green_place': green_places[int(team_id)]})
+        ranked.sort(key=lambda row: (-row['total'], row['team_id']))
+        for index, row in enumerate(ranked):
+            row['place'] = (ranked[index - 1]['place']
+                            if index and row['total'] == ranked[index - 1]['total']
+                            else index + 1)
+            # Positive change means climbing from a worse GREEN position.
+            row['move'] = row['green_place'] - row['place']
         return {'ranking': ranked, 'step': 0}
 
     def require_admin(request: Request, write=False):
@@ -216,6 +244,20 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
+        blue_show = result.get('blue_show')
+        if blue_show:
+            count = len(blue_show['ranking'])
+            step = blue_show['step']
+            # Never deliver unrevealed BLUE totals or positions to the projector,
+            # public JSON, or SSE before the organizer advances the scene.
+            visible = list(reversed(blue_show['ranking']))[:min(step, count)]
+            result['blue_view'] = {'count': count, 'step': step,
+                                   'max_step': count + 1, 'revealed': visible}
+            result['blue_show'] = {'step': step, 'max_step': count + 1}
+            if step < count + 1:
+                result['ranking'] = []
+                result['stages'] = {}
+                result['recent_changes'] = []
         return result
 
     def admin_state(c):
@@ -254,6 +296,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         # Public DEMO: synthetic values only. Never reads database, sessions,
         # private scores, players or votes, and has no write capabilities.
         return (HERE / 'static' / 'green-preview.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/blue', response_class=HTMLResponse)
+    def blue_preview():
+        # Demo-only results: cannot read or change tournament data.
+        return (HERE / 'static' / 'blue-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -676,7 +723,31 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if action in PHASES or (action == 'scene' and body.get('scene') in
                                         ('green', 'blue', 'red', 'final', 'winner')):
                     raise HTTPException(409, 'Сначала заверши раскрытие GREEN в шоу-пульте')
-            if action == 'green-show-start':
+            blue_show = p.get('blue_show')
+            if blue_show and action == 'blue':
+                raise HTTPException(409, 'BLUE SHOW уже запущен: повторная публикация BLUE недоступна')
+            if blue_show and blue_show['step'] < len(blue_show['ranking']) + 1:
+                if action in PHASES or (action == 'scene' and body.get('scene') in
+                                        ('green', 'blue', 'red', 'final', 'winner')):
+                    raise HTTPException(409, 'Сначала заверши раскрытие BLUE в шоу-пульте')
+            if action == 'blue-show-start':
+                if 'blue' not in p['published_phases'] or 'red' in p['published_phases']:
+                    raise HTTPException(409, 'Шоу BLUE доступно после BLUE и до RED')
+                if not blue_show:
+                    p['blue_show'] = blue_snapshot(p)
+                else:
+                    p['blue_show']['step'] = 0
+                p['scene'] = 'blue_show'
+            elif action == 'blue-show-step':
+                if not blue_show or 'red' in p['published_phases']:
+                    raise HTTPException(409, 'Сначала запусти BLUE SHOW')
+                last_step = blue_show['step']
+                step = strict_int(body.get('step'), 'step', 0, len(blue_show['ranking']) + 1)
+                if abs(step - last_step) != 1:
+                    raise HTTPException(409, 'Переходи по одному шагу')
+                blue_show['step'] = step
+                p['scene'] = 'blue_show'
+            elif action == 'green-show-start':
                 if 'green' not in p['published_phases'] or 'blue' in p['published_phases']:
                     raise HTTPException(409, 'Шоу GREEN доступно после GREEN и до BLUE')
                 if not show:
@@ -771,10 +842,14 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if action not in p['published_phases']:
                     p['published_phases'].append(action)
                 if action == 'green' and body.get('show_mode') == 'cinematic':
-                    # One transaction: freeze scores AND open a spoiler-free intro.
-                    # This prevents SSE/API from exposing the full results in between.
+                    # Freeze scores and open a spoiler-free GREEN intro atomically.
                     p['green_show'] = green_snapshot(p)
                     p['scene'] = 'green_show'
+                elif action == 'blue' and body.get('show_mode') == 'cinematic':
+                    # Freeze cumulative GREEN+BLUE and enter BLUE intro atomically.
+                    # Even the first public response must not contain BLUE totals.
+                    p['blue_show'] = blue_snapshot(p)
+                    p['scene'] = 'blue_show'
                 else:
                     p['scene'] = action
             elif action == 'reveal':
