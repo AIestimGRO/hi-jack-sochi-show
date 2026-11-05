@@ -1,1 +1,7 @@
-This folder deliberately does not include the organiser-approved seating data. Synthetic testing layouts are created inside `tests/test_show.py` and MUST NEVER be used as real cards. Upload `hi_jack_sochi_seating_v2.json` through the admin UI only when it is provided by the organiser.
+# Утверждённая рассадка HI, JACK — HI, SOCHI
+
+`hi_jack_sochi_seating_v2.json` — восстановленная по ранее загруженному организатором JSON структурная копия: 13 команд, 39 базовых карточек и отдельные варианты `variants["10"]`, `["11"]`, `["12"]`, `["13"]`.
+
+**Важно:** оригинальные байты файла из прежнего чата недоступны, поэтому перед физической выдачей карточек требуется сверить эту копию с утверждённым первоисточником. Использовать для импорта только подтверждённую схему; не пересоздавать и не обрезать рассадку самостоятельно.
+
+Приватные назначения Secret Jack сюда не входят и не должны публиковаться в GitHub.
