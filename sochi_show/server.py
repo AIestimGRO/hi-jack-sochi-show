@@ -152,6 +152,19 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         audit(c, action, {'version': previous_version + 1, 'scene': state['scene']})
         return previous_version + 1
 
+    def green_snapshot(p):
+        """Capture the stage-only ranking, independent of bonus and later stages."""
+        ranked = []
+        for team_id, name in p['teams'].items():
+            stage = p['stages'].get(team_id, {})
+            if 'green' not in stage:
+                raise HTTPException(409, 'Отсутствуют опубликованные очки GREEN')
+            ranked.append({'team_id': int(team_id), 'name': name, 'green': stage['green']})
+        ranked.sort(key=lambda x: (-x['green'], x['team_id']))
+        for idx, row in enumerate(ranked):
+            row['place'] = idx + 1 if idx == 0 or row['green'] != ranked[idx - 1]['green'] else ranked[idx - 1]['place']
+        return {'ranking': ranked, 'step': 0}
+
     def require_admin(request: Request, write=False):
         if request.session.get('admin') is not True:
             raise HTTPException(401, 'Требуется вход администратора')
@@ -661,17 +674,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if 'green' not in p['published_phases'] or 'blue' in p['published_phases']:
                     raise HTTPException(409, 'Шоу GREEN доступно после GREEN и до BLUE')
                 if not show:
-                    ranking = []
-                    for team_id, name in p['teams'].items():
-                        stage = p['stages'].get(team_id, {})
-                        if 'green' not in stage:
-                            raise HTTPException(409, 'Отсутствуют опубликованные очки GREEN')
-                        ranking.append({'team_id': int(team_id), 'name': name,
-                                        'green': stage['green']})
-                    ranking.sort(key=lambda x: (-x['green'], x['team_id']))
-                    for idx, row in enumerate(ranking):
-                        row['place'] = idx + 1 if idx == 0 or row['green'] != ranking[idx - 1]['green'] else ranking[idx - 1]['place']
-                    p['green_show'] = {'ranking': ranking, 'step': 0}
+                    p['green_show'] = green_snapshot(p)
                 else:
                     p['green_show']['step'] = 0
                 p['scene'] = 'green_show'
@@ -761,7 +764,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     p['stages'][team_id][action] = score
                 if action not in p['published_phases']:
                     p['published_phases'].append(action)
-                p['scene'] = action
+                if action == 'green' and body.get('show_mode') == 'cinematic':
+                    # One transaction: freeze scores AND open a spoiler-free intro.
+                    # This prevents SSE/API from exposing the full results in between.
+                    p['green_show'] = green_snapshot(p)
+                    p['scene'] = 'green_show'
+                else:
+                    p['scene'] = action
             elif action == 'reveal':
                 if not p['teams']:
                     raise HTTPException(409, 'Сначала опубликуйте команды')
