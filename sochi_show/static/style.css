@@ -189,3 +189,23 @@
 .admin #chips-settings-modal input{width:100%;font-size:17px}
 .admin #chips-settings-modal label:has(input:disabled){opacity:.58}
 .admin #chips-settings-modal form button{justify-self:start}
+
+/* Compact animated Jack remains visible on every legacy broadcast scene.
+ * GREEN and BLUE render their own full-size mascot and hide this corner layer. */
+.projector .show-jack-persistent{
+  position:absolute;
+  right:1.6vw;
+  bottom:4.3vh;
+  width:clamp(75px,8vw,150px);
+  max-height:19vh;
+  pointer-events:none;
+  z-index:12;
+  opacity:.86;
+  background:transparent;
+  filter:drop-shadow(0 4px 9px #041d22b3);
+}
+.projector .show-jack-persistent[hidden]{display:none!important}
+.projector .show-jack-persistent img{
+  display:block;width:100%;height:auto;max-height:19vh;object-fit:contain;
+  background:transparent;border:0;
+}
