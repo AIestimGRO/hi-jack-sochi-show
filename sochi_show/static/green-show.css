@@ -1,0 +1,112 @@
+/* HI, JACK — HI, SOCHI / broadcast alpine visual system.
+   Independent from the existing admin/daylight theme and legacy projector. */
+.projector .green-show-stage{height:100%;min-height:0;overflow:visible}
+.green-experience{
+  --ocean:#134a53;--titanium:#c7d2ce;--olive:#c3cc84;--burgundy:#863f50;--copper:#edba83;
+  position:absolute;inset:0;
+  width:100%;height:100%;overflow:hidden;
+  isolation:isolate;
+  color:#fdf4e8;
+  background:linear-gradient(120deg,#144d52 5%,#59827b 53%,#ab877e 100%);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:normal;
+}
+.green-experience .alpine-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.11);z-index:-3}
+.green-experience .gs-atmosphere{position:absolute;inset:0;z-index:-2;background:
+  linear-gradient(90deg,rgba(13,51,57,.94) 0%,rgba(12,57,62,.85) 32%,rgba(19,61,66,.34) 69%,rgba(24,48,55,.12) 100%),
+  linear-gradient(0deg,rgba(13,40,47,.64),transparent 35%,rgba(50,34,48,.08));
+}
+.green-experience::before{content:"";z-index:-1;position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 80% 22%,#e4b68233,transparent 34%),radial-gradient(circle at 5% 12%,#446f6d57,transparent 33%)}
+.green-experience::after{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;height:25%;background:linear-gradient(0deg,#0a3442aa,transparent)}
+.green-experience .gs-header{
+  display:flex;align-items:center;justify-content:space-between;
+  height:13%;padding:2.6vh 4.1vw 1vh;position:relative;z-index:2;
+  border-bottom:1px solid #d3d9c13b;
+}
+.green-experience .gs-brand{display:flex;align-items:center;gap:1.35vw}
+.green-experience .gs-brand img{width:clamp(35px,4.4vw,87px);height:clamp(35px,4.4vw,87px);object-fit:contain;filter:invert(87%) sepia(16%) saturate(552%) hue-rotate(338deg) brightness(108%)}
+.green-experience .gs-brand small{display:block;font-size:clamp(8px,.82vw,16px);letter-spacing:.3em;font-weight:800;color:#d8ded2;margin-bottom:.75vh}
+.green-experience .gs-brand strong{display:block;font-size:clamp(18px,2.1vw,41px);letter-spacing:.03em;font-family:Georgia,"Times New Roman",serif;font-weight:700;white-space:nowrap}
+.green-experience .gs-brand em{font-weight:400;font-style:italic;color:#f8c391}
+.green-experience .gs-step-label{display:flex;align-items:center;gap:.85vw;letter-spacing:.21em;font-size:clamp(9px,1.05vw,21px);font-weight:850;border:1px solid #cfd7bd78;border-radius:99px;padding:.85vw 1.55vw;background:#133f4391;box-shadow:0 8px 32px #1118}
+.green-experience .gs-live-dot{width:.48vw;min-width:6px;aspect-ratio:1;border-radius:50%;background:#d1dd87;box-shadow:0 0 13px #d1dd87}
+.green-experience .gs-content{display:grid;grid-template-columns:minmax(0,66%) minmax(0,34%);height:80%;position:relative;z-index:1}
+.green-experience .gs-main{padding:5.2vh 1vw 0 5.3vw;min-width:0;display:flex;flex-direction:column}
+.green-experience .gs-kicker{font-size:clamp(10px,1.1vw,21px);font-weight:900;color:#d1dc98;letter-spacing:.3em;margin-bottom:2vh}
+.green-experience .gs-title{font-family:Georgia,"Times New Roman",serif;font-size:clamp(38px,5.8vw,114px);line-height:.93;color:#fff7e9;font-weight:500;letter-spacing:-.032em;margin:0;text-shadow:0 10px 36px #15374265}
+.green-experience .gs-title em{font-style:italic;font-weight:400;color:#f6c393;text-shadow:0 0 42px #ffc99a2b}
+.green-experience .gs-section-rule{width:26%;height:3px;background:linear-gradient(90deg,#f4bf87,#c2c99a,transparent);margin:3.5vh 0 3vh;border-radius:99px}
+.green-experience .gs-intro-text{max-width:65ch;font-size:clamp(17px,2vw,40px);line-height:1.55;color:#e7e6d7;font-weight:450;text-shadow:0 2px 5px #192e31}
+.green-experience .gs-intro-cta{align-self:start;margin-top:5vh;background:#e5bc8c1f;border:1px solid #cfd9b380;border-radius:12px;padding:1.3vw 2vw;letter-spacing:.25em;font-size:clamp(11px,1.15vw,23px);font-weight:900;color:#ecf0d8}
+.green-experience .gs-reveal-label{font-size:clamp(10px,1.25vw,25px);font-weight:800;letter-spacing:.24em;color:#d3df9c;margin-top:.2vh;margin-bottom:1.8vh}
+.green-experience .gs-hero{display:flex;align-items:center;gap:2.6vw;min-height:19vh;max-width:64vw;animation:gs-reveal .65s cubic-bezier(.19,.8,.22,1) both}
+.green-experience .gs-hero-place{font-family:Georgia,serif;font-size:clamp(86px,12vw,238px);line-height:.9;letter-spacing:-.065em;color:#e9be91;text-shadow:0 0 40px #eabf8955,0 10px 0 #182f3e3e;display:flex;flex-direction:column;min-width:10vw;font-variant-numeric:tabular-nums}
+.green-experience .gs-hero-place small{font-family:Inter,system-ui,sans-serif;font-size:clamp(10px,1.1vw,22px);letter-spacing:.32em;line-height:1.3;color:#f8f0e2;text-align:center;padding-left:.9vw}
+.green-experience .gs-hero-team{max-width:48vw;min-width:0}
+.green-experience .gs-hero-name{font-weight:900;font-size:clamp(25px,3.45vw,67px);line-height:1.1;overflow-wrap:anywhere;letter-spacing:-.025em;color:#fff5e8;text-shadow:0 5px 30px #152a2e}
+.green-experience .gs-hero-points{margin-top:1.6vh;font-size:clamp(26px,3.3vw,65px);font-weight:850;color:#dce5b0;font-variant-numeric:tabular-nums;letter-spacing:.03em;white-space:nowrap}
+.green-experience .gs-hero-points span{font-size:clamp(11px,1.1vw,22px);font-weight:800;color:#e7dbca;letter-spacing:.17em}
+.green-experience .gs-reveal-counter{margin-top:auto;margin-bottom:3vh;font-size:clamp(11px,1vw,22px);color:#d7ded5;letter-spacing:.22em;font-weight:850}
+.green-experience .gs-top3-mini{display:flex;align-items:stretch;gap:.8vw;margin-top:2.2vh}
+.green-experience .gs-top3-mini>div{background:#e4d5b319;border:1px solid #c2ceae7a;border-radius:9px;padding:1.1vw 1.3vw;max-width:30%;display:flex;flex-direction:column;gap:.4vh;min-width:0}
+.green-experience .gs-top3-mini small{color:#cddba0;letter-spacing:.2em;font-weight:800;font-size:clamp(10px,1vw,20px)}
+.green-experience .gs-top3-mini strong{font-size:clamp(12px,1.2vw,24px);overflow-wrap:anywhere}
+.green-experience .gs-top3-mini .champion{background:#ae6a57a6;border-color:#ffc89e}
+.green-experience .gs-side{min-width:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4.2vh 5.1vw 3vh 1vw;overflow:hidden}
+.green-experience .gs-mountain-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;aspect-ratio:1;width:clamp(130px,17vw,320px);background:linear-gradient(155deg,#952f50c2,#3e5967c7);border:1px solid #eac4a0b5;border-radius:50%;box-shadow:0 24px 65px #1b253966,inset 0 0 50px #e0be8a32;transform:rotate(-7deg);position:relative}
+.green-experience .gs-mountain-badge::before{content:"";position:absolute;inset:8px;border-radius:50%;border:1px dashed #e7cfac7e}
+.green-experience .gs-mountain-badge>span{font-size:clamp(23px,2.6vw,50px);color:#ffdbac}
+.green-experience .gs-mountain-badge>strong{font-family:Georgia,serif;font-size:clamp(23px,3vw,57px);line-height:.85;text-align:center;font-style:italic;color:#fff0d6;letter-spacing:.02em}
+.green-experience .gs-mountain-badge>small{margin-top:1.2vh;font-weight:900;font-size:clamp(7px,.66vw,13px);letter-spacing:.14em;color:#f7dbb8}
+.green-experience .gs-route{width:100%;margin-top:auto;padding:1.5vh 0 2vh}
+.green-experience .gs-route-markers{display:flex;flex-direction:column;gap:1.5vh;position:relative}
+.green-experience .gs-route-markers::before{content:"";position:absolute;left:1vw;top:.7vw;bottom:.7vw;width:2px;background:linear-gradient(#f7cd97,#d3deac,#ca9f8b)}
+.green-experience .gs-route-marker{display:flex;align-items:center;gap:1.6vw;letter-spacing:.16em;font-size:clamp(9px,.9vw,18px);font-weight:800;color:#c8d5cd99;text-shadow:0 3px 6px #284043}
+.green-experience .gs-route-marker i{display:block;width:2vw;min-width:11px;max-width:27px;aspect-ratio:1;border:3px solid #c4d1c5a0;background:#4b6e74;border-radius:50%;position:relative;z-index:1}
+.green-experience .gs-route-marker.lit{color:#fff3d5}
+.green-experience .gs-route-marker.lit i{border-color:#ffe1ad;background:#c5cb84;box-shadow:0 0 20px #e9cba0d9}
+.green-experience .gs-side-bottom{display:flex;align-items:center;gap:1vw;border-top:1px solid #e5dcc67d;padding:1.4vh .2vw;color:#f2f0e4}
+.green-experience .gs-side-bottom b{font-family:Georgia,serif;font-size:clamp(28px,3.5vw,67px);color:#f6c38f;font-weight:400}
+.green-experience .gs-side-bottom span{font-weight:800;font-size:clamp(10px,.9vw,18px);letter-spacing:.13em}
+.green-experience .gs-side-bottom i{font-style:normal;font-size:clamp(22px,2vw,39px);color:#dae5b2}
+.green-experience .gs-footer{
+  height:7%;padding:1.5vh 4.5vw;
+  position:relative;z-index:2;
+  border-top:1px solid #c9d3bd4a;
+  background:linear-gradient(90deg,#0c3a46bd,#43535a92);
+  display:flex;justify-content:space-between;align-items:center;gap:1vw;
+  font-size:clamp(9px,.9vw,19px);font-weight:800;letter-spacing:.16em;color:#f6ecd9;
+}
+.green-experience .gs-footer span:nth-child(2){color:#d4dda7}
+.green-experience .gs-overview{margin-top:1vh;flex:1;min-height:0;max-width:95%;padding-bottom:2vh}
+.green-experience .gs-overview-cards{height:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:.9vh .8vw;align-content:stretch}
+.green-experience .gs-overview .gs-team-tile{background:#e4e7dbf5;color:#22434a;display:flex;flex-direction:row;align-items:center;gap:.8vw;border-radius:8px;min-width:0;padding:4px 10px;border:1px solid #fff6e6;box-shadow:0 10px 18px #091d2760}
+.green-experience .gs-overview .gs-team-place{font-family:Georgia,serif;font-size:clamp(17px,1.8vw,35px);font-weight:800;line-height:1;flex-shrink:0}
+.green-experience .gs-overview .gs-team-place span{display:block;font-family:Inter,system-ui,sans-serif;font-size:clamp(6px,.48vw,10px);font-weight:850;letter-spacing:.05em}
+.green-experience .gs-overview .gs-team-name{font-size:clamp(10px,1vw,20px);line-height:1.1;font-weight:850;flex:1;min-width:0;overflow-wrap:anywhere}
+.green-experience .gs-overview .gs-team-score{font-size:clamp(10px,1vw,21px);font-weight:900;flex-shrink:0;text-align:right}
+.green-experience .gs-overview .gs-team-score span{display:block;font-size:clamp(7px,.5vw,10px);color:#60777a;font-weight:850;letter-spacing:.08em}
+.green-experience .gs-overview .gs-podium-1{background:#e8c08df5;color:#3e3030}
+.green-experience .gs-overview .gs-podium-2{background:#c5d3c7f5}
+.green-experience .gs-overview .gs-podium-3{background:#cdb7a0f5}
+.green-experience.gs-overview .gs-main{padding-top:2vh}
+.green-experience.gs-overview .gs-kicker{margin-bottom:.7vh}
+.green-experience.gs-overview .gs-title{font-size:clamp(32px,3.7vw,76px)}
+.green-experience.gs-overview .gs-section-rule{margin:1vh 0}
+.green-experience.gs-overview .gs-side{padding-top:3.2vh}
+.green-experience.gs-top .gs-hero-place,.green-experience.gs-summit .gs-hero-place{color:#ffd69e}
+.green-experience.gs-summit .gs-mountain-badge{box-shadow:0 0 95px #f3d0a56e,0 24px 65px #1b253966;animation:gs-pulse 5s ease-in-out infinite}
+.green-experience.gs-summit .gs-title{color:#f7e6d1}
+@keyframes gs-reveal{from{transform:translateY(45px) scale(.97);opacity:0;filter:blur(7px)}to{transform:translateY(0) scale(1);opacity:1;filter:blur(0)}}
+@keyframes gs-pulse{50%{box-shadow:0 0 120px #f3d0a591,0 24px 65px #1b253966}}
+.green-preview-page{margin:0;background:#102b34;color:#fff;font-family:Inter,system-ui,sans-serif}
+.green-preview-page .green-preview-wrap{position:relative;height:100dvh;min-height:450px;overflow:hidden}
+.green-preview-page .green-preview-wrap .scene{height:100%;width:100%;position:relative}
+.green-preview-page .green-preview-controls{position:fixed;z-index:90;bottom:12px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 20px);display:flex;align-items:center;justify-content:center;gap:9px;border-radius:13px;padding:8px 14px;border:1px solid #efd3b57a;box-shadow:0 10px 36px #041c2280;background:#123a46f2;color:#fff}
+.green-preview-page .green-preview-controls button,.green-preview-page .green-preview-controls select{background:#e6bf91;color:#203d42;border:0;padding:10px 13px;border-radius:7px;font-weight:800;cursor:pointer;font-size:13px}
+.green-preview-page .green-preview-controls button:disabled{opacity:.36;cursor:not-allowed}
+.green-preview-page .green-preview-controls select{background:#dce7d9}
+.green-preview-page .green-preview-count{font-size:13px;white-space:nowrap;font-weight:850;letter-spacing:.08em;min-width:76px;text-align:center}
+.green-preview-page .green-preview-watermark{position:fixed;z-index:4;top:8px;right:30%;font-size:11px;color:#fff7e5;background:#744050e0;border-radius:6px;padding:6px 10px;font-weight:800;letter-spacing:.09em}
+@media(max-width:850px){.green-experience .gs-title{font-size:clamp(28px,4.5vw,70px)}.green-experience .gs-mountain-badge{width:15vw}.green-experience .gs-side{padding-right:3vw}.green-experience .gs-main{padding-left:3vw}.green-experience .gs-overview-cards{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr))}.green-experience .gs-brand strong{font-size:2vw}}
+@media(prefers-reduced-motion:reduce){.green-experience *{animation:none!important;transition:none!important}}
