@@ -109,10 +109,11 @@ def test_published_not_draft(client):
 
 
 def fill_stages(client, h, n):
+    assert call(client, 'chips-settings', h, {'reentry': 60000, 'addon': 50000}).status_code == 200
     for i in range(1, n + 1):
         stage = {'team_id': i, 'green_stack': 300000 if i == 1 else 200000,
-                 'reentry_chips': 120000, 'reentry_count': 2, 'blue_stack': 330000,
-                 'addon_chips': 50000, 'survivors': 2, 'red_place': i}
+                 'reentry_count': 2, 'blue_stack': 330000,
+                 'addon_count': 1, 'survivors': 2, 'red_place': i}
         result = call(client, 'stage', h, stage)
         assert result.status_code == 200, result.text
 
@@ -213,7 +214,8 @@ def test_revealed_correction_recomputes_once(client):
 def test_stage_bulk_and_self_vote(client):
     h=auth(client)
     prepare(client, h)
-    rows=[{'team_id':i,'green_stack':i*10000,'reentry_chips':0,'reentry_count':0} for i in range(1,11)]
+    assert call(client, 'chips-settings', h, {'reentry': 30000}).status_code == 200
+    rows=[{'team_id':i,'green_stack':i*10000,'reentry_count':0} for i in range(1,11)]
     assert call(client, 'stages/bulk', h, {'phase':'green','teams':rows}).status_code == 200
     assert call(client, 'publish', h, {'action':'teams'}).status_code == 200
     assert call(client, 'publish', h, {'action':'green'}).status_code == 200
@@ -274,3 +276,86 @@ def test_admin_operator_guide_and_daylight_theme(client):
     assert '.admin .guide-panel' in css.text
     assert '.admin .module-accordion' in css.text
     assert '.projector' in css.text
+
+
+def test_configured_chip_rates_are_multiplied_and_frozen(client):
+    h=auth(client)
+    prepare(client,h,10)
+    assert call(client,'chips-settings',h,{'reentry':30000,'addon':50000}).status_code==200
+    s=client.get('/sochi/api/admin/state').json()
+    assert s['chip_settings']=={'reentry':30000,'addon':50000}
+    assert call(client,'stage',h,{'team_id':1,'green_stack':300000,'reentry_count':2,
+                                  'blue_stack':410000,'addon_count':3,'survivors':2}).status_code==200
+    s=client.get('/sochi/api/admin/state').json()['stages']['1']
+    assert s['reentry_chips']==60000 and s['addon_chips']==150000
+    # Changing an unpublished rate recomputes team draft chip totals.
+    assert call(client,'chips-settings',h,{'reentry':40000}).status_code==200
+    assert client.get('/sochi/api/admin/state').json()['stages']['1']['reentry_chips']==80000
+    assert call(client,'publish',h,{'action':'teams'}).status_code==200
+    green=[{'team_id':i,'green_stack':300000,'reentry_count':2 if i==1 else 0} for i in range(1,11)]
+    assert call(client,'stages/bulk',h,{'phase':'green','teams':green}).status_code==200
+    assert call(client,'publish',h,{'action':'green'}).status_code==200
+    published=client.get('/sochi/api/public/state').json()['state']
+    assert next(r for r in published['ranking'] if r['team_id']==1)['green']==220000
+    assert call(client,'chips-settings',h,{'reentry':50000}).status_code==409
+    assert client.get('/sochi/api/public/state').json()['state']['ranking']==published['ranking']
+
+    blue=[{'team_id':i,'blue_stack':410000,'addon_count':3 if i==1 else 0,'survivors':2} for i in range(1,11)]
+    assert call(client,'stages/bulk',h,{'phase':'blue','teams':blue}).status_code==200
+    assert call(client,'publish',h,{'action':'blue'}).status_code==200
+    current=client.get('/sochi/api/public/state').json()['state']
+    assert next(r for r in current['ranking'] if r['team_id']==1)['blue']==-30000
+    assert call(client,'chips-settings',h,{'addon':90000}).status_code==409
+    assert call(client,'stage',h,{'team_id':1,'addon_count':2}).status_code==200
+    assert client.get('/sochi/api/admin/state').json()['stages']['1']['addon_chips']==100000
+    assert client.get('/sochi/api/public/state').json()['state']['ranking']==current['ranking']
+
+
+def test_chips_settings_validation_and_manual_amounts_forbidden(client):
+    h=auth(client)
+    prepare(client,h,10)
+    assert call(client,'stage',h,{'team_id':1,'reentry_count':0}).status_code==409
+    for value in (0,-1,1.5,'30000',1000000001):
+        assert call(client,'chips-settings',h,{'reentry':value}).status_code==422
+    assert call(client,'chips-settings',h,{'reentry':30000,'addon':50000}).status_code==200
+    assert call(client,'stage',h,{'team_id':1,'reentry_chips':90000}).status_code==422
+    assert call(client,'stage',h,{'team_id':1,'addon_chips':90000}).status_code==422
+    assert call(client,'stage',h,{'team_id':1,'reentry_count':1001}).status_code==422
+    assert call(client,'stage',h,{'team_id':1,'addon_count':1001}).status_code==422
+    assert call(client,'stage',h,{'team_id':1,'reentry_count':0,'addon_count':0}).status_code==200
+    values=client.get('/sochi/api/admin/state').json()['stages']['1']
+    assert values['reentry_chips']==0 and values['addon_chips']==0
+
+
+def test_existing_stage_db_migrates_addon_count_without_removing_data(tmp_path):
+    import sqlite3
+    path=tmp_path/'legacy.sqlite3'
+    with sqlite3.connect(path) as db:
+        db.execute('CREATE TABLE stages (team_id INTEGER PRIMARY KEY,green_stack INTEGER,'
+                   'reentry_chips INTEGER,reentry_count INTEGER,blue_stack INTEGER,'
+                   'addon_chips INTEGER,survivors INTEGER,red_place INTEGER)')
+        db.execute('INSERT INTO stages(team_id,green_stack,reentry_chips,reentry_count) '
+                   'VALUES (1,250000,120000,2)')
+    app=app_factory(db_path=str(path),media_path=str(tmp_path/'media'),
+                    admin_password='A_real_long_test_password_123',
+                    session_secret='A_very_long_random_testing_session_secret_9876',
+                    secure_cookie=False)
+    with TestClient(app) as c:
+        assert c.get('/health').status_code==200
+    with sqlite3.connect(path) as db:
+        row=db.execute('SELECT green_stack,reentry_chips,reentry_count,addon_count '
+                       'FROM stages WHERE team_id=1').fetchone()
+    assert row==(250000,120000,2,None)
+
+
+def test_chips_ui_is_count_only(client):
+    html=client.get('/sochi/admin').text
+    assert 'id="chips-settings-modal"' in html
+    assert 'id="open-chips-settings"' in html
+    assert '<th>Re-entry, шт.</th>' in html
+    assert '<th>Add-on, шт.</th>' in html
+    assert '<th>Re-entry фишки</th>' not in html
+    assert '<th>Add-on фишки</th>' not in html
+    js=client.get('/sochi/static/admin.js').text
+    assert "'reentry_count','blue_stack','addon_count'" in js
+    assert "api('/sochi/api/admin/chips-settings'" in js
