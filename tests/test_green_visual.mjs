@@ -29,7 +29,7 @@ for(const count of [10,11]){
     'cabin has finished the first phase and parks at GREEN, not START');
 
   // Revealing the last, middle and first places never moves the cabin.
-  for(const step of [1,Math.floor(count/2),count,count+1,count+2]){
+  for(const step of [1,Math.floor(count/2),count,count+1]){
     render(host,frame(data,step));
     assert.equal(cabinPosition(host.innerHTML),station,'rank changes must not change cabin location');
   }
@@ -44,7 +44,13 @@ for(const count of [10,11]){
   assert.match(host.innerHTML,/gs-hero-mascot/);
 
   // Final GREEN is a 1..N classic list, with a unique badge in every row.
-  render(host,frame(data,count+2));
+  // After the Zeus 1st-place reveal (N), immediately show the board (N+1).
+  render(host,frame(data,count));
+  assert.match(host.innerHTML,/class="gs-hero-mascot"/,'first place is a hero reveal');
+  assert.doesNotMatch(host.innerHTML,/class="gs-ranking-list"/,'first place is not yet the overall board');
+  render(host,frame(data,count+1));
+  assert.match(host.innerHTML,/class="gs-ranking-list"/,'next press goes directly to results');
+  assert.equal(data.max_step,count+1);
   assert.equal((host.innerHTML.match(/class="gs-ranking-row/g)||[]).length,count);
   assert.equal((host.innerHTML.match(/class="gs-ranking-mascot"/g)||[]).length,count);
   assert.match(host.innerHTML,/class="gs-ranking-list"/);
@@ -56,6 +62,8 @@ for(const count of [10,11]){
   assert.match(host.innerHTML,/aria-label="Зевс с молнией"/);
   assert.match(host.innerHTML,/aria-label="Хромая бабушка с тростью"/);
   assert.match(host.innerHTML,/aria-label="Бабушка без трости"/);
+  assert.match(host.innerHTML,/БЛЕФ · СТЕК · ОЛЛ-ИН/,'poker-specific badge slogan');
+  assert.doesNotMatch(host.innerHTML,/ВЫСОТА · ВОЛЯ · ПОБЕДА/);
 }
 
 assert.equal(Object.keys(mascots).sort().join(','),'label,render');
