@@ -254,3 +254,23 @@ def test_invalid_short_admin_password_rejected(tmp_path, bad_password):
                     admin_password=bad_password,
                     session_secret='Another_long_random_testing_session_secret_9876',
                     secure_cookie=False)
+
+
+def test_admin_operator_guide_and_daylight_theme(client):
+    html = client.get('/sochi/admin')
+    assert html.status_code == 200
+    assert 'Как управлять шоу — по шагам' in html.text
+    assert 'workflow-guide' in html.text
+    for name in ('control-panel', 'seating-panel', 'teams-panel', 'scores-panel',
+                 'secrets-panel', 'votes-panel', 'review-panel'):
+        assert f'id="{name}"' in html.text
+    assert 'это не отдельный деморежим' in html.text
+    js = client.get('/sochi/static/admin.js')
+    assert js.status_code == 200
+    assert 'installModuleLayout();' in js.text
+    assert 'updateWorkflow();' in js.text
+    css = client.get('/sochi/static/style.css')
+    assert css.status_code == 200
+    assert '.admin .guide-panel' in css.text
+    assert '.admin .module-accordion' in css.text
+    assert '.projector' in css.text
