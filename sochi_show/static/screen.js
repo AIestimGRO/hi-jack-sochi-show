@@ -8,6 +8,10 @@ const logo='<div class="stage-logo"><img class="brand-mark" src="/sochi/static/h
 const header=(title,phase='')=>`<div class="show-header">${logo}<div class="stage-tag ${phase}">${esc(title)}</div></div>`;
 const avatar=(id,has)=>id&&has?`<img class="avatar" src="/sochi/api/public/photo/${id}" alt="">`:'<span>♠</span>';
 function render(state,animate=true){const scene=state.scene||'intro';const panel=$('scene');panel.className=`scene ${scene}${animate?' slide-in':''}`;const rows=state.ranking||[];
+if(scene==='green_show'){
+  window.GreenShow.render(panel,state.green_view||{count:state.team_count,step:0,revealed:[]});
+  return;
+}
 if(scene==='intro'){panel.innerHTML=`${logo}<div class="mountains">◆ ▲ ◆</div><div class="prelude">7 НОЯБРЯ 2026 · ОДНА КОМАНДА — ДВА МЕСТА В СОЧИ</div>`;return}
 if(scene==='pause'){panel.innerHTML=`${logo}<div class="feature-title">ПАУЗА</div><div class="feature-sub">СКОРО ПРОДОЛЖИМ</div>`;return}
 if(scene==='teams'){panel.innerHTML=header('НАШИ КОМАНДЫ')+`<div class="team-tiles">${Object.entries(state.teams||{}).map(([id,name])=>`<div class="team-tile"><small>КОМАНДА №${id}</small><strong>${esc(name)}</strong></div>`).join('')}</div>`;return}
