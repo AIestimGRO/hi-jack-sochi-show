@@ -90,7 +90,8 @@ function renderGreenDirector(){
   const blue=(state.published?.published_phases||[]).includes('blue');
   const show=state.published?.green_show;
   const current=show?.step??0;
-  const max=show?.ranking?.length+2||((state.team_count||0)+2);
+  // GREEN: intro (0), positions N..1 (1..N), final list (N+1).
+  const max=(show?.ranking?.length??state.team_count??0)+1;
   $('green-show-start').disabled=!active||blue;
   $('green-show-start').textContent=show?'↻ Начать GREEN сначала':'▶ Запустить шоу GREEN';
   $('green-show-back').disabled=!show||current===0;
