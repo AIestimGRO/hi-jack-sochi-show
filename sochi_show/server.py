@@ -4,6 +4,7 @@ import copy
 import io
 import json
 import os
+import re
 import secrets
 import sqlite3
 import time
@@ -47,8 +48,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     if len(session_key) < 32:
         # Misconfigured service should fail closed, rather than use known credentials.
         raise RuntimeError('SOCHI_SESSION_SECRET must be at least 32 characters')
-    if len(password) < 16:
-        raise RuntimeError('SOCHI_ADMIN_PASSWORD must be at least 16 characters')
+    # A short, operator-friendly 4-digit PIN is allowed for this live event.
+    # Longer passwords remain supported for existing deployments and tests.
+    if not (re.fullmatch(r'[0-9]{4}', password) or len(password) >= 16):
+        raise RuntimeError('SOCHI_ADMIN_PASSWORD must be a 4-digit PIN or at least 16 characters')
     secure = secure_cookie if secure_cookie is not None else os.environ.get('SOCHI_SECURE_COOKIE', 'true').lower() == 'true'
     db.parent.mkdir(parents=True, exist_ok=True)
     media.mkdir(parents=True, exist_ok=True)
@@ -59,6 +62,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                        max_age=12 * 3600)
     app.mount('/sochi/static', StaticFiles(directory=HERE / 'static'), name='sochi_static')
     login_attempts: dict[str, list[float]] = {}
+    # Shared failure budget prevents distributed PIN guessing from many IPs.
+    # Failed attempts only; never log the supplied secret.
+    global_login_failures: list[float] = []
 
     @contextmanager
     def connection(write=False):
@@ -201,11 +207,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         client = request.client.host if request.client else 'unknown'
         now = time.monotonic()
         login_attempts[client] = [t for t in login_attempts.get(client, []) if now - t < 300]
-        if len(login_attempts[client]) >= 8:
-            raise HTTPException(429, 'Слишком много попыток. Повторите через 5 минут')
+        global_login_failures[:] = [t for t in global_login_failures if now - t < 3600]
+        if len(login_attempts[client]) >= 8 or len(global_login_failures) >= 20:
+            raise HTTPException(429, 'Слишком много попыток входа. Попробуйте позже')
         submitted = body.get('password', '')
         if not isinstance(submitted, str) or not secrets.compare_digest(submitted, password):
             login_attempts[client].append(now)
+            global_login_failures.append(now)
             raise HTTPException(401, 'Неверный пароль')
         request.session.clear()
         request.session.update({'admin': True, 'csrf': secrets.token_urlsafe(32)})
