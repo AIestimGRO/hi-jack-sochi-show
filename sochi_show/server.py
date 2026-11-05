@@ -244,9 +244,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         return (HERE / 'static' / 'screen.html').read_text('utf-8')
 
     @app.get('/sochi/preview/green', response_class=HTMLResponse)
-    def green_preview(request: Request):
-        # Isolated rehearsal: never publishes or writes any tournament data.
-        require_admin(request)
+    def green_preview():
+        # Public DEMO: synthetic values only. Never reads database, sessions,
+        # private scores, players or votes, and has no write capabilities.
         return (HERE / 'static' / 'green-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
