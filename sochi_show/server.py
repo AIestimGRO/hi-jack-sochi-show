@@ -180,11 +180,23 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         return value
 
     def public_safe(payload):
-        # Internal frozen GREEN stacks are used for BLUE math, but must not
-        # appear in HTML, public JSON or SSE responses.
+        # Never expose unpublished material in public JSON, including SSE.
         result = copy.deepcopy(payload)
         for stage in result.get('stages', {}).values():
             stage.pop('green_stack_actual', None)
+        show = result.get('green_show')
+        if show:
+            count = len(show['ranking'])
+            step = show['step']
+            visible = list(reversed(show['ranking']))[:min(step, count)]
+            result['green_view'] = {'count': count, 'step': step, 'max_step': count + 2,
+                                    'revealed': visible}
+            # The privately captured entire ranking must NEVER reach a public endpoint.
+            result['green_show'] = {'step': step, 'max_step': count + 2}
+            if step < count + 2:
+                result['ranking'] = []
+                result['stages'] = {}
+                result['recent_changes'] = []
         return result
 
     def admin_state(c):
@@ -217,6 +229,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     @app.get('/sochi/screen', response_class=HTMLResponse)
     def public_page():
         return (HERE / 'static' / 'screen.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/green', response_class=HTMLResponse)
+    def green_preview(request: Request):
+        # Isolated rehearsal: never publishes or writes any tournament data.
+        require_admin(request)
+        return (HERE / 'static' / 'green-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -632,7 +650,39 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             count = team_count(c)
             if not count:
                 raise HTTPException(409, 'Сначала импортируйте утверждённую рассадку')
-            if action == 'teams':
+            show = p.get('green_show')
+            if show and show['step'] < len(show['ranking']) + 2:
+                if action in PHASES or (action == 'scene' and body.get('scene') in
+                                        ('green', 'blue', 'red', 'final', 'winner')):
+                    raise HTTPException(409, 'Сначала заверши раскрытие GREEN в шоу-пульте')
+            if action == 'green-show-start':
+                if 'green' not in p['published_phases'] or 'blue' in p['published_phases']:
+                    raise HTTPException(409, 'Шоу GREEN доступно после GREEN и до BLUE')
+                if not show:
+                    ranking = []
+                    for team_id, name in p['teams'].items():
+                        stage = p['stages'].get(team_id, {})
+                        if 'green' not in stage:
+                            raise HTTPException(409, 'Отсутствуют опубликованные очки GREEN')
+                        ranking.append({'team_id': int(team_id), 'name': name,
+                                        'green': stage['green']})
+                    ranking.sort(key=lambda x: (-x['green'], x['team_id']))
+                    for idx, row in enumerate(ranking):
+                        row['place'] = idx + 1 if idx == 0 or row['green'] != ranking[idx - 1]['green'] else ranking[idx - 1]['place']
+                    p['green_show'] = {'ranking': ranking, 'step': 0}
+                else:
+                    p['green_show']['step'] = 0
+                p['scene'] = 'green_show'
+            elif action == 'green-show-step':
+                if not show:
+                    raise HTTPException(409, 'Сначала запусти GREEN SHOW')
+                last_step = show['step']
+                step = strict_int(body.get('step'), 'step', 0, len(show['ranking']) + 2)
+                if abs(step - last_step) != 1:
+                    raise HTTPException(409, 'Переходи по одному шагу')
+                show['step'] = step
+                p['scene'] = 'green_show'
+            elif action == 'teams':
                 p['team_count'] = count
                 p['teams'] = {str(r['team_id']): r['display_name'] for r in c.execute('SELECT * FROM teams')}
                 p['roster'] = {str(tid): [r['name'] for r in c.execute('''SELECT p.name FROM seats s JOIN players p ON p.id=s.player_id
