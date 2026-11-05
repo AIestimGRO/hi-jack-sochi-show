@@ -2,18 +2,17 @@
 from test_show import auth, call, prepare, client
 
 
-def test_green_rehearsal_requires_login_and_is_read_only(client):
-    assert client.get('/sochi/preview/green').status_code == 401
-    headers = auth(client)
-    before = client.get('/sochi/api/admin/state').json()['publication_version']
+def test_green_rehearsal_public_demo_is_read_only(client):
+    before = client.get('/sochi/api/public/state').json()
     response = client.get('/sochi/preview/green')
     assert response.status_code == 200
     assert 'ДЕМО-ПРОСМОТР' in response.text
     assert 'green-show.js' in response.text
+    assert client.get('/sochi/api/admin/state').status_code == 401
     for path in ('green-show.css', 'green-show.js', 'green-preview.js'):
         r = client.get('/sochi/static/' + path)
         assert r.status_code == 200 and r.content
-    assert client.get('/sochi/api/admin/state').json()['publication_version'] == before
+    assert client.get('/sochi/api/public/state').json() == before
 
 
 def test_green_show_sequential_reveal_never_leaks_unopened_ranking(client):
