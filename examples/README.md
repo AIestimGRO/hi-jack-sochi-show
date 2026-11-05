@@ -1,0 +1,1 @@
+This folder deliberately does not include the organiser-approved seating data. Synthetic testing layouts are created inside `tests/test_show.py` and MUST NEVER be used as real cards. Upload `hi_jack_sochi_seating_v2.json` through the admin UI only when it is provided by the organiser.

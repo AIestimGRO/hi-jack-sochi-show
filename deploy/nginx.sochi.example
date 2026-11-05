@@ -1,0 +1,25 @@
+# OPTIONAL DEDICATED HOST. Do not edit existing timer/JACKSIDE Nginx vhosts.
+# Only add this after obtaining a certificate for sochi.hijackpoker.ru.
+server {
+    listen 443 ssl http2;
+    server_name sochi.hijackpoker.ru;
+    ssl_certificate /etc/letsencrypt/live/sochi.hijackpoker.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/sochi.hijackpoker.ru/privkey.pem;
+    client_max_body_size 6m;
+    location / {
+        return 404;
+    }
+    location ^~ /sochi/ {
+        proxy_pass http://127.0.0.1:8092;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering off;  # required for SSE live updates
+        proxy_read_timeout 120s;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy no-referrer always;
+    }
+}

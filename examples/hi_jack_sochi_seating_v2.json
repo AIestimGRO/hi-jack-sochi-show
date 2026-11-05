@@ -1,0 +1,1414 @@
+{
+  "event": "HI, JACK — HI, SOCHI",
+  "date": "2026-11-07",
+  "teams": [
+    {
+      "id": 1,
+      "name": "ПИКОВЫЙ ПЕРЕВАЛ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 2,
+      "name": "ГОРНЫЕ ТУЗЫ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 3,
+      "name": "СНЕЖНЫЙ БЛЕФ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 4,
+      "name": "КРАСНАЯ ПОЛЯНА",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 5,
+      "name": "ДЖЕК НА ВЫСОТЕ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 6,
+      "name": "КАНАТНЫЙ БАНК",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 7,
+      "name": "ФИШКИ В ОБЛАКАХ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 8,
+      "name": "СОЧИ-СТРИТ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 9,
+      "name": "РОЯЛЬ В ГОРАХ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 10,
+      "name": "ЛАВИНА ОЛЛ-ИН",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 11,
+      "name": "ВАЛЕТЫ ВЕРШИНЫ",
+      "reserve_for_11plus": false
+    },
+    {
+      "id": 12,
+      "name": "ЧЁРНЫЙ СКЛОН",
+      "reserve_for_11plus": true
+    },
+    {
+      "id": 13,
+      "name": "ФУЛЛ-ХАУС В ГОРАХ",
+      "reserve_for_11plus": true
+    }
+  ],
+  "default_mode": "11-13",
+  "cards": [
+    {
+      "team_id": 1,
+      "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+      "table": 2,
+      "box": 5,
+      "card_id": "HJ-01-T2"
+    },
+    {
+      "team_id": 1,
+      "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+      "table": 3,
+      "box": 2,
+      "card_id": "HJ-01-T3"
+    },
+    {
+      "team_id": 1,
+      "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+      "table": 4,
+      "box": 4,
+      "card_id": "HJ-01-T4"
+    },
+    {
+      "team_id": 2,
+      "team": "ГОРНЫЕ ТУЗЫ",
+      "table": 2,
+      "box": 8,
+      "card_id": "HJ-02-T2"
+    },
+    {
+      "team_id": 2,
+      "team": "ГОРНЫЕ ТУЗЫ",
+      "table": 3,
+      "box": 8,
+      "card_id": "HJ-02-T3"
+    },
+    {
+      "team_id": 2,
+      "team": "ГОРНЫЕ ТУЗЫ",
+      "table": 4,
+      "box": 1,
+      "card_id": "HJ-02-T4"
+    },
+    {
+      "team_id": 3,
+      "team": "СНЕЖНЫЙ БЛЕФ",
+      "table": 2,
+      "box": 6,
+      "card_id": "HJ-03-T2"
+    },
+    {
+      "team_id": 3,
+      "team": "СНЕЖНЫЙ БЛЕФ",
+      "table": 3,
+      "box": 7,
+      "card_id": "HJ-03-T3"
+    },
+    {
+      "team_id": 3,
+      "team": "СНЕЖНЫЙ БЛЕФ",
+      "table": 4,
+      "box": 8,
+      "card_id": "HJ-03-T4"
+    },
+    {
+      "team_id": 4,
+      "team": "КРАСНАЯ ПОЛЯНА",
+      "table": 1,
+      "box": 6,
+      "card_id": "HJ-04-T1"
+    },
+    {
+      "team_id": 4,
+      "team": "КРАСНАЯ ПОЛЯНА",
+      "table": 3,
+      "box": 1,
+      "card_id": "HJ-04-T3"
+    },
+    {
+      "team_id": 4,
+      "team": "КРАСНАЯ ПОЛЯНА",
+      "table": 4,
+      "box": 7,
+      "card_id": "HJ-04-T4"
+    },
+    {
+      "team_id": 5,
+      "team": "ДЖЕК НА ВЫСОТЕ",
+      "table": 1,
+      "box": 5,
+      "card_id": "HJ-05-T1"
+    },
+    {
+      "team_id": 5,
+      "team": "ДЖЕК НА ВЫСОТЕ",
+      "table": 3,
+      "box": 3,
+      "card_id": "HJ-05-T3"
+    },
+    {
+      "team_id": 5,
+      "team": "ДЖЕК НА ВЫСОТЕ",
+      "table": 4,
+      "box": 9,
+      "card_id": "HJ-05-T4"
+    },
+    {
+      "team_id": 6,
+      "team": "КАНАТНЫЙ БАНК",
+      "table": 1,
+      "box": 4,
+      "card_id": "HJ-06-T1"
+    },
+    {
+      "team_id": 6,
+      "team": "КАНАТНЫЙ БАНК",
+      "table": 3,
+      "box": 4,
+      "card_id": "HJ-06-T3"
+    },
+    {
+      "team_id": 6,
+      "team": "КАНАТНЫЙ БАНК",
+      "table": 4,
+      "box": 6,
+      "card_id": "HJ-06-T4"
+    },
+    {
+      "team_id": 7,
+      "team": "ФИШКИ В ОБЛАКАХ",
+      "table": 1,
+      "box": 7,
+      "card_id": "HJ-07-T1"
+    },
+    {
+      "team_id": 7,
+      "team": "ФИШКИ В ОБЛАКАХ",
+      "table": 2,
+      "box": 2,
+      "card_id": "HJ-07-T2"
+    },
+    {
+      "team_id": 7,
+      "team": "ФИШКИ В ОБЛАКАХ",
+      "table": 4,
+      "box": 3,
+      "card_id": "HJ-07-T4"
+    },
+    {
+      "team_id": 8,
+      "team": "СОЧИ-СТРИТ",
+      "table": 1,
+      "box": 1,
+      "card_id": "HJ-08-T1"
+    },
+    {
+      "team_id": 8,
+      "team": "СОЧИ-СТРИТ",
+      "table": 2,
+      "box": 7,
+      "card_id": "HJ-08-T2"
+    },
+    {
+      "team_id": 8,
+      "team": "СОЧИ-СТРИТ",
+      "table": 4,
+      "box": 2,
+      "card_id": "HJ-08-T4"
+    },
+    {
+      "team_id": 9,
+      "team": "РОЯЛЬ В ГОРАХ",
+      "table": 1,
+      "box": 3,
+      "card_id": "HJ-09-T1"
+    },
+    {
+      "team_id": 9,
+      "team": "РОЯЛЬ В ГОРАХ",
+      "table": 2,
+      "box": 1,
+      "card_id": "HJ-09-T2"
+    },
+    {
+      "team_id": 9,
+      "team": "РОЯЛЬ В ГОРАХ",
+      "table": 4,
+      "box": 5,
+      "card_id": "HJ-09-T4"
+    },
+    {
+      "team_id": 10,
+      "team": "ЛАВИНА ОЛЛ-ИН",
+      "table": 1,
+      "box": 8,
+      "card_id": "HJ-10-T1"
+    },
+    {
+      "team_id": 10,
+      "team": "ЛАВИНА ОЛЛ-ИН",
+      "table": 2,
+      "box": 3,
+      "card_id": "HJ-10-T2"
+    },
+    {
+      "team_id": 10,
+      "team": "ЛАВИНА ОЛЛ-ИН",
+      "table": 3,
+      "box": 5,
+      "card_id": "HJ-10-T3"
+    },
+    {
+      "team_id": 11,
+      "team": "ВАЛЕТЫ ВЕРШИНЫ",
+      "table": 1,
+      "box": 2,
+      "card_id": "HJ-11-T1"
+    },
+    {
+      "team_id": 11,
+      "team": "ВАЛЕТЫ ВЕРШИНЫ",
+      "table": 2,
+      "box": 4,
+      "card_id": "HJ-11-T2"
+    },
+    {
+      "team_id": 11,
+      "team": "ВАЛЕТЫ ВЕРШИНЫ",
+      "table": 3,
+      "box": 6,
+      "card_id": "HJ-11-T3"
+    },
+    {
+      "team_id": 12,
+      "team": "ЧЁРНЫЙ СКЛОН",
+      "table": 1,
+      "box": 9,
+      "card_id": "HJ-12-T1"
+    },
+    {
+      "team_id": 12,
+      "team": "ЧЁРНЫЙ СКЛОН",
+      "table": 2,
+      "box": 9,
+      "card_id": "HJ-12-T2"
+    },
+    {
+      "team_id": 12,
+      "team": "ЧЁРНЫЙ СКЛОН",
+      "table": 3,
+      "box": 9,
+      "card_id": "HJ-12-T3"
+    },
+    {
+      "team_id": 13,
+      "team": "ФУЛЛ-ХАУС В ГОРАХ",
+      "table": 1,
+      "box": 10,
+      "card_id": "HJ-13-T1"
+    },
+    {
+      "team_id": 13,
+      "team": "ФУЛЛ-ХАУС В ГОРАХ",
+      "table": 2,
+      "box": 10,
+      "card_id": "HJ-13-T2"
+    },
+    {
+      "team_id": 13,
+      "team": "ФУЛЛ-ХАУС В ГОРАХ",
+      "table": 3,
+      "box": 10,
+      "card_id": "HJ-13-T3"
+    }
+  ],
+  "variants": {
+    "10": {
+      "active_team_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "active_tables": [
+        1,
+        2,
+        3
+      ],
+      "cards": [
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 1,
+          "box": 2,
+          "card_id": "HJ-01-T1"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 2,
+          "box": 5,
+          "card_id": "HJ-01-T2"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 3,
+          "box": 2,
+          "card_id": "HJ-01-T3"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 1,
+          "box": 9,
+          "card_id": "HJ-02-T1"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 2,
+          "box": 8,
+          "card_id": "HJ-02-T2"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 3,
+          "box": 8,
+          "card_id": "HJ-02-T3"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 1,
+          "box": 10,
+          "card_id": "HJ-03-T1"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 2,
+          "box": 6,
+          "card_id": "HJ-03-T2"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 3,
+          "box": 7,
+          "card_id": "HJ-03-T3"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 1,
+          "box": 6,
+          "card_id": "HJ-04-T1"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 2,
+          "box": 4,
+          "card_id": "HJ-04-T2"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 3,
+          "box": 1,
+          "card_id": "HJ-04-T3"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 1,
+          "box": 5,
+          "card_id": "HJ-05-T1"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 2,
+          "box": 9,
+          "card_id": "HJ-05-T2"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 3,
+          "box": 3,
+          "card_id": "HJ-05-T3"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 1,
+          "box": 4,
+          "card_id": "HJ-06-T1"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 2,
+          "box": 10,
+          "card_id": "HJ-06-T2"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 3,
+          "box": 4,
+          "card_id": "HJ-06-T3"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 1,
+          "box": 7,
+          "card_id": "HJ-07-T1"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 2,
+          "box": 2,
+          "card_id": "HJ-07-T2"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 3,
+          "box": 6,
+          "card_id": "HJ-07-T3"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 1,
+          "box": 1,
+          "card_id": "HJ-08-T1"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 2,
+          "box": 7,
+          "card_id": "HJ-08-T2"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 3,
+          "box": 9,
+          "card_id": "HJ-08-T3"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 1,
+          "box": 3,
+          "card_id": "HJ-09-T1"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 2,
+          "box": 1,
+          "card_id": "HJ-09-T2"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 3,
+          "box": 10,
+          "card_id": "HJ-09-T3"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 1,
+          "box": 8,
+          "card_id": "HJ-10-T1"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 2,
+          "box": 3,
+          "card_id": "HJ-10-T2"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 3,
+          "box": 5,
+          "card_id": "HJ-10-T3"
+        }
+      ]
+    },
+    "11": {
+      "active_team_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "active_tables": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "cards": [
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 2,
+          "box": 5,
+          "card_id": "HJ-01-T2"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 3,
+          "box": 2,
+          "card_id": "HJ-01-T3"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 4,
+          "box": 4,
+          "card_id": "HJ-01-T4"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 2,
+          "box": 8,
+          "card_id": "HJ-02-T2"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 3,
+          "box": 8,
+          "card_id": "HJ-02-T3"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 4,
+          "box": 1,
+          "card_id": "HJ-02-T4"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 2,
+          "box": 6,
+          "card_id": "HJ-03-T2"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 3,
+          "box": 7,
+          "card_id": "HJ-03-T3"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 4,
+          "box": 8,
+          "card_id": "HJ-03-T4"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 1,
+          "box": 6,
+          "card_id": "HJ-04-T1"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 3,
+          "box": 1,
+          "card_id": "HJ-04-T3"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 4,
+          "box": 7,
+          "card_id": "HJ-04-T4"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 1,
+          "box": 5,
+          "card_id": "HJ-05-T1"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 3,
+          "box": 3,
+          "card_id": "HJ-05-T3"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 4,
+          "box": 9,
+          "card_id": "HJ-05-T4"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 1,
+          "box": 4,
+          "card_id": "HJ-06-T1"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 3,
+          "box": 4,
+          "card_id": "HJ-06-T3"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 4,
+          "box": 6,
+          "card_id": "HJ-06-T4"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 1,
+          "box": 7,
+          "card_id": "HJ-07-T1"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 2,
+          "box": 2,
+          "card_id": "HJ-07-T2"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 4,
+          "box": 3,
+          "card_id": "HJ-07-T4"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 1,
+          "box": 1,
+          "card_id": "HJ-08-T1"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 2,
+          "box": 7,
+          "card_id": "HJ-08-T2"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 4,
+          "box": 2,
+          "card_id": "HJ-08-T4"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 1,
+          "box": 3,
+          "card_id": "HJ-09-T1"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 2,
+          "box": 1,
+          "card_id": "HJ-09-T2"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 4,
+          "box": 5,
+          "card_id": "HJ-09-T4"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 1,
+          "box": 8,
+          "card_id": "HJ-10-T1"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 2,
+          "box": 3,
+          "card_id": "HJ-10-T2"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 3,
+          "box": 5,
+          "card_id": "HJ-10-T3"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 1,
+          "box": 2,
+          "card_id": "HJ-11-T1"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 2,
+          "box": 4,
+          "card_id": "HJ-11-T2"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 3,
+          "box": 6,
+          "card_id": "HJ-11-T3"
+        }
+      ]
+    },
+    "12": {
+      "active_team_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "active_tables": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "cards": [
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 2,
+          "box": 5,
+          "card_id": "HJ-01-T2"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 3,
+          "box": 2,
+          "card_id": "HJ-01-T3"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 4,
+          "box": 4,
+          "card_id": "HJ-01-T4"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 2,
+          "box": 8,
+          "card_id": "HJ-02-T2"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 3,
+          "box": 8,
+          "card_id": "HJ-02-T3"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 4,
+          "box": 1,
+          "card_id": "HJ-02-T4"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 2,
+          "box": 6,
+          "card_id": "HJ-03-T2"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 3,
+          "box": 7,
+          "card_id": "HJ-03-T3"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 4,
+          "box": 8,
+          "card_id": "HJ-03-T4"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 1,
+          "box": 6,
+          "card_id": "HJ-04-T1"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 3,
+          "box": 1,
+          "card_id": "HJ-04-T3"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 4,
+          "box": 7,
+          "card_id": "HJ-04-T4"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 1,
+          "box": 5,
+          "card_id": "HJ-05-T1"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 3,
+          "box": 3,
+          "card_id": "HJ-05-T3"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 4,
+          "box": 9,
+          "card_id": "HJ-05-T4"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 1,
+          "box": 4,
+          "card_id": "HJ-06-T1"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 3,
+          "box": 4,
+          "card_id": "HJ-06-T3"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 4,
+          "box": 6,
+          "card_id": "HJ-06-T4"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 1,
+          "box": 7,
+          "card_id": "HJ-07-T1"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 2,
+          "box": 2,
+          "card_id": "HJ-07-T2"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 4,
+          "box": 3,
+          "card_id": "HJ-07-T4"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 1,
+          "box": 1,
+          "card_id": "HJ-08-T1"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 2,
+          "box": 7,
+          "card_id": "HJ-08-T2"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 4,
+          "box": 2,
+          "card_id": "HJ-08-T4"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 1,
+          "box": 3,
+          "card_id": "HJ-09-T1"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 2,
+          "box": 1,
+          "card_id": "HJ-09-T2"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 4,
+          "box": 5,
+          "card_id": "HJ-09-T4"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 1,
+          "box": 8,
+          "card_id": "HJ-10-T1"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 2,
+          "box": 3,
+          "card_id": "HJ-10-T2"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 3,
+          "box": 5,
+          "card_id": "HJ-10-T3"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 1,
+          "box": 2,
+          "card_id": "HJ-11-T1"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 2,
+          "box": 4,
+          "card_id": "HJ-11-T2"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 3,
+          "box": 6,
+          "card_id": "HJ-11-T3"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 1,
+          "box": 9,
+          "card_id": "HJ-12-T1"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 2,
+          "box": 9,
+          "card_id": "HJ-12-T2"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 3,
+          "box": 9,
+          "card_id": "HJ-12-T3"
+        }
+      ]
+    },
+    "13": {
+      "active_team_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "active_tables": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "cards": [
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 2,
+          "box": 5,
+          "card_id": "HJ-01-T2"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 3,
+          "box": 2,
+          "card_id": "HJ-01-T3"
+        },
+        {
+          "team_id": 1,
+          "team": "ПИКОВЫЙ ПЕРЕВАЛ",
+          "table": 4,
+          "box": 4,
+          "card_id": "HJ-01-T4"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 2,
+          "box": 8,
+          "card_id": "HJ-02-T2"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 3,
+          "box": 8,
+          "card_id": "HJ-02-T3"
+        },
+        {
+          "team_id": 2,
+          "team": "ГОРНЫЕ ТУЗЫ",
+          "table": 4,
+          "box": 1,
+          "card_id": "HJ-02-T4"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 2,
+          "box": 6,
+          "card_id": "HJ-03-T2"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 3,
+          "box": 7,
+          "card_id": "HJ-03-T3"
+        },
+        {
+          "team_id": 3,
+          "team": "СНЕЖНЫЙ БЛЕФ",
+          "table": 4,
+          "box": 8,
+          "card_id": "HJ-03-T4"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 1,
+          "box": 6,
+          "card_id": "HJ-04-T1"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 3,
+          "box": 1,
+          "card_id": "HJ-04-T3"
+        },
+        {
+          "team_id": 4,
+          "team": "КРАСНАЯ ПОЛЯНА",
+          "table": 4,
+          "box": 7,
+          "card_id": "HJ-04-T4"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 1,
+          "box": 5,
+          "card_id": "HJ-05-T1"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 3,
+          "box": 3,
+          "card_id": "HJ-05-T3"
+        },
+        {
+          "team_id": 5,
+          "team": "ДЖЕК НА ВЫСОТЕ",
+          "table": 4,
+          "box": 9,
+          "card_id": "HJ-05-T4"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 1,
+          "box": 4,
+          "card_id": "HJ-06-T1"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 3,
+          "box": 4,
+          "card_id": "HJ-06-T3"
+        },
+        {
+          "team_id": 6,
+          "team": "КАНАТНЫЙ БАНК",
+          "table": 4,
+          "box": 6,
+          "card_id": "HJ-06-T4"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 1,
+          "box": 7,
+          "card_id": "HJ-07-T1"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 2,
+          "box": 2,
+          "card_id": "HJ-07-T2"
+        },
+        {
+          "team_id": 7,
+          "team": "ФИШКИ В ОБЛАКАХ",
+          "table": 4,
+          "box": 3,
+          "card_id": "HJ-07-T4"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 1,
+          "box": 1,
+          "card_id": "HJ-08-T1"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 2,
+          "box": 7,
+          "card_id": "HJ-08-T2"
+        },
+        {
+          "team_id": 8,
+          "team": "СОЧИ-СТРИТ",
+          "table": 4,
+          "box": 2,
+          "card_id": "HJ-08-T4"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 1,
+          "box": 3,
+          "card_id": "HJ-09-T1"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 2,
+          "box": 1,
+          "card_id": "HJ-09-T2"
+        },
+        {
+          "team_id": 9,
+          "team": "РОЯЛЬ В ГОРАХ",
+          "table": 4,
+          "box": 5,
+          "card_id": "HJ-09-T4"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 1,
+          "box": 8,
+          "card_id": "HJ-10-T1"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 2,
+          "box": 3,
+          "card_id": "HJ-10-T2"
+        },
+        {
+          "team_id": 10,
+          "team": "ЛАВИНА ОЛЛ-ИН",
+          "table": 3,
+          "box": 5,
+          "card_id": "HJ-10-T3"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 1,
+          "box": 2,
+          "card_id": "HJ-11-T1"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 2,
+          "box": 4,
+          "card_id": "HJ-11-T2"
+        },
+        {
+          "team_id": 11,
+          "team": "ВАЛЕТЫ ВЕРШИНЫ",
+          "table": 3,
+          "box": 6,
+          "card_id": "HJ-11-T3"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 1,
+          "box": 9,
+          "card_id": "HJ-12-T1"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 2,
+          "box": 9,
+          "card_id": "HJ-12-T2"
+        },
+        {
+          "team_id": 12,
+          "team": "ЧЁРНЫЙ СКЛОН",
+          "table": 3,
+          "box": 9,
+          "card_id": "HJ-12-T3"
+        },
+        {
+          "team_id": 13,
+          "team": "ФУЛЛ-ХАУС В ГОРАХ",
+          "table": 1,
+          "box": 10,
+          "card_id": "HJ-13-T1"
+        },
+        {
+          "team_id": 13,
+          "team": "ФУЛЛ-ХАУС В ГОРАХ",
+          "table": 2,
+          "box": 10,
+          "card_id": "HJ-13-T2"
+        },
+        {
+          "team_id": 13,
+          "team": "ФУЛЛ-ХАУС В ГОРАХ",
+          "table": 3,
+          "box": 10,
+          "card_id": "HJ-13-T3"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "One card per player; exactly three players per team.",
+    "Each team is assigned to three different tables.",
+    "10-team mode replaces the table 4 cards of teams 1-9 with nine alternate cards; mode 11-13 preserves original master 39 assignments.",
+    "Confidential Secret Jack assignments are excluded from this public roster and must be entered privately by organizers."
+  ]
+}
