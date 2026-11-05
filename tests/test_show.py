@@ -222,3 +222,35 @@ def test_stage_bulk_and_self_vote(client):
     assert call(client, 'stages/bulk', h, {'phase':'green','teams':bad}).status_code == 422
     assert call(client, 'vote', h, {'voter_team_id':1,'target_team_id':1}).status_code == 422
     assert client.get('/sochi/api/public/state').json()['state']['ranking'][0]['green']==100000
+
+
+def test_short_pin_login_and_bruteforce_limit(tmp_path):
+    app = app_factory(db_path=str(tmp_path / 'pin.sqlite3'),
+                      media_path=str(tmp_path / 'media'),
+                      admin_password='7392',
+                      session_secret='Another_long_random_testing_session_secret_9876',
+                      secure_cookie=False)
+    with TestClient(app) as c:
+        assert c.post('/sochi/api/admin/login', json={'password': '7392'}).status_code == 200
+        assert c.get('/sochi/api/admin/state').status_code == 200
+
+    # An attacker must not be able to exhaustively guess a four-digit PIN.
+    app2 = app_factory(db_path=str(tmp_path / 'blocked.sqlite3'),
+                       media_path=str(tmp_path / 'other-media'),
+                       admin_password='7392',
+                       session_secret='Another_long_random_testing_session_secret_9876',
+                       secure_cookie=False)
+    with TestClient(app2) as c:
+        for guess in range(8):
+            assert c.post('/sochi/api/admin/login', json={'password': f'{guess:04d}'}).status_code == 401
+        assert c.post('/sochi/api/admin/login', json={'password': '7392'}).status_code == 429
+
+
+@pytest.mark.parametrize('bad_password', ['123', '12345', '12a4', 'abcd', ''])
+def test_invalid_short_admin_password_rejected(tmp_path, bad_password):
+    with pytest.raises(RuntimeError, match='4-digit PIN'):
+        app_factory(db_path=str(tmp_path / 'invalid.sqlite3'),
+                    media_path=str(tmp_path / 'media'),
+                    admin_password=bad_password,
+                    session_secret='Another_long_random_testing_session_secret_9876',
+                    secure_cookie=False)
