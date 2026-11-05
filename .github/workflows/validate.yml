@@ -22,4 +22,8 @@ jobs:
       - name: Python tests
         run: python -m pytest -q
       - name: Check JavaScript syntax
-        run: node --check sochi_show/static/admin.js
+        run: |
+          node --check sochi_show/static/admin.js
+          node --check sochi_show/static/screen.js
+          node --check sochi_show/static/green-show.js
+          node --check sochi_show/static/green-preview.js
