@@ -241,7 +241,7 @@
 .green-experience.gs-overview .gs-section-rule{margin:1vh 0}
 .green-experience.gs-overview .gs-side{padding-top:3.2vh}
 .green-experience.gs-top .gs-hero-place,.green-experience.gs-summit .gs-hero-place{color:#ffd69e}
-.green-experience.gs-summit .gs-mountain-badge{box-shadow:0 0 95px #f3d0a56e,0 24px 65px #1b253966;animation:gs-pulse 5s ease-in-out infinite}
+.green-experience.gs-top .gs-mountain-badge{box-shadow:0 0 95px #f3d0a56e,0 24px 65px #1b253966;animation:gs-pulse 5s ease-in-out infinite}
 .green-experience.gs-summit .gs-title{color:#f7e6d1}
 @keyframes gs-reveal{from{transform:translateY(45px) scale(.97);opacity:0;filter:blur(7px)}to{transform:translateY(0) scale(1);opacity:1;filter:blur(0)}}
 @keyframes gs-pulse{50%{box-shadow:0 0 120px #f3d0a591,0 24px 65px #1b253966}}
