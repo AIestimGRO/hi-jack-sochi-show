@@ -7,7 +7,27 @@ const titles={intro:'ЗАСТАВКА',teams:'КОМАНДЫ',green:'GREEN',blue
 const logo='<div class="stage-logo"><img class="brand-mark" src="/sochi/static/hi-jack-logo.svg" alt="Логотип Hi, Jack Club"><div>HI, JACK <span>— HI, SOCHI</span></div></div>';
 const header=(title,phase='')=>`<div class="show-header">${logo}<div class="stage-tag ${phase}">${esc(title)}</div></div>`;
 const avatar=(id,has)=>id&&has?`<img class="avatar" src="/sochi/api/public/photo/${id}" alt="">`:'<span>♠</span>';
+function updatePersistentJack(scene){
+  // GREEN/BLUE already contain a full-size Jack. The same mascot remains
+  // visible in the corner of every other scene: intro, RED, Jack, vote, final...
+  const slot=$('show-jack-persistent');
+  const img=$('show-jack-persistent-img');
+  if(!slot||!img)return;
+  const integrated=scene==='green_show'||scene==='blue_show';
+  slot.hidden=integrated;
+  if(!integrated&&!img.dataset.ready){
+    img.src=window.JackSwordGifB64
+      ?'data:image/gif;base64,'+window.JackSwordGifB64
+      :'/sochi/static/hi-jack-logo.svg';
+    img.dataset.ready='1';
+  }
+}
 function render(state,animate=true){const scene=state.scene||'intro';const panel=$('scene');panel.className=`scene ${scene}${animate?' slide-in':''}`;const rows=state.ranking||[];
+updatePersistentJack(scene);
+if(scene==='blue_show'){
+  window.BlueShow.render(panel,state.blue_view||{count:state.team_count,step:0,revealed:[]});
+  return;
+}
 if(scene==='green_show'){
   window.GreenShow.render(panel,state.green_view||{count:state.team_count,step:0,revealed:[]});
   return;
