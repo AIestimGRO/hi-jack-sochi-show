@@ -24,7 +24,9 @@ from .core import blue_points, green_points, published_ranking, red_points, vali
 HERE = Path(__file__).resolve().parent
 SCENES = {'intro', 'teams', 'green', 'blue', 'captains', 'red', 'secrets', 'votes', 'final', 'winner', 'pause'}
 PHASES = ('green', 'blue', 'red')
-COLUMNS = ('green_stack', 'reentry_chips', 'blue_stack', 'addon_chips', 'survivors', 'red_place', 'reentry_count')
+COLUMNS = ('green_stack', 'reentry_count', 'blue_stack', 'addon_count', 'survivors', 'red_place')
+CHIP_LIMIT = 1_000_000_000
+COUNT_LIMIT = 1000
 
 
 def stamp():
@@ -92,12 +94,15 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             CREATE TABLE IF NOT EXISTS teams (team_id INTEGER PRIMARY KEY,original_name TEXT NOT NULL,display_name TEXT NOT NULL,captain_player_id INTEGER);
             CREATE TABLE IF NOT EXISTS seats (card_id TEXT PRIMARY KEY,team_id INTEGER NOT NULL,table_no INTEGER NOT NULL,box_no INTEGER NOT NULL,player_id INTEGER UNIQUE,UNIQUE(table_no,box_no));
             CREATE TABLE IF NOT EXISTS players (id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,photo_path TEXT);
-            CREATE TABLE IF NOT EXISTS stages (team_id INTEGER PRIMARY KEY,green_stack INTEGER,reentry_chips INTEGER,reentry_count INTEGER,blue_stack INTEGER,addon_chips INTEGER,survivors INTEGER,red_place INTEGER);
+            CREATE TABLE IF NOT EXISTS stages (team_id INTEGER PRIMARY KEY,green_stack INTEGER,reentry_chips INTEGER,reentry_count INTEGER,blue_stack INTEGER,addon_chips INTEGER,addon_count INTEGER,survivors INTEGER,red_place INTEGER);
             CREATE TABLE IF NOT EXISTS secrets (slot INTEGER PRIMARY KEY CHECK(slot BETWEEN 1 AND 3),player_id INTEGER NOT NULL UNIQUE,knockout_team_id INTEGER,knockout_player_id INTEGER,confirmed INTEGER NOT NULL DEFAULT 0);
             CREATE TABLE IF NOT EXISTS votes (voter_team_id INTEGER PRIMARY KEY,target_team_id INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS publication (id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL,payload TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT,created_at TEXT NOT NULL,action TEXT NOT NULL,data TEXT NOT NULL);
         ''')
+        # Non-destructive migration of the existing independent SOCHI database.
+        if 'addon_count' not in {row[1] for row in c.execute('PRAGMA table_info(stages)')}:
+            c.execute('ALTER TABLE stages ADD COLUMN addon_count INTEGER')
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)', ('team_count', '0'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)', ('vote_mode', 'target'))
         c.execute('INSERT OR IGNORE INTO publication(id,version,payload) VALUES (1,0,?)', (json.dumps(empty_public()),))
@@ -112,6 +117,16 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
 
     def team_count(c):
         return int(setting(c, 'team_count') or 0)
+
+    def chip_setting(c, kind):
+        raw = setting(c, f'{kind}_chips_per_entry')
+        return int(raw) if raw is not None else None
+
+    def require_chip_setting(c, kind):
+        value = chip_setting(c, kind)
+        if value is None:
+            raise HTTPException(409, f'Сначала укажите фишки за одно {kind} в настройках турнира')
+        return value
 
     def get_pub(c):
         row = c.execute('SELECT version,payload FROM publication WHERE id=1').fetchone()
@@ -184,6 +199,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                   FROM secrets s JOIN players p ON p.id=s.player_id JOIN seats st ON st.player_id=p.id ORDER BY slot''')]
         vote_rows = [rowdict(r) for r in c.execute('SELECT * FROM votes ORDER BY voter_team_id')]
         return {'csrf': None, 'team_count': team_count(c), 'vote_mode': setting(c, 'vote_mode'),
+                'chip_settings': {'reentry': chip_setting(c, 'reentry'),
+                                  'addon': chip_setting(c, 'addon')},
                 'teams': list(entries.values()), 'seats': seats, 'stages': stage,
                 'secrets': secret_rows, 'votes': vote_rows, 'publication_version': version,
                 'published': published,
@@ -346,16 +363,43 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 audit(c, 'captain-update', {'team_id': team_id, 'player_id': pid})
         return {'ok': True}
 
+    @app.post('/sochi/api/admin/chips-settings')
+    async def update_chip_settings(request: Request):
+        require_admin(request, True)
+        body = await request.json()
+        if not isinstance(body, dict) or not body or set(body) - {'reentry', 'addon'}:
+            raise HTTPException(422, 'Передайте reentry и/или addon')
+        with connection(write=True) as c:
+            _, published = get_pub(c)
+            for kind, value in body.items():
+                strict_int(value, f'{kind}_chips_per_entry', 1, CHIP_LIMIT)
+                phase = 'green' if kind == 'reentry' else 'blue'
+                previous = chip_setting(c, kind)
+                if phase in published['published_phases'] and value != previous:
+                    raise HTTPException(409, f'{phase.upper()} уже опубликован: норматив фишек заблокирован')
+            for kind, value in body.items():
+                c.execute('INSERT OR REPLACE INTO settings(key,value) VALUES (?,?)',
+                          (f'{kind}_chips_per_entry', str(value)))
+                amount_column = 'reentry_chips' if kind == 'reentry' else 'addon_chips'
+                count_column = 'reentry_count' if kind == 'reentry' else 'addon_count'
+                # Keep saved drafts coherent with the newly configured chip amount.
+                c.execute(f'UPDATE stages SET {amount_column}={count_column}*? '
+                          f'WHERE {count_column} IS NOT NULL', (value,))
+            audit(c, 'chips-settings', {'configured': list(body)})
+        return {'ok': True}
+
     @app.post('/sochi/api/admin/stage')
     async def update_stage(request: Request):
         require_admin(request, True)
         body = await request.json()
+        if 'reentry_chips' in body or 'addon_chips' in body:
+            raise HTTPException(422, 'Фишки рассчитываются автоматически: передайте только количество')
         fields = {k: v for k, v in body.items() if k in COLUMNS}
         if not fields:
             raise HTTPException(422, 'Не переданы поля этапа')
         for k, val in fields.items():
             strict_int(val, k, 1 if k == 'red_place' else 0,
-                       3 if k == 'survivors' else None)
+                       3 if k == 'survivors' else COUNT_LIMIT if k in ('reentry_count', 'addon_count') else None)
         with connection(write=True) as c:
             team_id = check_team(c, body.get('team_id'))
             if 'red_place' in fields:
@@ -364,6 +408,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                                   (fields['red_place'], team_id)).fetchone()
                 if clash:
                     raise HTTPException(409, f'Место RED уже у команды {clash[0]}')
+            if 'reentry_count' in fields:
+                fields['reentry_chips'] = fields['reentry_count'] * require_chip_setting(c, 'reentry')
+            if 'addon_count' in fields:
+                fields['addon_chips'] = fields['addon_count'] * require_chip_setting(c, 'addon')
             sets = ','.join(f'{k}=?' for k in fields)
             c.execute(f'UPDATE stages SET {sets} WHERE team_id=?', (*fields.values(), team_id))
             audit(c, 'stage-draft', {'team_id': team_id, 'fields': fields})
@@ -374,8 +422,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         require_admin(request, True)
         body = await request.json()
         phase, entries = body.get('phase'), body.get('teams')
-        required = {'green': ('green_stack', 'reentry_chips', 'reentry_count'),
-                    'blue': ('blue_stack', 'addon_chips', 'survivors'),
+        required = {'green': ('green_stack', 'reentry_count'),
+                    'blue': ('blue_stack', 'addon_count', 'survivors'),
                     'red': ('red_place',)}.get(phase)
         if not required or not isinstance(entries, list):
             raise HTTPException(422, 'Ожидается phase=green|blue|red и список teams')
@@ -383,22 +431,32 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             count = team_count(c)
             if len(entries) != count or {x.get('team_id') for x in entries if isinstance(x, dict)} != set(range(1, count + 1)):
                 raise HTTPException(422, 'Нужен ровно один ряд на каждую активную команду')
+            amount_per_entry = (require_chip_setting(c, 'reentry') if phase == 'green'
+                                else require_chip_setting(c, 'addon') if phase == 'blue' else None)
             red_places = []
             for item in entries:
                 if not isinstance(item, dict):
                     raise HTTPException(422, 'Некорректная строка')
+                if 'reentry_chips' in item or 'addon_chips' in item:
+                    raise HTTPException(422, 'Фишки рассчитываются автоматически: передайте только количество')
                 if any(key not in item for key in required):
                     raise HTTPException(422, f'Команда {item.get("team_id")}: заполните все поля этапа')
                 for key in required:
                     strict_int(item[key], key, 1 if key == 'red_place' else 0,
-                               count if key == 'red_place' else 3 if key == 'survivors' else None)
-                if phase == 'red': red_places.append(item['red_place'])
+                               count if key == 'red_place' else 3 if key == 'survivors' else
+                               COUNT_LIMIT if key in ('reentry_count', 'addon_count') else None)
+                if phase == 'red':
+                    red_places.append(item['red_place'])
             if phase == 'red' and sorted(red_places) != list(range(1, count + 1)):
                 raise HTTPException(422, 'Места RED должны быть уникальными от 1 до N')
             for item in entries:
-                sets = ','.join(f'{key}=?' for key in required)
-                c.execute(f'UPDATE stages SET {sets} WHERE team_id=?',
-                          (*[item[key] for key in required], item['team_id']))
+                fields = {key: item[key] for key in required}
+                if phase == 'green':
+                    fields['reentry_chips'] = item['reentry_count'] * amount_per_entry
+                elif phase == 'blue':
+                    fields['addon_chips'] = item['addon_count'] * amount_per_entry
+                sets = ','.join(f'{key}=?' for key in fields)
+                c.execute(f'UPDATE stages SET {sets} WHERE team_id=?', (*fields.values(), item['team_id']))
             audit(c, 'stage-bulk-draft', {'phase': phase, 'count': count})
         return {'ok': True}
 
@@ -630,15 +688,21 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     team_id = str(r['team_id'])
                     p['stages'].setdefault(team_id, {})
                     if action == 'green':
-                        if any(r[key] is None for key in ('green_stack', 'reentry_chips')):
-                            raise HTTPException(422, 'GREEN: все стеки и re-entry обязательны')
+                        if any(r[key] is None for key in ('green_stack', 'reentry_count', 'reentry_chips')):
+                            raise HTTPException(422, 'GREEN: заполните стеки и количество re-entry')
+                        rate = require_chip_setting(c, 'reentry')
+                        if r['reentry_chips'] != r['reentry_count'] * rate:
+                            raise HTTPException(409, 'GREEN: сумма re-entry не соответствует настройкам')
                         score = green_points(r['green_stack'], r['reentry_chips'])
                         p['stages'][team_id]['green_stack_actual'] = r['green_stack']
                     elif action == 'blue':
                         if 'green' not in p['published_phases']:
                             raise HTTPException(409, 'Перед BLUE необходимо опубликовать GREEN')
-                        if any(r[key] is None for key in ('green_stack', 'blue_stack', 'addon_chips', 'survivors')):
-                            raise HTTPException(422, 'BLUE: заполните стеки, add-on и survivors')
+                        if any(r[key] is None for key in ('blue_stack', 'addon_count', 'addon_chips', 'survivors')):
+                            raise HTTPException(422, 'BLUE: заполните стек, количество add-on и выживших')
+                        rate = require_chip_setting(c, 'addon')
+                        if r['addon_chips'] != r['addon_count'] * rate:
+                            raise HTTPException(409, 'BLUE: сумма add-on не соответствует настройкам')
                         score = blue_points(p['stages'][team_id]['green_stack_actual'], r['blue_stack'], r['addon_chips'], r['survivors'])
                     else:
                         score = red_points(r['red_place'], count)
