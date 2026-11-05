@@ -130,7 +130,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
 
     def get_pub(c):
         row = c.execute('SELECT version,payload FROM publication WHERE id=1').fetchone()
-        return row['version'], json.loads(row['payload'])
+        payload = json.loads(row['payload'])
+        # Compatibility: older GREEN SHOW versions had an extra duplicate leader
+        # step (N+2). Treat saved N+2 as the new final board step (N+1).
+        show = payload.get('green_show')
+        if show:
+            show['step'] = min(show['step'], len(show['ranking']) + 1)
+        return row['version'], payload
 
     def audit(c, action, data):
         c.execute('INSERT INTO audit(created_at,action,data) VALUES (?,?,?)',
@@ -202,11 +208,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             count = len(show['ranking'])
             step = show['step']
             visible = list(reversed(show['ranking']))[:min(step, count)]
-            result['green_view'] = {'count': count, 'step': step, 'max_step': count + 2,
+            result['green_view'] = {'count': count, 'step': step, 'max_step': count + 1,
                                     'revealed': visible}
             # The privately captured entire ranking must NEVER reach a public endpoint.
-            result['green_show'] = {'step': step, 'max_step': count + 2}
-            if step < count + 2:
+            result['green_show'] = {'step': step, 'max_step': count + 1}
+            if step < count + 1:
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
@@ -666,7 +672,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             show = p.get('green_show')
             if show and action == 'green':
                 raise HTTPException(409, 'GREEN SHOW уже запущен: повторная публикация GREEN требует отдельной процедуры исправления')
-            if show and show['step'] < len(show['ranking']) + 2:
+            if show and show['step'] < len(show['ranking']) + 1:
                 if action in PHASES or (action == 'scene' and body.get('scene') in
                                         ('green', 'blue', 'red', 'final', 'winner')):
                     raise HTTPException(409, 'Сначала заверши раскрытие GREEN в шоу-пульте')
@@ -682,7 +688,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if not show:
                     raise HTTPException(409, 'Сначала запусти GREEN SHOW')
                 last_step = show['step']
-                step = strict_int(body.get('step'), 'step', 0, len(show['ranking']) + 2)
+                step = strict_int(body.get('step'), 'step', 0, len(show['ranking']) + 1)
                 if abs(step - last_step) != 1:
                     raise HTTPException(409, 'Переходи по одному шагу')
                 show['step'] = step
