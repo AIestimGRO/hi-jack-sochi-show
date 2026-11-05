@@ -1,0 +1,120 @@
+/* BLUE SHOW — second ascent: titanium, dark-ocean teal and burgundy drama.
+   Shared mountains / Jack mascot come from the proven GREEN visual system. */
+.projector .blue-show-stage{height:100%;min-height:0;overflow:visible}
+.blue-experience{
+  --blue-ice:#b9d8e9;--blue-titanium:#d8e5e8;--blue-burgundy:#784459;
+  background:linear-gradient(125deg,#103743 5%,#295b72 54%,#8b7292 100%);
+}
+.blue-experience .alpine-art{filter:saturate(.78) hue-rotate(15deg) contrast(1.05) brightness(.89)}
+.blue-experience .gs-atmosphere{
+  background:linear-gradient(90deg,rgba(9,38,57,.97),rgba(12,53,70,.88) 37%,rgba(26,52,72,.34) 75%,rgba(31,42,57,.12)),
+    linear-gradient(0deg,rgba(10,31,46,.75),transparent 50%);
+}
+.blue-experience .gs-kicker,.blue-experience .gs-reveal-label{color:#c5deee}
+.blue-experience .gs-title em{color:#bde3f2;text-shadow:0 0 43px #a9d9e44a}
+.blue-experience .gs-section-rule{background:linear-gradient(90deg,#c5e6f4,#abb7d7,transparent)}
+.blue-experience .gs-step-label{border-color:#b1d9ecaa;background:#20546fa8}
+.blue-experience .gs-live-dot{background:#bbdfff;box-shadow:0 0 12px #afe6fd}
+.blue-experience .gs-jack-animation-tagline{color:#d9e9f6}
+.blue-experience .gs-route-marker.lit i{background:#a4cedd;border-color:#e0f5ff;box-shadow:0 0 17px #bfdbf1b3}
+.blue-experience .gs-side-bottom b{color:#c5e7f5}
+.blue-experience .gs-footer{background:linear-gradient(90deg,#143d53d9,#47577aa4)}
+.blue-experience .gs-footer span:nth-child(2){color:#d1def4}
+.blue-experience .gs-main{padding-top:3.2vh}
+.blue-experience .gs-kicker{margin-bottom:1vh}
+.blue-experience .gs-title{font-size:clamp(39px,5.2vw,100px)}
+.blue-experience .gs-section-rule{margin:2.4vh 0 2vh}
+.blue-experience .gs-side{padding-top:3vh}
+.blue-experience .gs-jack-animation{width:clamp(150px,17vw,335px)}
+.bs-intro-copy{
+  font-size:clamp(20px,2vw,38px);
+  line-height:1.4;
+  max-width:25em;
+  color:#edf4ec;
+  text-shadow:0 3px 11px #123446b3;
+}
+.bs-intro-copy strong{color:#c3e7f5}
+.bs-intro-footer{
+  align-self:start;
+  margin-top:4.8vh;
+  padding:1.25vw 1.65vw;
+  border-radius:9px;
+  border:1px solid #d1e7e8aa;
+  background:#1d4b63c2;
+  color:#eaf6f7;
+  font-size:clamp(11px,1.25vw,23px);
+  font-weight:850;
+  letter-spacing:.2em;
+}
+.bs-hero-label{
+  color:#cde5f4;
+  font-size:clamp(11px,1.2vw,23px);
+  font-weight:900;
+  letter-spacing:.2em;
+  margin-bottom:2vh;
+}
+.bs-hero{display:flex;align-items:center;gap:clamp(8px,1.3vw,23px);max-width:100%;min-width:0;animation:gs-reveal .6s cubic-bezier(.15,.85,.3,1) both}
+.bs-hero-icon{width:clamp(78px,7.5vw,143px);height:clamp(78px,7.5vw,143px);flex:0 0 auto}
+.bs-hero-icon .gs-rank-symbol{width:100%;height:100%;filter:drop-shadow(0 8px 20px #1f3749)}
+.bs-hero-place{font-family:Georgia,serif;font-size:clamp(74px,8vw,155px);line-height:.85;color:#e2dbe0;display:flex;flex-direction:column;min-width:7.2vw;align-items:center;letter-spacing:-.045em}
+.bs-hero-place small{font:850 clamp(9px,.86vw,17px)/1.6 Inter,system-ui,sans-serif;letter-spacing:.21em;color:#d2e6f1}
+.bs-hero-right{max-width:32vw;min-width:0;display:flex;flex-direction:column;gap:2vh}
+.bs-hero-name{font-size:clamp(24px,2.85vw,54px);font-weight:900;line-height:1.08;overflow-wrap:anywhere}
+.bs-change-line{display:flex;flex-wrap:wrap;align-items:center;gap:1vw;font-size:clamp(10px,1.15vw,22px);font-weight:900;letter-spacing:.05em}
+.bs-from{background:#27495ab0;padding:7px 12px;border:1px solid #d6e6ec67;border-radius:6px;white-space:nowrap}
+.bs-change-line strong{padding:8px 12px;border-radius:7px;letter-spacing:.09em}
+.bs-change-line .rise,.bs-move.rise{color:#ddf5bb;background:#4673497d}
+.bs-change-line .fall,.bs-move.fall{color:#ffd2ca;background:#994d607e}
+.bs-change-line .same,.bs-move.same{color:#d8e0e2;background:#59707b50}
+.bs-score-panels{display:flex;gap:1vw;margin-top:3vh;width:100%;max-width:58vw}
+.bs-score-panels>div{flex:1;min-width:0;padding:1.3vw 1.6vw;border:1px solid #b3cad8bb;background:#23475dcb;border-radius:12px;display:flex;flex-direction:column;gap:.7vh}
+.bs-score-panels small{font-size:clamp(10px,1vw,18px);font-weight:850;letter-spacing:.14em;color:#d3e4ea}
+.bs-score-panels strong{font-size:clamp(23px,2.8vw,56px);font-weight:900;color:#ccebf9;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bs-score-panels>.bs-cumulative{border-color:#e3bb96;background:linear-gradient(110deg,#804e67ce,#3b596eca)}
+.bs-score-panels>.bs-cumulative strong{color:#ffe0a9}
+.blue-experience .gs-reveal-counter{margin-top:auto;margin-bottom:2vh}
+.blue-experience.bs-champion .bs-hero-icon{filter:drop-shadow(0 0 25px #d9e7f6bd)}
+.blue-experience.bs-champion .bs-hero-place{color:#f3d8aa}
+.blue-experience.bs-board .gs-main{padding-top:1.8vh}
+.blue-experience.bs-board .gs-kicker{margin-bottom:.7vh}
+.blue-experience.bs-board .gs-title{font-size:clamp(34px,3.6vw,72px)}
+.blue-experience.bs-board .gs-section-rule{margin:1.2vh 0 .7vh}
+.bs-table-head,.bs-ranking-row{
+  display:grid;
+  grid-template-columns:clamp(20px,2vw,42px) clamp(23px,2.4vw,50px) minmax(0,1fr) clamp(78px,7vw,140px) clamp(90px,8vw,158px) clamp(98px,9.7vw,196px);
+  column-gap:clamp(4px,.7vw,14px);
+  align-items:center;
+}
+.bs-table-head{color:#cfe2f0;font-size:clamp(9px,.75vw,15px);font-weight:850;letter-spacing:.08em;padding:0 .75vw .5vh;flex:0 0 auto}
+.bs-table-head span:nth-child(n+4){text-align:right}
+.bs-ranking-list{flex:1;min-height:0;width:100%;max-width:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(var(--rank-count,11),minmax(0,1fr));gap:clamp(2px,.55vh,8px);padding-bottom:1.2vh}
+.bs-ranking-row{
+  background:linear-gradient(105deg,#dce9ebf4,#c5d5dfeb);
+  border:1px solid #eef6facc;
+  border-radius:7px;
+  color:#163e50;
+  min-height:0;
+  padding:0 clamp(5px,.75vw,15px);
+  box-shadow:0 2px 8px #071d3244;
+}
+.bs-ranking-row.bs-podium-1{background:linear-gradient(100deg,#ebc89e,#d9d6ca);border-color:#ffe6b9;color:#423641}
+.bs-ranking-row.bs-podium-2{background:linear-gradient(100deg,#d2e3e9,#e3e8e8)}
+.bs-ranking-row.bs-podium-3{background:linear-gradient(100deg,#bfc8d2,#e0c9c1)}
+.bs-ranking-row .bs-icon{width:clamp(18px,2.5vh,33px);height:clamp(18px,2.5vh,33px)}
+.bs-ranking-row .gs-rank-symbol{width:100%;height:100%}
+.bs-place{font:700 clamp(17px,1.65vw,31px)/1 Georgia,serif}
+.bs-name{font-size:clamp(12px,1.22vw,23px);font-weight:900;line-height:1.04;min-width:0;overflow-wrap:anywhere}
+.bs-move{font-size:clamp(9px,.84vw,16px);font-weight:900;white-space:nowrap;padding:5px 3px;border-radius:4px;text-align:center}
+.bs-blue-points,.bs-total{font-size:clamp(12px,1.13vw,23px);font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bs-total{color:#385269;font-size:clamp(13px,1.24vw,25px)}
+.bs-podium-1 .bs-total{color:#7a4e33}
+@media(max-width:1050px){
+ .bs-table-head,.bs-ranking-row{grid-template-columns:19px 23px minmax(0,1fr) 69px 77px 93px;column-gap:3px}
+ .bs-name{font-size:clamp(10px,1.4vw,17px)}
+ .bs-move{font-size:clamp(8px,.9vw,11px)}
+ .bs-blue-points,.bs-total{font-size:clamp(10px,1.1vw,14px)}
+ .blue-experience .gs-title{font-size:clamp(28px,4.5vw,67px)}
+ .bs-hero-icon{width:clamp(53px,7vw,100px);height:clamp(53px,7vw,100px)}
+ .bs-hero-place{font-size:clamp(54px,7vw,116px)}
+}
+@media(prefers-reduced-motion:reduce){.bs-hero{animation:none}}
