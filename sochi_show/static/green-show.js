@@ -134,7 +134,16 @@ window.GreenShow=(()=>{
               ${lastThree.length&&top?`<div class="gs-top3-mini">${lastThree.map(r=>`<div class="${r.place===1?'champion':''}"><small>#${r.place}</small><strong>${esc(r.name)}</strong></div>`).join('')}</div>`:''}
               <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(n,shown.length)} / ${n}</div>`}
         </div>
-        <aside class="gs-side"><div class="gs-mountain-badge"><span>♠</span><strong>HI,<br>SOCHI</strong><small>БЛЕФ · СТЕК · ОЛЛ-ИН</small></div><div class="gs-route">${progressMarkup()}</div><div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div></aside>
+        <aside class="gs-side">
+          <div class="gs-jack-animation" aria-label="Анимация приветствия Джека с мечом">
+            <img class="gs-jack-animation-image"
+                 src="${window.JackSwordGifB64 ? 'data:image/gif;base64,'+window.JackSwordGifB64 : '/sochi/static/hi-jack-logo.svg'}"
+                 alt="Анимированный Валет HI, JACK с мечом" loading="eager" decoding="async">
+            <div class="gs-jack-animation-tagline">БЛЕФ · СТЕК · ОЛЛ-ИН</div>
+          </div>
+          <div class="gs-route">${progressMarkup()}</div>
+          <div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div>
+        </aside>
       </div>
       <footer class="gs-footer"><span>GREEN / ${esc(ordinal)}</span><span>${esc(secondary)}</span><span>${step} / ${n+1}</span></footer>
     </div>`;
