@@ -99,7 +99,7 @@
 }
 .green-experience .gs-ranking-row{
   display:grid;
-  grid-template-columns:clamp(40px,4vw,82px) minmax(0,1fr) clamp(96px,10vw,195px);
+  grid-template-columns:clamp(22px,2.8vh,35px) clamp(36px,3vw,70px) minmax(0,1fr) clamp(96px,10vw,195px);
   gap:clamp(6px,.75vw,16px);
   align-items:center;
   min-height:0;
@@ -110,6 +110,71 @@
   color:#153e49;
   box-shadow:0 4px 18px #112e384a;
   animation:gs-reveal .4s ease-out both;
+}
+
+/* Each place has its own character badge, including granny / Zeus. */
+.green-experience .gs-ranking-mascot{
+  width:clamp(22px,2.8vh,35px);
+  height:clamp(22px,2.8vh,35px);
+  align-self:center;
+  justify-self:center;
+}
+.green-experience .gs-rank-symbol{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  overflow:visible;
+  flex:0 0 auto;
+  background:linear-gradient(140deg,#fbebcc33,#203e4766);
+  box-shadow:0 3px 10px #102f3d42;
+}
+.green-experience .gs-rank-symbol svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 2px 3px #23384250);
+}
+.green-experience .gs-rank-symbol-1 svg{
+  filter:drop-shadow(0 0 7px #ffe2a5ba) drop-shadow(0 4px 3px #68412b8c);
+}
+.green-experience .gs-hero{
+  max-width:100%;
+  gap:clamp(10px,1.35vw,24px);
+}
+.green-experience .gs-hero-mascot{
+  width:clamp(75px,8.3vw,160px);
+  height:clamp(75px,8.3vw,160px);
+  flex:0 0 auto;
+  animation:gs-rank-pop .48s cubic-bezier(.19,.85,.24,1.2) both;
+}
+.green-experience .gs-hero-place{
+  font-size:clamp(75px,8.2vw,165px);
+  min-width:clamp(58px,7vw,125px);
+}
+.green-experience .gs-hero-team{
+  max-width:35vw;
+  min-width:0;
+}
+.green-experience .gs-rank-caption{
+  font-size:clamp(12px,1.3vw,24px);
+  font-weight:900;
+  letter-spacing:.19em;
+  text-transform:uppercase;
+  color:#d9dfa9;
+  margin-top:1.8vh;
+  padding-left:clamp(75px,8.3vw,160px);
+  text-shadow:0 4px 10px #183a3d8a;
+}
+.green-experience.gs-summit .gs-hero-mascot{
+  filter:drop-shadow(0 0 25px #ffe0a2a6);
+}
+@keyframes gs-rank-pop{
+  from{opacity:0;transform:scale(.72) rotate(-7deg)}
+  to{opacity:1;transform:scale(1) rotate(0)}
 }
 .green-experience .gs-ranking-row.gs-rank-1{
   background:linear-gradient(100deg,#f1c694,#e9d4b2);
@@ -189,5 +254,5 @@
 .green-preview-page .green-preview-controls select{background:#dce7d9}
 .green-preview-page .green-preview-count{font-size:13px;white-space:nowrap;font-weight:850;letter-spacing:.08em;min-width:76px;text-align:center}
 .green-preview-page .green-preview-watermark{position:fixed;z-index:4;top:8px;right:30%;font-size:11px;color:#fff7e5;background:#744050e0;border-radius:6px;padding:6px 10px;font-weight:800;letter-spacing:.09em}
-@media(max-width:850px){.green-experience .gs-title{font-size:clamp(28px,4.5vw,70px)}.green-experience .gs-mountain-badge{width:15vw}.green-experience .gs-side{padding-right:3vw}.green-experience .gs-main{padding-left:3vw}.green-experience .gs-ranking-row{grid-template-columns:clamp(36px,5vw,60px) minmax(0,1fr) clamp(85px,12vw,125px);gap:6px;padding:0 7px}.green-experience .gs-ranking-name{font-size:clamp(11px,1.5vw,15px)}.green-experience .gs-ranking-score b{font-size:clamp(11px,1.55vw,17px)}.green-experience .gs-brand strong{font-size:2vw}}
+@media(max-width:850px){.green-experience .gs-title{font-size:clamp(28px,4.5vw,70px)}.green-experience .gs-mountain-badge{width:15vw}.green-experience .gs-side{padding-right:3vw}.green-experience .gs-main{padding-left:3vw}.green-experience .gs-ranking-row{grid-template-columns:clamp(19px,2.7vh,29px) clamp(28px,4vw,48px) minmax(0,1fr) clamp(76px,10vw,110px);gap:5px;padding:0 6px}.green-experience .gs-ranking-name{font-size:clamp(11px,1.5vw,15px)}.green-experience .gs-ranking-score b{font-size:clamp(11px,1.55vw,17px)}.green-experience .gs-brand strong{font-size:2vw}}
 @media(prefers-reduced-motion:reduce){.green-experience *{animation:none!important;transition:none!important}}
