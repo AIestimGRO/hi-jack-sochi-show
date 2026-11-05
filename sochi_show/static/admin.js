@@ -85,6 +85,21 @@ function updateWorkflow(){
     guideOpened=true;
   }
 }
+function renderBlueDirector(){
+  const phases=state.published?.published_phases||[];
+  const show=state.published?.blue_show;
+  const ready=phases.includes('blue')&&!phases.includes('red');
+  const current=show?.step??0;
+  const max=(show?.ranking?.length??state.team_count??0)+1;
+  $('blue-show-start').disabled=!ready;
+  $('blue-show-start').textContent=show?'↻ Начать BLUE сначала':'▶ Запустить шоу BLUE';
+  $('blue-show-back').disabled=!show||current===0||phases.includes('red');
+  $('blue-show-next').disabled=!show||current>=max||phases.includes('red');
+  $('blue-show-progress').textContent=show
+    ?'Шаг '+current+' из '+max+(current>=max?' · BLUE завершён':' · раскрываем места')
+    :phases.includes('red')?'RED уже опубликован'
+    :phases.includes('blue')?'BLUE опубликован · можешь начать шоу':'Сначала опубликуй BLUE';
+}
 function renderGreenDirector(){
   const active=(state.published?.published_phases||[]).includes('green');
   const blue=(state.published?.published_phases||[]).includes('blue');
@@ -127,7 +142,7 @@ const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}">${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary">✓</button></div>`}).join('');
 let rk=pub.ranking;$('ranking-preview').innerHTML=rk.length?`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
 const ties=rk.length>1?rk.filter(r=>r.total===rk[0].total):[];$('tie-resolution').innerHTML=ties.length>1?`<span class="note">НИЧЬЯ НА ПЕРВОМ МЕСТЕ · решение организатора:</span><select id="tie-winner">${ties.map(t=>`<option value="${t.team_id}" ${pub.winner_decision===t.team_id?'selected':''}>${esc(t.name)}</option>`).join('')}</select><button id="save-tie" class="gold">Зафиксировать решение</button>`:'';
-$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();renderGreenDirector();}
+$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();renderGreenDirector();renderBlueDirector();}
 $('login-form').onsubmit=async e=>{e.preventDefault();try{await api('/sochi/api/admin/login','POST',{password:$('password').value});$('password').value='';await refresh()}catch(err){toast(err.message,true)}};
 $('logout').onclick=async()=>{await change('/sochi/api/admin/logout',{});location.reload()};
 $('import').onclick=async()=>{const file=$('json-file').files[0];if(!file)return toast('Выберите файл JSON',true);let obj;try{obj=JSON.parse(await file.text())}catch{return toast('Неверный JSON',true)}let n=Number($('count').value);let assigned=state.seats.some(s=>s.player_id);let confirm_replace_cards=false;if(assigned){confirm_replace_cards=confirm(`ВНИМАНИЕ: у участников уже есть карточки. Смена схемы требует ФИЗИЧЕСКОЙ ЗАМЕНЫ карточек. Подтвердить?`);if(!confirm_replace_cards)return}await change('/sochi/api/admin/seating',{document:obj,team_count:n,confirm_replace_cards})};
@@ -185,7 +200,7 @@ async function bulkStage(stage){
   $('confirm-pub-stage').onclick=async()=>{
     try{
       await api('/sochi/api/admin/stages/bulk','POST',{phase:stage,teams:rows});
-      await api('/sochi/api/admin/publish','POST',{action:stage,...(stage==='green'?{show_mode:'cinematic'}:{})});
+      await api('/sochi/api/admin/publish','POST',{action:stage,...(['green','blue'].includes(stage)?{show_mode:'cinematic'}:{})});
       $('preview-modal').close();
       toast(`Этап ${stage.toUpperCase()} опубликован`);
       await refresh();
@@ -211,6 +226,17 @@ $('green-show-back').onclick=async()=>{
   const show=state.published?.green_show;
   if(!show)return;
   await change('/sochi/api/admin/publish',{action:'green-show-step',step:show.step-1});
+};
+$('blue-show-start').onclick=()=>publish({action:'blue-show-start'},'Запустить или повторить BLUE SHOW на публичном проекторе?');
+$('blue-show-next').onclick=async()=>{
+  const show=state.published?.blue_show;
+  if(!show)return;
+  await change('/sochi/api/admin/publish',{action:'blue-show-step',step:show.step+1});
+};
+$('blue-show-back').onclick=async()=>{
+  const show=state.published?.blue_show;
+  if(!show)return;
+  await change('/sochi/api/admin/publish',{action:'blue-show-step',step:show.step-1});
 };
 $('open-chips-settings').onclick=openChipSettings;
 $('close-chips-settings').onclick=()=>$('chips-settings-modal').close();
