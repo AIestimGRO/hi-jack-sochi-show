@@ -55,8 +55,10 @@ def test_secret_show_complete_and_replay_do_not_double_award(client, n):
         assert show['ranking'] == []
         assert show['stages'] == {}
         assert show['secret_view']['revealed'][-1]['name'] == names[slot-1]
-        assert all(name not in json.dumps(show['secret_view'], ensure_ascii=False)
-                   for name in names[slot:])
+        # A future Jack's name may appear as the *killer* of an earlier
+        # Jack; this does not disclose that player's secret identity.
+        assert [role['name'] for role in show['secret_view']['revealed']] == names[:slot]
+        assert [role['slot'] for role in show['secret_view']['revealed']] == list(range(1, slot+1))
         assert call(client, 'publish', h, {'action': 'reveal', 'slot': slot}).status_code == 409
         assert call(client, 'publish', h, {'action': 'votes'}).status_code == 409
     assert call(client, 'publish', h, {'action': 'secret-show-step', 'step': 4}).status_code == 200
