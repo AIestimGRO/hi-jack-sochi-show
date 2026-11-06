@@ -204,7 +204,15 @@ def test_revealed_correction_recomputes_once(client):
                'knockout_player_id': next(x for x in seats if x['team_id'] == 3)['player_id'], 'confirmed': True}
     assert call(client, 'secret-correction', h, payload).status_code == 409
     payload['confirm_correction'] = True
-    assert call(client, 'secret-correction', h, payload).status_code == 200
+    assert call(client, 'secret-correction', h, payload).status_code == 409
+    # Correctly protected alternate path: reason, current version, PIN and phrase.
+    payload.pop('confirm_correction')
+    payload['kind'] = 'secret'
+    payload['expected_version'] = client.get('/sochi/api/admin/state').json()['publication_version']
+    payload['reason'] = 'Исправление раскрытого Secret Jack'
+    payload['pin'] = 'A_real_long_test_password_123'
+    payload['confirm'] = 'ИСПРАВИТЬ'
+    assert call(client, 'correction/apply', h, payload).status_code == 200
     state = client.get('/sochi/api/public/state').json()['state']
     assert sum(x['secret'] for x in state['ranking']) == 10000
     assert next(x for x in state['ranking'] if x['team_id'] == 3)['secret'] == 10000
