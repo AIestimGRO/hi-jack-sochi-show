@@ -189,5 +189,10 @@ el('protected-history-btn').addEventListener('click',async()=>{
         <p>${escapeText(row.reason)}</p><pre>${escapeText(row.previous_value)} → ${escapeText(row.updated_value)}</pre></div>`).join('');
  }catch(error){toast(error.message,true)}
 });
+document.addEventListener('sochi-admin-refreshed',()=>{
+  // Populate team/player/seat dropdowns after the asynchronous admin login.
+  // Never throw away a currently confirmed before/after preview.
+  if(el('protected-confirm').classList.contains('hidden'))changeFields();
+});
 changeFields();
 })();
