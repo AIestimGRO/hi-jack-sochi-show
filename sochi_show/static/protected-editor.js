@@ -119,9 +119,12 @@ function readable(v){if(v===null||v===undefined)return '— (пусто)';
  return String(v);
 }
 function renderPreview(preview){
- const warning=preview.retracted_phases?.length?
-  '<p class="error"><strong>ВНИМАНИЕ:</strong> будут сняты с публикации этапы: '+
-  preview.retracted_phases.map(escapeText).join(', ')+'. Нужно будет заново заполнить данные и опубликовать этап.</p>':'';
+ const alerts=[];
+ if(preview.retracted_phases?.length)alerts.push('Будут сняты с публикации этапы: '+preview.retracted_phases.join(', '));
+ if(preview.retracted_secrets?.length)alerts.push('Потребуется заново раскрыть Secret Jack: '+preview.retracted_secrets.join(', '));
+ if(preview.votes_retracted)alerts.push('Ранее опубликованные голоса будут отозваны — после исправления их нужно опубликовать заново');
+ if(preview.final_retracted)alerts.push('Финальный экран будет отозван до восстановления полного рейтинга');
+ const warning=alerts.length?'<p class="error"><strong>ВНИМАНИЕ:</strong> '+alerts.map(escapeText).join('. ')+'.</p>':'';
  const rows=(preview.score_changes||[]).slice(0,22).map(r=>
    `<tr><td>${escapeText(r.name)}</td><td>${r.old_place} → ${r.new_place}</td><td>${r.old_total.toLocaleString('ru-RU')} → ${r.new_total.toLocaleString('ru-RU')}</td></tr>`).join('');
  el('protected-result').innerHTML=`<div class="protected-compare">
