@@ -962,6 +962,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         # table must be in sync even if the broadcast stays on its current step.
         result=score_delta(old,p)
         details['score_changes']=result
+        labels={'teams':'Названия команд','roster':'Составы игроков',
+                'captains':'Капитаны','stages':'Фишки и очки этапов',
+                'revealed_secrets':'Secret Jack','published_votes':'Голоса',
+                'vote_mode':'Режим начисления','visible_photos':'Фотографии',
+                'winner_decision':'Победитель','ranking':'Общий рейтинг'}
+        details['updated_sections']=[label for key,label in labels.items()
+                                     if old.get(key)!=p.get(key)]
         return {'label':label, 'before':before, 'after':after,
                 'old_scene':old.get('scene'),'new_scene':p.get('scene'),
                 'old_phases':old.get('published_phases',[]),
