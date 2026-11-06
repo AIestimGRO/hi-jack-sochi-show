@@ -139,6 +139,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         blue_show = payload.get('blue_show')
         if blue_show:
             blue_show['step'] = min(blue_show['step'], len(blue_show['ranking']) + 1)
+        red_show = payload.get('red_show')
+        if red_show:
+            red_show['step'] = min(red_show['step'], len(red_show['ranking']) + 1)
         return row['version'], payload
 
     def audit(c, action, data):
@@ -197,6 +200,32 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                             else index + 1)
             # Positive change means climbing from a worse GREEN position.
             row['move'] = row['green_place'] - row['place']
+        return {'ranking': ranked, 'step': 0}
+
+    def red_snapshot(p):
+        """Cumulative GREEN+BLUE+RED, but never secretly include Jack or votes."""
+        if not all(phase in p['published_phases'] for phase in PHASES):
+            raise HTTPException(409, 'RED SHOW доступен после GREEN, BLUE и RED')
+        blues = p.get('blue_show')
+        previous = blues['ranking'] if blues else blue_snapshot(p)['ranking']
+        blue_places = {int(r['team_id']): r['place'] for r in previous}
+        ranked = []
+        for team_id, name in p['teams'].items():
+            stage = p['stages'].get(team_id, {})
+            if any(stage.get(phase) is None for phase in PHASES):
+                raise HTTPException(409, 'Для RED нужны опубликованные очки всех трёх этапов')
+            green, blue, red = (stage[k] for k in PHASES)
+            ranked.append({'team_id': int(team_id), 'name': name,
+                           'green': green, 'blue': blue, 'red': red,
+                           'red_place': 1 + (130000 - red) // 10000,
+                           'total': green + blue + red,
+                           'blue_place': blue_places[int(team_id)]})
+        ranked.sort(key=lambda row: (-row['total'], row['team_id']))
+        for index, row in enumerate(ranked):
+            row['place'] = (ranked[index - 1]['place']
+                            if index and row['total'] == ranked[index - 1]['total']
+                            else index + 1)
+            row['move'] = row['blue_place'] - row['place']
         return {'ranking': ranked, 'step': 0}
 
     def require_admin(request: Request, write=False):
@@ -258,6 +287,19 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
+        red_show = result.get('red_show')
+        if red_show:
+            count = len(red_show['ranking'])
+            step = red_show['step']
+            visible = list(reversed(red_show['ranking']))[:min(step, count)]
+            result['red_view'] = {'count': count, 'step': step,
+                                  'max_step': count + 1, 'revealed': visible}
+            # Private full ranking is omitted from all public response formats.
+            result['red_show'] = {'step': step, 'max_step': count + 1}
+            if step < count + 1:
+                result['ranking'] = []
+                result['stages'] = {}
+                result['recent_changes'] = []
         return result
 
     def admin_state(c):
@@ -301,6 +343,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     def blue_preview():
         # Demo-only results: cannot read or change tournament data.
         return (HERE / 'static' / 'blue-preview.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/red', response_class=HTMLResponse)
+    def red_preview():
+        # Synthetic demo only; no authentication, tournament results or writes.
+        return (HERE / 'static' / 'red-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -730,7 +777,31 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if action in PHASES or (action == 'scene' and body.get('scene') in
                                         ('green', 'blue', 'red', 'final', 'winner')):
                     raise HTTPException(409, 'Сначала заверши раскрытие BLUE в шоу-пульте')
-            if action == 'blue-show-start':
+            red_show = p.get('red_show')
+            if red_show and action == 'red':
+                raise HTTPException(409, 'RED SHOW уже запущен: повторная публикация RED недоступна')
+            if red_show and red_show['step'] < len(red_show['ranking']) + 1:
+                if (action in PHASES or action in ('reveal', 'votes')
+                    or (action == 'scene' and body.get('scene') in
+                        ('green', 'blue', 'red', 'secrets', 'votes', 'final', 'winner'))):
+                    raise HTTPException(409, 'Сначала заверши раскрытие RED в шоу-пульте')
+            if action == 'red-show-start':
+                if 'red' not in p['published_phases'] or p['revealed_slots'] or p['votes_published']:
+                    raise HTTPException(409, 'Шоу RED доступно после RED, до Secret Jack и голосов')
+                if not red_show:
+                    p['red_show'] = red_snapshot(p)
+                else:
+                    p['red_show']['step'] = 0
+                p['scene'] = 'red_show'
+            elif action == 'red-show-step':
+                if not red_show or p['revealed_slots'] or p['votes_published']:
+                    raise HTTPException(409, 'Сначала запусти RED SHOW')
+                step = strict_int(body.get('step'), 'step', 0, len(red_show['ranking']) + 1)
+                if abs(step - red_show['step']) != 1:
+                    raise HTTPException(409, 'Переходи по одному шагу')
+                red_show['step'] = step
+                p['scene'] = 'red_show'
+            elif action == 'blue-show-start':
                 if 'blue' not in p['published_phases'] or 'red' in p['published_phases']:
                     raise HTTPException(409, 'Шоу BLUE доступно после BLUE и до RED')
                 if not blue_show:
@@ -850,6 +921,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     # Even the first public response must not contain BLUE totals.
                     p['blue_show'] = blue_snapshot(p)
                     p['scene'] = 'blue_show'
+                elif action == 'red' and body.get('show_mode') == 'cinematic':
+                    # Atomic capture: no RED score leaks on the first SSE frame.
+                    p['red_show'] = red_snapshot(p)
+                    p['scene'] = 'red_show'
                 else:
                     p['scene'] = action
             elif action == 'reveal':
