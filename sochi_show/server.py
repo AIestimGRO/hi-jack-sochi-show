@@ -996,9 +996,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         ('votes', 'final', 'winner', 'secrets'))):
                     raise HTTPException(409, 'Сначала заверши раскрытие голосов капитанов')
             final_show = p.get('final_show')
-            if final_show and final_show['step'] < 5:
-                if (action in ('vote-show-start', 'vote-show-step', 'winner-decision')
-                    or (action == 'scene' and body.get('scene') in ('final', 'winner'))):
+            if final_show:
+                if action in ('vote-show-start', 'vote-show-step', 'winner-decision'):
+                    raise HTTPException(409, 'Финальный результат уже зафиксирован')
+                if (final_show['step'] < 5 and action == 'scene' and
+                    body.get('scene') in ('final', 'winner')):
                     raise HTTPException(409, 'Заверши FINAL SHOW в пульте организатора')
             if action == 'final-show-start':
                 if not final_show:
