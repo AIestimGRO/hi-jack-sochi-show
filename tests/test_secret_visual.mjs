@@ -68,7 +68,7 @@ const stage=fs.readFileSync('sochi_show/static/screen.html','utf8');
 const controls=fs.readFileSync('sochi_show/static/admin.html','utf8');
 const preview=fs.readFileSync('sochi_show/static/secret-preview.html','utf8');
 assert.match(screen,/scene==='secret_show'/);
-assert.match(screen,/\['green_show','blue_show','red_show','secret_show'\]/);
+assert.match(screen,/\['green_show','blue_show','red_show','secret_show','vote_show'\]/);
 assert.match(stage,/secret-show\.css/);
 assert.match(stage,/secret-show\.js/);
 assert.match(controls,/id="secret-show-start"/);
