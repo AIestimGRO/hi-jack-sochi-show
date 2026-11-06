@@ -722,6 +722,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             b = check_team(c, body.get('target_team_id'))
             if a == b:
                 raise HTTPException(422, 'Голосовать за свою команду нельзя')
+            _, public = get_pub(c)
+            if public['votes_published']:
+                raise HTTPException(409, 'Голоса уже опубликованы и зафиксированы')
             c.execute('INSERT INTO votes(voter_team_id,target_team_id) VALUES (?,?) ON CONFLICT(voter_team_id) DO UPDATE SET target_team_id=excluded.target_team_id', (a, b))
             audit(c, 'vote-draft', {'voter_team_id': a})
         return {'ok': True}
