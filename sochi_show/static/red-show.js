@@ -7,7 +7,6 @@ window.RedShow=(()=>{
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=value=>new Intl.NumberFormat('ru-RU').format(value||0);
   const rankArt=place=>window.SochiRankMascots?.render(place)||'<span>♠</span>';
-  const label=place=>window.SochiRankMascots?.label(place)||'Покоритель вершины';
   const jack=()=>`<div class="gs-jack-animation" aria-label="Валет HI, JACK с мечом">
      <img class="gs-jack-animation-image"
        src="${window.JackSwordGifB64?'data:image/gif;base64,'+window.JackSwordGifB64:'/sochi/static/hi-jack-logo.svg'}"
@@ -91,7 +90,6 @@ window.RedShow=(()=>{
                  <span class="rs-hero-place">${protagonist?.place||'—'}<small>МЕСТО</small></span>
                  <div class="rs-hero-detail"><div class="rs-hero-name">${esc(protagonist?.name||'')}</div>
                    <div class="rs-hero-shift">BLUE #${protagonist?.blue_place||'—'} → RED #${protagonist?.place||'—'}</div>
-                   <div class="rs-hero-rank-badge">${esc(label(protagonist?.place))}</div>
                  </div>
                </div>
                <div class="rs-score-panels">
