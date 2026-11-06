@@ -21,7 +21,7 @@ for(const count of [10,11]){
   assert.equal(set.demo_ranking.length,count);
   const blue=ctx.window.BlueShow.demo(count).demo_ranking;
   const byID=new Map(blue.map(r=>[r.team_id,r]));
-  const expectedRedPlaces=set.demo_ranking.map(r=>r.red_place).sort((a,b)=>a-b);
+  const expectedRedPlaces=Array.from(set.demo_ranking, r=>r.red_place).sort((a,b)=>a-b);
   assert.deepEqual(expectedRedPlaces,Array.from({length:count},(_,i)=>i+1));
   set.demo_ranking.forEach(r=>{
     assert.equal(r.total,byID.get(r.team_id).total+r.red,'cumulative total');
