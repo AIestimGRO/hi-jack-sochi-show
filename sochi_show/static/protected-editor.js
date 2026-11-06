@@ -132,6 +132,7 @@ function renderPreview(preview){
     <div class="protected-compare-grid"><div><b>БЫЛО</b><pre>${escapeText(readable(preview.before))}</pre></div>
       <div><b>БУДЕТ</b><pre>${escapeText(readable(preview.after))}</pre></div></div>
     ${warning}
+    <p><strong>Будут обновлены разделы:</strong> ${(preview.updated_sections||[]).map(escapeText).join(' · ')||'Только указанная запись'}.</p>
     <p>Экран: ${escapeText(preview.old_scene)} → ${escapeText(preview.new_scene)}.
       Лидер: ${escapeText(preview.old_leader||'—')} → ${escapeText(preview.new_leader||'—')}.</p>
     ${rows?`<table><thead><tr><th>Команда</th><th>Место</th><th>Очки</th></tr></thead><tbody>${rows}</tbody></table>`:
