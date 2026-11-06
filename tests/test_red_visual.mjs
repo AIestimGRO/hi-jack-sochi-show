@@ -80,7 +80,7 @@ assert.match(page,/ДЕМО RED · НЕ ЭФИР/);
 assert.match(page,/red-preview.js/);
 assert.match(screenHTML,/red-show\.js/);
 assert.match(screen,/scene==='red_show'/);
-assert.match(screen,/\['green_show','blue_show','red_show'\]/);
+assert.match(screen,/secret_show/);
 assert.match(admin,/id="red-director"/);
 assert.match(admin,/red-show-next/);
 assert.match(adminJS,/renderRedDirector\(\)/);
