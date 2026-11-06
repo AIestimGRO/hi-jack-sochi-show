@@ -39,6 +39,8 @@ jobs:
           node --check sochi_show/static/vote-preview.js
           node --check sochi_show/static/final-show.js
           node --check sochi_show/static/final-preview.js
+          node --check sochi_show/static/captain-show.js
+          node --check sochi_show/static/captain-preview.js
       - name: GREEN visual smoke tests
         run: node tests/test_green_visual.mjs
       - name: BLUE visual smoke tests
@@ -51,3 +53,5 @@ jobs:
         run: node tests/test_vote_visual.mjs
       - name: FINAL SHOW visual smoke tests
         run: node tests/test_final_visual.mjs
+      - name: CAPTAINS visual smoke tests
+        run: node tests/test_captain_visual.mjs
