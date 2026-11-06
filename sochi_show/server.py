@@ -874,6 +874,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     @app.post('/sochi/api/admin/secret-correction')
     async def correct_revealed_secret(request: Request):
         require_admin(request, True)
+        # Legacy endpoint is intentionally retired: browser confirmation alone
+        # is insufficient for changing an already published Secret Jack.
+        raise HTTPException(409, 'Исправь опубликованного Secret Jack через защищённый редактор с PIN')
         body = await request.json()
         slot = strict_int(body.get('slot'), 'slot', 1, 3)
         pid = strict_int(body.get('player_id'), 'player_id', 1)
@@ -1090,6 +1093,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             count = team_count(c)
             if not count:
                 raise HTTPException(409, 'Сначала импортируйте утверждённую рассадку')
+            if p['published_phases']:
+                if action in ('teams','name','refresh-photo') or (
+                    action == 'captains' and p.get('captains')):
+                    raise HTTPException(409, 'Опубликованные данные исправляй через 🔐 Защищённое исправление с PIN')
             show = p.get('green_show')
             if show and action == 'green':
                 raise HTTPException(409, 'GREEN SHOW уже запущен: повторная публикация GREEN требует отдельной процедуры исправления')
