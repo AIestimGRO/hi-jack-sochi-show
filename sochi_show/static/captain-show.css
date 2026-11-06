@@ -1,0 +1,86 @@
+/* CAPTAINS EXPEDITION — cinematic roster on the BLUE mountain route.
+   Replaces legacy dark captain-cards without modifying published roster or points. */
+.projector .captain-show-stage{height:100%;min-height:0;overflow:visible}
+.captain-experience{background:linear-gradient(125deg,#164850,#3b4d51 58%,#765065 100%)}
+.captain-experience .alpine-art{filter:sepia(.12) hue-rotate(354deg) saturate(.83) brightness(.73)}
+.captain-experience .gs-atmosphere{
+  background:linear-gradient(90deg,rgba(11,54,61,.97),rgba(19,53,64,.90) 48%,rgba(61,61,70,.53) 83%,rgba(56,50,58,.22)),
+    linear-gradient(0deg,rgba(14,42,49,.86),transparent 70%);
+}
+.captain-experience .gs-content{grid-template-columns:minmax(0,79%) minmax(0,21%)}
+.captain-experience .gs-header{height:12%}
+.captain-experience .gs-content{height:81%}
+.captain-experience .gs-footer{height:7%}
+.captain-experience .gs-main{padding:2.4vh .85vw 1.1vh 3.3vw;min-height:0}
+.captain-experience .gs-kicker{font-size:clamp(10px,1.03vw,19px);color:#d3d9a2;letter-spacing:.25em;margin-bottom:.7vh}
+.captain-experience .gs-title{font-size:clamp(29px,3.85vw,75px);line-height:1.02;letter-spacing:-.025em;white-space:nowrap}
+.captain-experience .gs-title em{color:#f3c99c;text-shadow:0 0 26px #f2bf966e}
+.captain-experience .gs-section-rule{width:27%;margin:1.5vh 0 1.15vh;height:3px;background:linear-gradient(90deg,#f5ca8b,#cbd8b1,transparent)}
+.captain-experience .gs-step-label{border-color:#dbe4c18c;background:#264e55d0}
+.captain-experience .gs-live-dot{background:#dbe7a4;box-shadow:0 0 17px #d7e4aa}
+.cs-subline{display:flex;justify-content:space-between;align-items:center;gap:1vw;margin-bottom:1.1vh;min-height:2.4vh;color:#f0dfc8;font-size:clamp(10px,.85vw,17px);font-weight:900;letter-spacing:.15em}
+.cs-subline strong{color:#dfeab8}
+.cs-subline span{color:#ead0b4}
+.cs-tiles{min-height:0;flex:1;width:100%;display:grid;grid-template-columns:repeat(var(--captain-columns,5),minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(5px,.75vw,16px)}
+.cs-tile{min-width:0;min-height:0;position:relative;display:flex;flex-direction:column;
+  overflow:hidden;border-radius:clamp(8px,.7vw,15px);
+  border:1px solid #e7d2ad9e;
+  background:linear-gradient(150deg,rgba(123,89,104,.86) 0%,rgba(54,79,79,.91) 42%,rgba(37,66,73,.96) 100%);
+  box-shadow:0 10px 22px #0c233c8c,inset 0 1px 1px #e5ecda3d}
+.cs-tile::before{content:"";position:absolute;inset:0;pointer-events:none;
+  border-top:3px solid #e7bc8b;background:linear-gradient(145deg,#f7cc9722,transparent 36%);z-index:1}
+.cs-tile.cs-awaiting{border-color:#b4c9bf73;background:linear-gradient(160deg,#3c5b64e5,#303f4fe6)}
+.cs-tile.cs-awaiting::before{border-color:#9cb6ae}
+.cs-tile-top{display:flex;justify-content:space-between;align-items:center;gap:4px;padding:clamp(5px,.7vh,10px) clamp(7px,.65vw,13px);
+  border-bottom:1px solid #faf0d938;font-size:clamp(8px,.73vw,14px);font-weight:850;letter-spacing:.1em;color:#f5d9b9;white-space:nowrap;position:relative;z-index:2}
+.cs-tile-spade{font-family:Georgia,serif;color:#f8d3a1;font-size:clamp(15px,1.25vw,25px)}
+.cs-tile-center{min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5vh;padding:.5vh .55vw}
+.cs-portrait{position:relative;min-height:0;width:clamp(44px,5.4vw,104px);height:clamp(44px,5.4vw,104px);aspect-ratio:1;flex:0 1 auto;overflow:hidden;border-radius:50%;
+ border:3px solid #ffe0b3;background:radial-gradient(circle at 40% 30%,#a77b78,#394e55 75%);box-shadow:0 5px 15px #112a3db5,0 0 0 4px #e7c69c37}
+.cs-portrait-photo{width:100%;height:100%;object-fit:cover;display:block}
+.cs-portrait-symbol{display:grid;place-items:center;width:100%;height:100%;font:700 clamp(24px,3.6vw,72px)/1 Georgia,serif;color:#f0d5ab;text-shadow:0 0 16px #f3c28da6}
+.cs-awaiting .cs-portrait{border-color:#d4e2cc73;box-shadow:0 0 0 4px #d4e5c724}
+.cs-awaiting .cs-portrait-symbol{color:#e0e9d3a3}
+.cs-captain-line{display:flex;flex-direction:column;align-items:center;gap:.18vh;min-width:0;text-align:center}
+.cs-role{font-size:clamp(8px,.67vw,14px);letter-spacing:.17em;color:#d9e1b8;font-weight:900}
+.cs-captain-name{max-width:100%;font-size:clamp(14px,1.24vw,27px);line-height:1.08;letter-spacing:.01em;color:#fff4df;font-weight:950;overflow-wrap:anywhere}
+.cs-captain-pending{max-width:100%;font-size:clamp(8px,.74vw,14px);line-height:1.22;letter-spacing:.08em;color:#c6d7cf;font-weight:850}
+.cs-team-name{min-height:clamp(34px,4.4vh,65px);padding:.65vh .7vw;display:flex;align-items:center;justify-content:center;text-align:center;
+ font-size:clamp(11px,.94vw,19px);line-height:1.08;font-weight:900;color:#fff0d5;
+ border-top:1px solid #f3e5c83a;background:rgba(15,46,55,.41);overflow-wrap:anywhere}
+.cs-awaiting .cs-team-name{color:#e8f0dc;font-size:clamp(11px,.96vw,20px)}
+.cs-footnote{min-height:2.1vh;padding-top:.7vh;font-size:clamp(9px,.74vw,15px);font-weight:850;letter-spacing:.13em;color:#f3d7ae}
+.captain-experience .gs-side{padding:3.2vh 1vw 2.7vh .3vw;overflow:hidden}
+.captain-experience .gs-jack-animation{width:clamp(94px,15vw,260px)}
+.captain-experience .gs-jack-animation-image{max-height:31vh}
+.captain-experience .gs-jack-animation-tagline{color:#e8daab;font-size:clamp(8px,.73vw,14px);letter-spacing:.08em;text-align:center}
+.captain-experience .gs-route{padding:0 0 1.4vh}
+.captain-experience .gs-route-markers{gap:clamp(7px,1.2vh,15px)}
+.captain-experience .gs-route-marker{font-size:clamp(8px,.72vw,14px);letter-spacing:.12em;gap:.65vw}
+.captain-experience .gs-route-marker i{width:clamp(11px,1.4vw,23px)}
+.captain-experience .gs-route-markers::before{left:.7vw}
+.captain-experience .gs-side-bottom{gap:.6vw;font-size:clamp(10px,.86vw,17px)}
+.captain-experience .gs-side-bottom b{font-size:clamp(27px,2.45vw,50px);color:#e6d8a7}
+.captain-experience .gs-footer{background:linear-gradient(90deg,#153f4edc,#625464dc);font-size:clamp(9px,.84vw,16px)}
+.captain-experience .gs-footer span:nth-child(2){color:#dfdfae}
+@media (max-width:1200px){
+  .captain-experience .gs-content{grid-template-columns:minmax(0,81%) minmax(0,19%)}
+  .captain-experience .gs-main{padding-left:2.2vw}
+  .captain-experience .gs-title{font-size:clamp(28px,3.35vw,52px)}
+  .cs-tiles{gap:5px}
+  .cs-portrait{width:clamp(36px,5.3vw,68px);height:clamp(36px,5.3vw,68px)}
+  .cs-team-index{font-size:clamp(7px,.69vw,10px)}
+  .cs-tile-top{padding:3px 5px}
+  .cs-captain-name{font-size:clamp(12px,1.24vw,17px)}
+  .cs-team-name{font-size:clamp(10px,.96vw,14px)}
+}
+@media (max-height:720px){
+  .captain-experience .gs-main{padding-top:1.2vh}
+  .captain-experience .gs-title{font-size:clamp(28px,3.3vw,65px)}
+  .captain-experience .gs-section-rule{margin:.85vh 0}
+  .cs-subline{margin-bottom:.65vh}
+  .cs-portrait{width:clamp(36px,4.4vw,80px);height:clamp(36px,4.4vw,80px)}
+  .cs-tile-center{gap:.3vh}
+  .cs-team-name{min-height:3.3vh}
+}
+@media(prefers-reduced-motion:reduce){.cs-tile{animation:none}}
