@@ -142,6 +142,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         red_show = payload.get('red_show')
         if red_show:
             red_show['step'] = min(red_show['step'], len(red_show['ranking']) + 1)
+        secret_show = payload.get('secret_show')
+        if secret_show:
+            available = len(payload.get('revealed_secrets', []))
+            secret_show['step'] = min(max(0, secret_show['step']),
+                                       available + (1 if available == 3 else 0))
         return row['version'], payload
 
     def audit(c, action, data):
@@ -300,6 +305,26 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
+        secret_show = result.get('secret_show')
+        if secret_show:
+            step = secret_show['step']
+            available = len(result['revealed_secrets'])
+            visible = sorted(result['revealed_secrets'], key=lambda secret: secret['slot'])[:min(step, available)]
+            result['secret_view'] = {
+                'step': step, 'revealed_count': available,
+                'max_step': available + (1 if available == 3 else 0),
+                'revealed': visible,
+                'summary': step == 4 and available == 3,
+            }
+            result['secret_show'] = {'step': step, 'revealed_count': available}
+            result['revealed_secrets'] = visible
+            result['revealed_slots'] = [secret['slot'] for secret in visible]
+            # During cinematic replay, even previously announced Secret Jacks,
+            # knockout bonuses and totals remain hidden until their reveal.
+            if step < 4:
+                result['ranking'] = []
+                result['stages'] = {}
+                result['recent_changes'] = []
         return result
 
     def admin_state(c):
@@ -348,6 +373,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     def red_preview():
         # Synthetic demo only; no authentication, tournament results or writes.
         return (HERE / 'static' / 'red-preview.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/secret', response_class=HTMLResponse)
+    def secret_preview():
+        # Self-contained fictional rehearsal. No private draft or database reads.
+        return (HERE / 'static' / 'secret-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -781,11 +811,34 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if red_show and action == 'red':
                 raise HTTPException(409, 'RED SHOW уже запущен: повторная публикация RED недоступна')
             if red_show and red_show['step'] < len(red_show['ranking']) + 1:
-                if (action in PHASES or action in ('reveal', 'votes')
+                if (action in PHASES or action in ('reveal', 'votes', 'secret-show-start')
                     or (action == 'scene' and body.get('scene') in
                         ('green', 'blue', 'red', 'secrets', 'votes', 'final', 'winner'))):
                     raise HTTPException(409, 'Сначала заверши раскрытие RED в шоу-пульте')
-            if action == 'red-show-start':
+            secret_show = p.get('secret_show')
+            if secret_show and secret_show['step'] < 4:
+                if (action in ('votes', 'red-show-start') or
+                    (action == 'scene' and body.get('scene') in
+                        ('secrets', 'votes', 'final', 'winner'))):
+                    raise HTTPException(409, 'Сначала заверши раскрытие SECRET JACK SHOW')
+            if action == 'secret-show-start':
+                if 'red' not in p['published_phases'] or p['votes_published']:
+                    raise HTTPException(409, 'SECRET JACK SHOW доступен после RED и до голосования')
+                if len(list(c.execute('SELECT slot FROM secrets'))) != 3:
+                    raise HTTPException(409, 'Сначала назначьте всех трёх Secret Jacks')
+                p['secret_show'] = {'step': 0}
+                p['scene'] = 'secret_show'
+            elif action == 'secret-show-step':
+                if not secret_show or p['votes_published']:
+                    raise HTTPException(409, 'Сначала запусти SECRET JACK SHOW')
+                available = len(p['revealed_secrets'])
+                max_step = available + (1 if available == 3 else 0)
+                step = strict_int(body.get('step'), 'step', 0, max_step)
+                if abs(step - secret_show['step']) != 1:
+                    raise HTTPException(409, 'Переходи по одному шагу')
+                secret_show['step'] = step
+                p['scene'] = 'secret_show'
+            elif action == 'red-show-start':
                 if 'red' not in p['published_phases'] or p['revealed_slots'] or p['votes_published']:
                     raise HTTPException(409, 'Шоу RED доступно после RED, до Secret Jack и голосов')
                 if not red_show:
@@ -937,6 +990,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     raise HTTPException(409, 'Назначьте всех 3 Secret Jacks до раскрытия')
                 if slot != len(p['revealed_slots']) + 1:
                     raise HTTPException(409, 'Раскрытие строго по одному: 1, 2, 3')
+                if secret_show and secret_show['step'] != len(p['revealed_slots']):
+                    raise HTTPException(409, 'Сначала вернись к последнему раскрытому Jack')
                 sec = c.execute('''SELECT s.*,p.name, p.photo_path,st.team_id AS jack_team_id FROM secrets s
                                     JOIN players p ON p.id=s.player_id JOIN seats st ON st.player_id=p.id WHERE slot=?''', (slot,)).fetchone()
                 if not sec:
@@ -953,7 +1008,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 p['visible_player_ids'] = sorted(visible)
                 if sec['photo_path']:
                     p.setdefault('visible_photos', {})[str(sec['player_id'])] = sec['photo_path']
-                p['scene'] = 'secrets'
+                if secret_show:
+                    # Replays only change scene step; this first publish assigns
+                    # the bonus exactly once through revealed_secrets.
+                    secret_show['step'] = slot
+                    p['scene'] = 'secret_show'
+                else:
+                    p['scene'] = 'secrets'
             elif action == 'votes':
                 votes = [rowdict(r) for r in c.execute('SELECT * FROM votes')]
                 if len(votes) != count:
