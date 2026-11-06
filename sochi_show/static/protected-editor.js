@@ -138,10 +138,14 @@ function renderPreview(preview){
 }
 el('protected-kind').addEventListener('change',changeFields);
 el('protected-fields').addEventListener('change',e=>{
- if(e.target.id==='protected-team'||e.target.id==='protected-field'||e.target.id==='protected-player'||e.target.id==='protected-slot'){
-  const kind=value('protected-kind');
-  if(['stage','chip_rate','team_name','player_name','captain','vote','secret'].includes(kind))prefill();
- }
+ const kind=value('protected-kind'),id=e.target.id;
+ const reload = (kind==='stage' && ['protected-team','protected-field'].includes(id))
+   || (kind==='chip_rate' && id==='protected-field')
+   || (['team_name','captain','vote','winner'].includes(kind) && id==='protected-team')
+   || (kind==='player_name' && id==='protected-player')
+   || (kind==='secret' && id==='protected-slot');
+ // Do not revert a newly selected captain or Secret Jack!
+ if(reload)prefill();
 });
 el('protected-preview').addEventListener('click',async()=>{
  try{
