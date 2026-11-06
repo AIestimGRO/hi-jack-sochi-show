@@ -184,7 +184,7 @@ def test_correction_invalid_inputs_are_atomic_and_admin_only(client):
     prepare(client,h,10)
     state=client.get('/sochi/api/admin/state').json()
     assert client.post('/sochi/api/admin/correction/preview',json={
-        'kind':'team_name','team_id':1,'value':'A','expected_version':0}).status_code==403 or True
+        'kind':'team_name','team_id':1,'value':'A','expected_version':0}).status_code==403
     bad=preview(client,h,kind='stage',team_id=1,field='green_stack',value=-3)
     assert bad.status_code==422
     assert client.get('/sochi/api/admin/state').json()==state
@@ -194,3 +194,83 @@ def test_correction_invalid_inputs_are_atomic_and_admin_only(client):
     bad=preview(client,h,kind='seat',card_id='nonexistent',value='Игрок')
     assert bad.status_code==422
     assert client.get('/sochi/api/admin/state').json()==state
+
+
+
+def test_protected_photo_publish_replace_delete(client):
+    import io
+    from PIL import Image
+    h=auth(client)
+    st=prepare(client,h,10,True)
+    captain=next(s for s in st['seats'] if s['team_id']==1)
+    assert call(client,'team',h,{'team_id':1,'captain_player_id':captain['player_id']}).status_code==200
+    assert call(client,'publish',h,{'action':'teams'}).status_code==200
+    assert call(client,'publish',h,{'action':'captains'}).status_code==200
+    pid=captain['player_id']
+    def upload(color):
+        im=Image.new('RGB',(100,100),color)
+        binary=io.BytesIO()
+        im.save(binary,'PNG')
+        res=client.post('/sochi/api/admin/photo/'+str(pid),headers=h,
+          files={'file':('pic.png',binary.getvalue(),'image/png')})
+        assert res.status_code==200,res.text
+    upload('red')
+    before=client.get('/sochi/api/public/state').json()['state']
+    assert str(pid) not in before.get('visible_photos',{})
+    assert client.get('/sochi/api/public/photo/'+str(pid)).status_code==404
+    trial=preview(client,h,kind='photo',player_id=pid)
+    assert trial.status_code==200
+    assert trial.json()['preview']['before'] is None
+    commit(client,h,kind='photo',player_id=pid)
+    pub=client.get('/sochi/api/public/state').json()['state']
+    first=pub['visible_photos'][str(pid)]
+    assert client.get('/sochi/api/public/photo/'+str(pid)).status_code==200
+    upload('blue')
+    commit(client,h,kind='photo',player_id=pid)
+    next_pub=client.get('/sochi/api/public/state').json()['state']
+    assert next_pub['visible_photos'][str(pid)]!=first
+    commit(client,h,kind='photo',player_id=pid,clear=True)
+    assert client.get('/sochi/api/public/photo/'+str(pid)).status_code==404
+
+
+def test_protected_seat_layout_swap_preserves_roster(client):
+    h=auth(client)
+    prepare(client,h,10,True)
+    assert call(client,'publish',h,{'action':'teams'}).status_code==200
+    st=client.get('/sochi/api/admin/state').json()
+    cards=[r for r in st['seats'] if r['table_no']==1]
+    assert len(cards)==10
+    a,b=cards[:2]
+    res=preview(client,h,kind='seat_layout',card_id=a['card_id'],value=b['card_id'])
+    assert res.status_code==200,res.text
+    assert client.get('/sochi/api/admin/state').json()==st
+    commit(client,h,kind='seat_layout',card_id=a['card_id'],value=b['card_id'])
+    updated=client.get('/sochi/api/admin/state').json()
+    by_id={s['card_id']:s for s in updated['seats']}
+    assert by_id[a['card_id']]['box_no']==b['box_no']
+    assert by_id[b['card_id']]['box_no']==a['box_no']
+    assert len(updated['seats'])==30
+    assert len(set((s['table_no'],s['box_no']) for s in updated['seats']))==30
+    assert sorted(r['table_no'] for r in updated['seats'])==sorted(r['table_no'] for r in st['seats'])
+
+
+def test_reseat_after_final_retracts_publication_without_deleting_history(client):
+    from test_show import approved_shape
+    h=auth(client)
+    finalized_votes(client,h,10)
+    old=client.get('/sochi/api/admin/state').json()
+    data={'kind':'seating_import','value':{'team_count':11,'document':approved_shape()}}
+    result=preview(client,h,**data)
+    assert result.status_code==200,result.text
+    assert set(result.json()['preview']['retracted_phases'])=={'green','blue','red'}
+    assert client.get('/sochi/api/admin/state').json()==old
+    commit(client,h,**data)
+    now=client.get('/sochi/api/admin/state').json()
+    assert now['team_count']==11 and len(now['teams'])==11 and len(now['seats'])==33
+    assert now['published']['scene']=='pause'
+    assert now['published']['published_phases']==[]
+    assert now['published']['ranking']==[]
+    assert now['published']['revealed_secrets']==[]
+    assert now['published']['published_votes']==[]
+    assert 'final_show' not in now['published']
+    assert client.get('/sochi/api/admin/corrections/history').json()['history'][0]['field_name']=='Полная замена схемы рассадки'
