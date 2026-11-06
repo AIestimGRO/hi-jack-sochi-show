@@ -79,10 +79,14 @@ for(const count of [10,11]){
   assert.match(host.innerHTML,/aria-label="Зевс с молнией"/);
   assert.match(host.innerHTML,/aria-label="Хромая бабушка с тростью"/);
   assert.match(host.innerHTML,/aria-label="Бабушка без трости"/);
-  assert.match(host.innerHTML,/БЛЕФ · СТЕК · ОЛЛ-ИН/,'poker-specific badge slogan');
+  assert.match(host.innerHTML,/ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ/,'poker-specific badge slogan');
   assert.doesNotMatch(host.innerHTML,/ВЫСОТА · ВОЛЯ · ПОБЕДА/);
 }
 
+const greenCSS=fs.readFileSync('sochi_show/static/green-show.css','utf8');
+assert.match(greenCSS,/\.green-experience \.gs-hero-place\{\s*line-height:1\.08;\s*gap:/);
+assert.match(greenCSS,/\.green-experience \.gs-hero-place small\{\s*display:block;/);
+assert.match(greenCSS,/padding-left:0;/);
 assert.equal(Object.keys(mascots).sort().join(','),'label,render');
 for(const rank of Array.from({length:11},(_,i)=>i+1)){
   const svg=mascots.render(rank);
