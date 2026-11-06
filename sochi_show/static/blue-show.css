@@ -57,12 +57,19 @@
 .bs-hero-icon{width:clamp(78px,7.5vw,143px);height:clamp(78px,7.5vw,143px);flex:0 0 auto}
 .bs-hero-icon .gs-rank-symbol{width:100%;height:100%;filter:drop-shadow(0 8px 20px #1f3749)}
 .bs-hero-place{font-family:Georgia,serif;font-size:clamp(74px,8vw,155px);line-height:.85;color:#e2dbe0;display:flex;flex-direction:column;min-width:7.2vw;align-items:center;letter-spacing:-.045em}
-.bs-hero-place small{font:850 clamp(9px,.86vw,17px)/1.6 Inter,system-ui,sans-serif;letter-spacing:.21em;color:#d2e6f1}
+.bs-hero-place small{font:850 clamp(9px,.86vw,17px)/1.3 Inter,system-ui,sans-serif;letter-spacing:.21em;color:#d2e6f1;display:block;margin:0}
+/* The nine-shaped descender must not overlap the caption on any reveal. */
+.bs-hero-place{
+  line-height:1.08;
+  gap:clamp(9px,1.5vh,18px);
+  justify-content:center;
+  padding-bottom:clamp(3px,.5vh,8px);
+}
 .bs-hero-right{max-width:32vw;min-width:0;display:flex;flex-direction:column;gap:2vh}
 .bs-hero-name{font-size:clamp(24px,2.85vw,54px);font-weight:900;line-height:1.08;overflow-wrap:anywhere}
 .bs-change-line{display:flex;flex-wrap:wrap;align-items:center;gap:1vw;font-size:clamp(10px,1.15vw,22px);font-weight:900;letter-spacing:.05em}
 .bs-from{background:#27495ab0;padding:7px 12px;border:1px solid #d6e6ec67;border-radius:6px;white-space:nowrap}
-.bs-change-line strong{padding:8px 12px;border-radius:7px;letter-spacing:.09em}
+/* Movement is expressed only as GREEN #N → BLUE #M in the reveal. */
 .bs-change-line .rise,.bs-move.rise{color:#ddf5bb;background:#4673497d}
 .bs-change-line .fall,.bs-move.fall{color:#ffd2ca;background:#994d607e}
 .bs-change-line .same,.bs-move.same{color:#d8e0e2;background:#59707b50}
