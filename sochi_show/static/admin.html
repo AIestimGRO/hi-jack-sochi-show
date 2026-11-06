@@ -120,4 +120,49 @@
   </div>
   <p class="muted">Начальный экран скрывает призёров. Кнопкой «Далее» открой сначала 3-е, затем 2-е и 1-е место. После них — общий рейтинг и праздничная сцена чемпиона с составом команды. При ничьей на первом месте сначала зафиксируй решение организатора в протоколе ниже. Перемотка не меняет очки.</p>
 </section>
-<section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">После публикации GREEN норматив re-entry блокируется, после BLUE — норматив add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=final-v1" defer></script></body></html>
+<section class="panel" id="protected-editor-panel">
+  <div class="row between wrap">
+    <div>
+      <div class="eyebrow">КОНТРОЛЬ РЕЗУЛЬТАТОВ / ВОССТАНОВЛЕНИЕ</div>
+      <h2>🔐 Защищённое исправление любых данных</h2>
+      <p class="muted">Исправления разрешены даже после GREEN, BLUE, RED, Secret Jack, голосования и финала. Перед применением: сравнение было/станет, повторный PIN и причина. Каждое действие сохраняется в истории вместе со снимком состояния.</p>
+    </div>
+    <button id="protected-history-btn" type="button" class="secondary">История исправлений</button>
+  </div>
+  <div class="row wrap">
+    <label>Что исправляем
+      <select id="protected-kind">
+        <option value="stage">GREEN / BLUE / RED: стек, количество, место</option>
+        <option value="chip_rate">Норматив фишек re-entry / add-on</option>
+        <option value="team_name">Название команды</option>
+        <option value="captain">Капитан команды</option>
+        <option value="player_name">Имя игрока</option>
+        <option value="seat">Игрок в карточке рассадки / убрать игрока</option>
+        <option value="secret">Secret Jack / выбивание / удалить роль</option>
+        <option value="vote">Голос капитана / удалить голос</option>
+        <option value="vote_mode">Правило начисления голосов</option>
+        <option value="winner">Победитель при ничьей</option>
+      </select>
+    </label>
+  </div>
+  <div id="protected-fields" class="protected-fields"></div>
+  <div class="row wrap">
+    <button type="button" id="protected-preview" class="gold">Проверить последствия исправления</button>
+  </div>
+  <div id="protected-result" class="muted"></div>
+  <form id="protected-confirm" class="hidden">
+    <p><strong>Подтверждение защищённого исправления</strong> — действие изменит текущий эфир и сохранит старые значения в журнале.</p>
+    <label>Причина (не менее 8 символов)
+      <textarea id="protected-reason" rows="2" maxlength="300" placeholder="Например: исправление стека GREEN по протоколу стола"></textarea>
+    </label>
+    <label>Повторно введи PIN администратора
+      <input id="protected-pin" type="password" autocomplete="off" required placeholder="PIN"/>
+    </label>
+    <label>Напиши слово ИСПРАВИТЬ
+      <input id="protected-phrase" type="text" autocomplete="off" required placeholder="ИСПРАВИТЬ"/>
+    </label>
+    <button type="submit" id="protected-apply" class="gold">Подтвердить и применить исправление</button>
+  </form>
+  <div id="protected-history" class="hidden"></div>
+</section>
+<section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">После публикации GREEN норматив re-entry блокируется, после BLUE — норматив add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=final-v1" defer></script><script src="/sochi/static/protected-editor.js?v=corrections-v1" defer></script></body></html>
