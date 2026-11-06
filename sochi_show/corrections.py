@@ -6,7 +6,7 @@ No public data is modified on preview (the caller rolls the transaction back).
 import copy
 import sqlite3
 from fastapi import HTTPException
-from .core import green_points, blue_points, red_points, published_ranking
+from .core import green_points, blue_points, red_points, published_ranking, validate_seating
 
 FIELD_LIMITS = {
     'green_stack': (0, None), 'reentry_count': (0, 1000),
@@ -130,6 +130,63 @@ def correction(c, body):
             if rate is None and new is not None: fail(409,f'Сначала задай норматив {name}')
             c.execute(f'UPDATE stages SET {name}_chips=? WHERE team_id=?',(None if new is None else new*rate,tid))
         return f'{field} команды №{tid}',old[field],new
+    if kind == 'photo':
+        pid=active_player(c,body.get('player_id'))
+        row=c.execute('SELECT photo_path FROM players WHERE id=?',(pid,)).fetchone()
+        old=body.get('_photo_before')
+        if clear:
+            c.execute('UPDATE players SET photo_path=NULL WHERE id=?',(pid,))
+            return f'Фото игрока #{pid}',old,None
+        if row['photo_path'] is None:
+            fail(409,'Сначала загрузи новое фото игрока в карточке участника')
+        return f'Фото игрока #{pid}',old,row['photo_path']
+    if kind == 'seat_layout':
+        first=str(body.get('card_id') or '')
+        second=str(value or '')
+        if first==second:fail(422,'Выбери две разные карточки')
+        a=c.execute('SELECT * FROM seats WHERE card_id=?',(first,)).fetchone()
+        b=c.execute('SELECT * FROM seats WHERE card_id=?',(second,)).fetchone()
+        if not a or not b:fail(422,'Карточка не найдена')
+        before={first:[a['table_no'],a['box_no']],second:[b['table_no'],b['box_no']]}
+        c.execute('UPDATE seats SET table_no=-1,box_no=-1 WHERE card_id=?',(first,))
+        c.execute('UPDATE seats SET table_no=?,box_no=? WHERE card_id=?',(a['table_no'],a['box_no'],second))
+        c.execute('UPDATE seats SET table_no=?,box_no=? WHERE card_id=?',(b['table_no'],b['box_no'],first))
+        duplicate=c.execute('''SELECT team_id,table_no,COUNT(*) n FROM seats
+                GROUP BY team_id,table_no HAVING n>1''').fetchone()
+        if duplicate:fail(409,'Недопустимая пересадка: два игрока одной команды за одним столом')
+        return 'Обмен местами двух карточек',before,{first:before[second],second:before[first]}
+    if kind == 'seating_import':
+        payload=value
+        if not isinstance(payload,dict):fail(422,'Требуется JSON рассадки')
+        count=integer(payload.get('team_count'),'team_count',10,13)
+        document=payload.get('document')
+        if not isinstance(document,dict):fail(422,'Требуется JSON с variants')
+        try:
+            teams,cards=validate_seating(document,count)
+        except (ValueError,TypeError,KeyError) as exc:
+            fail(422,str(exc))
+        previous_count=c.execute('SELECT COUNT(*) FROM teams').fetchone()[0]
+        old_map={r['card_id']:(r['team_id'],r['player_id']) for r in c.execute('SELECT card_id,team_id,player_id FROM seats')}
+        old_names={r['team_id']:r['display_name'] for r in c.execute('SELECT team_id,display_name FROM teams')}
+        old_caps={r['team_id']:r['captain_player_id'] for r in c.execute('SELECT team_id,captain_player_id FROM teams')}
+        for table in ('votes','secrets','stages','seats','teams'):
+            c.execute(f'DELETE FROM {table}')
+        for r in teams:
+            tid=r['team_id']
+            name=old_names.get(tid,r['original_name'])
+            c.execute('INSERT INTO teams(team_id,original_name,display_name) VALUES (?,?,?)',(tid,r['original_name'],name))
+            c.execute('INSERT INTO stages(team_id) VALUES (?)',(tid,))
+        for r in cards:
+            old=old_map.get(r['card_id'])
+            pid=old[1] if old and old[0]==r['team_id'] else None
+            c.execute('INSERT INTO seats(card_id,team_id,table_no,box_no,player_id) VALUES (?,?,?,?,?)',
+                (r['card_id'],r['team_id'],r['table'],r['box'],pid))
+        for tid,cap in old_caps.items():
+            if cap is not None and c.execute('SELECT 1 FROM seats WHERE player_id=? AND team_id=?',(cap,tid)).fetchone():
+                c.execute('UPDATE teams SET captain_player_id=? WHERE team_id=?',(cap,tid))
+        c.execute("INSERT OR REPLACE INTO settings(key,value) VALUES ('team_count',?)",(str(count),))
+        return 'Полная замена схемы рассадки',{'teams':previous_count,'cards':len(old_map),'published_reset':True},
+            {'teams':count,'cards':len(cards),'published_reset':True}
     if kind == 'vote_mode':
         old = c.execute("SELECT value FROM settings WHERE key='vote_mode'").fetchone()
         new=str(value or '')
