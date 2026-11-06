@@ -102,4 +102,22 @@
     <span id="vote-show-progress" class="chip">Сначала закончи SECRET JACK</span>
   </div>
   <p class="muted">Сохранение сразу покажет зрителям только заставку, без голосов и будущих баллов. Каждое «Далее» раскрывает один голос капитана и промежуточные места. Последний шаг — таблица после всех бонусов. Повторный показ не добавляет очки.</p>
-</div></section><section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">После публикации GREEN норматив re-entry блокируется, после BLUE — норматив add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=vote-v1" defer></script></body></html>
+</div></section>
+<section class="panel" id="final-director">
+  <div class="row between wrap">
+    <div>
+      <div class="eyebrow">BROADCAST 2.0 · GRAND FINALE</div>
+      <h2>FINAL SHOW — церемония победителей</h2>
+      <p class="muted">Заставка → бронза → серебро → золото → полный рейтинг → чемпион на вершине.</p>
+    </div>
+    <a href="/sochi/preview/final" class="button secondary" target="_blank" rel="noopener">Демо финала ↗</a>
+  </div>
+  <div class="row wrap green-director-actions">
+    <button id="final-show-start" type="button" class="gold">▶ Начать FINAL SHOW</button>
+    <button id="final-show-back" type="button" class="secondary">← Назад</button>
+    <button id="final-show-next" type="button" class="gold">Далее →</button>
+    <span id="final-show-progress" class="chip">Сначала заверши голосование</span>
+  </div>
+  <p class="muted">Начальный экран скрывает призёров. Кнопкой «Далее» открой сначала 3-е, затем 2-е и 1-е место. После них — общий рейтинг и праздничная сцена чемпиона с составом команды. При ничьей на первом месте сначала зафиксируй решение организатора в протоколе ниже. Перемотка не меняет очки.</p>
+</section>
+<section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">После публикации GREEN норматив re-entry блокируется, после BLUE — норматив add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=final-v1" defer></script></body></html>
