@@ -545,6 +545,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         # Public demo is fictional, does not read or mutate live tournament.
         return (HERE / 'static' / 'final-preview.html').read_text('utf-8')
 
+    @app.get('/sochi/preview/captains', response_class=HTMLResponse)
+    def captains_preview():
+        # Demo has no API calls; it cannot disclose or modify real captains.
+        return (HERE / 'static' / 'captain-preview.html').read_text('utf-8')
+
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
         body = await request.json()
