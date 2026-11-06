@@ -11,7 +11,7 @@ const MODULES=[
   ['teams-panel','02','Игроки и команды','Имена, капитаны, фотографии и публикация команд.'],
   ['scores-panel','03','Результаты GREEN / BLUE / RED','Заполняй этапы последовательно; перед публикацией будет расчёт.'],
   ['secrets-panel','04','Secret Jacks','Три закрытых назначения и поочерёдное раскрытие.'],
-  ['votes-panel','05','Голоса команд','Один голос от каждой команды, затем публикация.'],
+  ['votes-panel','05','Голоса команд','Один голос от каждой команды, затем кинематографическое раскрытие.'],
   ['review-panel','06','Рейтинг и протокол','Итоговая проверка, история изменений, CSV.']
 ];
 let guideOpened=false;
@@ -84,6 +84,28 @@ function updateWorkflow(){
     if(module)module.open=true;
     guideOpened=true;
   }
+}
+function renderVoteDirector(){
+  const pub=state.published||{};
+  const show=pub.vote_show;
+  const count=state.team_count||0;
+  const complete=state.votes?.length===count&&count>0;
+  const secretsDone=pub.secret_show?pub.secret_show.step===4:(pub.revealed_slots?.length||0)===3;
+  const ready=complete&&secretsDone&&!pub.votes_published;
+  const current=show?.step??0;
+  const max=count+1;
+  $('publish-votes').disabled=!ready;
+  $('publish-votes').textContent=pub.votes_published?
+    '✓ Голоса уже зафиксированы':'♠ Зафиксировать голоса и начать шоу';
+  $('vote-show-start').disabled=!show||['final','winner'].includes(pub.scene);
+  $('vote-show-back').disabled=!show||current===0||['final','winner'].includes(pub.scene);
+  $('vote-show-next').disabled=!show||current>=max||['final','winner'].includes(pub.scene);
+  $('vote-show-next').textContent=current===count?'Показать итог →':'Далее →';
+  $('vote-show-progress').textContent=show?
+    'Голос '+Math.min(current,count)+' / '+count+
+    (current===max?' · итог раскрыт':' · показ частичных результатов'):
+    !secretsDone?'Сначала заверши SECRET JACK SHOW':
+    !complete?'Заполни и сохрани голоса всех команд':'Можно опубликовать голоса';
 }
 function renderSecretDirector(){
   const pub=state.published||{};
@@ -182,11 +204,26 @@ const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}">${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary">✓</button></div>`}).join('');
 let rk=pub.ranking;$('ranking-preview').innerHTML=rk.length?`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
 const ties=rk.length>1?rk.filter(r=>r.total===rk[0].total):[];$('tie-resolution').innerHTML=ties.length>1?`<span class="note">НИЧЬЯ НА ПЕРВОМ МЕСТЕ · решение организатора:</span><select id="tie-winner">${ties.map(t=>`<option value="${t.team_id}" ${pub.winner_decision===t.team_id?'selected':''}>${esc(t.name)}</option>`).join('')}</select><button id="save-tie" class="gold">Зафиксировать решение</button>`:'';
-$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();renderGreenDirector();renderBlueDirector();renderRedDirector();renderSecretDirector();}
+$('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();renderGreenDirector();renderBlueDirector();renderRedDirector();renderSecretDirector();renderVoteDirector();}
 $('login-form').onsubmit=async e=>{e.preventDefault();try{await api('/sochi/api/admin/login','POST',{password:$('password').value});$('password').value='';await refresh()}catch(err){toast(err.message,true)}};
 $('logout').onclick=async()=>{await change('/sochi/api/admin/logout',{});location.reload()};
 $('import').onclick=async()=>{const file=$('json-file').files[0];if(!file)return toast('Выберите файл JSON',true);let obj;try{obj=JSON.parse(await file.text())}catch{return toast('Неверный JSON',true)}let n=Number($('count').value);let assigned=state.seats.some(s=>s.player_id);let confirm_replace_cards=false;if(assigned){confirm_replace_cards=confirm(`ВНИМАНИЕ: у участников уже есть карточки. Смена схемы требует ФИЗИЧЕСКОЙ ЗАМЕНЫ карточек. Подтвердить?`);if(!confirm_replace_cards)return}await change('/sochi/api/admin/seating',{document:obj,team_count:n,confirm_replace_cards})};
-$('publish-teams').onclick=()=>publish({action:'teams'},'Опубликовать названия всех команд?');$('publish-captains').onclick=()=>publish({action:'captains'},'Показать капитанов и их фотографии?');$('publish-votes').onclick=()=>publish({action:'votes'},'Раскрыть голоса всех команд и начислить бонусы?');$('vote-mode').onchange=e=>change('/sochi/api/admin/vote-mode',{mode:e.target.value});$('reveal-next').onclick=()=>{
+$('publish-teams').onclick=()=>publish({action:'teams'},'Опубликовать названия всех команд?');$('publish-captains').onclick=()=>publish({action:'captains'},'Показать капитанов и их фотографии?');$('publish-votes').onclick=()=>publish(
+  {action:'votes',show_mode:'cinematic'},
+  'Зафиксировать все голоса и открыть только ЗАСТАВКУ голосования? Кнопка «Далее» будет раскрывать голоса по одному.'
+);
+$('vote-show-start').onclick=()=>publish({action:'vote-show-start'},
+  'Повторить шоу голосования с заставки? Баллы повторно не начисляются.');
+$('vote-show-back').onclick=async()=>{
+  const show=state.published?.vote_show;
+  if(!show)return;
+  await change('/sochi/api/admin/publish',{action:'vote-show-step',step:show.step-1});
+};
+$('vote-show-next').onclick=async()=>{
+  const show=state.published?.vote_show;
+  if(!show)return;
+  await change('/sochi/api/admin/publish',{action:'vote-show-step',step:show.step+1});
+};$('vote-mode').onchange=e=>change('/sochi/api/admin/vote-mode',{mode:e.target.value});$('reveal-next').onclick=()=>{
   const slot=(state.published.revealed_slots?.length||0)+1;
   if(!state.published.secret_show)return toast('Сначала запусти SECRET JACK SHOW',true);
   if(slot>3)return toast('Все три Валета раскрыты');
