@@ -25,7 +25,10 @@ def finalized_votes(client, headers, count, mode='target'):
 @pytest.mark.parametrize('mode', ['target','voter'])
 def test_complete_final_ceremony_private_steps_and_replay(client, count, mode):
     h = auth(client)
-    full = finalized_votes(client, h, count, mode)
+    # Vote show's public intermediate table carries movement-only fields.
+    # FINAL freezes the canonical published ranking without those display fields.
+    full = [{k:v for k,v in row.items() if k not in ('before_place','move')}
+            for row in finalized_votes(client, h, count, mode)]
     full_by_team = {r['team_id']: r for r in full}
     first = full[0]
     assert call(client, 'publish', h, {'action': 'final-show-step', 'step': 1}).status_code == 409
