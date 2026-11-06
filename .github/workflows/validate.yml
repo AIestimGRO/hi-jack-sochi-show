@@ -33,9 +33,13 @@ jobs:
           node --check sochi_show/static/blue-preview.js
           node --check sochi_show/static/red-show.js
           node --check sochi_show/static/red-preview.js
+          node --check sochi_show/static/secret-show.js
+          node --check sochi_show/static/secret-preview.js
       - name: GREEN visual smoke tests
         run: node tests/test_green_visual.mjs
       - name: BLUE visual smoke tests
         run: node tests/test_blue_visual.mjs
       - name: RED visual smoke tests
         run: node tests/test_red_visual.mjs
+      - name: SECRET JACK visual smoke tests
+        run: node tests/test_secret_visual.mjs
