@@ -305,7 +305,17 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
         # cannot remain public. Legacy shows without RED are left intact.
         p['revealed_slots']=[]
     else:
-        p['revealed_slots']=[x for x in revealed if x in available]
+        # The director can only reveal 1, then 2, then 3.
+        # If an already-revealed Jack is deleted, retract that reveal AND
+        # the later ones. They remain editable drafts in the database and
+        # can be deliberately re-revealed in order after correction.
+        retained=[]
+        for slot in (1,2,3):
+            if slot in revealed and slot in available:
+                retained.append(slot)
+            else:
+                break
+        p['revealed_slots']=retained
     p['revealed_secrets']=[available[x] for x in p['revealed_slots']]
     if 'secret_show' in p:
         n=len(p['revealed_slots'])
