@@ -300,7 +300,9 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             'jack_team_id':row['jack_team_id'],'knockout_team_id':row['knockout_team_id'],
             'knockout_player_id':row['knockout_player_id'],'knockout_name':row['knockout_name'],
             'confirmed':bool(row['confirmed']),'has_photo':bool(row['photo_path'])}
-    if 'red' not in p['published_phases']:
+    if 'red' in old_phases and 'red' not in p['published_phases']:
+        # A once-published RED has been withdrawn, so downstream bonuses
+        # cannot remain public. Legacy shows without RED are left intact.
         p['revealed_slots']=[]
     else:
         p['revealed_slots']=[x for x in revealed if x in available]
