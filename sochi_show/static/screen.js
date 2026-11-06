@@ -13,7 +13,7 @@ function updatePersistentJack(scene){
   const slot=$('show-jack-persistent');
   const img=$('show-jack-persistent-img');
   if(!slot||!img)return;
-  const integrated=['green_show','blue_show','red_show'].includes(scene);
+  const integrated=['green_show','blue_show','red_show','secret_show'].includes(scene);
   slot.hidden=integrated;
   if(!integrated&&!img.dataset.ready){
     img.src=window.JackSwordGifB64
@@ -24,6 +24,10 @@ function updatePersistentJack(scene){
 }
 function render(state,animate=true){const scene=state.scene||'intro';const panel=$('scene');panel.className=`scene ${scene}${animate?' slide-in':''}`;const rows=state.ranking||[];
 updatePersistentJack(scene);
+if(scene==='secret_show'){
+  window.SecretShow.render(panel,{...state.secret_view,teams:state.teams||{}});
+  return;
+}
 if(scene==='red_show'){
   window.RedShow.render(panel,state.red_view||{count:state.team_count,step:0,revealed:[]});
   return;
