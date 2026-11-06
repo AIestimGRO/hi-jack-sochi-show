@@ -31,6 +31,14 @@ function changeFields(){
  else if(kind==='captain')html=tselect('protected-team','Команда')+pselect('protected-player','Новый капитан')+clearField();
  else if(kind==='player_name')html=pselect('protected-player','Игрок')+textField('text','Новое имя или никнейм');
  else if(kind==='seat')html=select('protected-card','Карточка рассадки',seats().map(s=>[s.card_id,'Стол '+s.table_no+', бокс '+s.box_no+' · '+s.card_id+' · команда '+s.team_id]))+textField('text','Имя нового игрока (создать и назначить)')+clearField();
+ else if(kind==='seat_layout')html=select('protected-card','Первая карточка',seats().map(s=>[s.card_id,'Стол '+s.table_no+', бокс '+s.box_no+' · '+s.card_id]))+
+  select('protected-second-card','Поменять местами с',seats().map(s=>[s.card_id,'Стол '+s.table_no+', бокс '+s.box_no+' · '+s.card_id]))+
+  '<p class="muted">Важно: физически переставьте карточки рассадки! Перестановка, нарушающая принцип «один игрок команды на столе», отклоняется.</p>';
+ else if(kind==='seating_import')html=select('protected-new-count','Количество команд',[[10,'10 команд'],[11,'11 команд'],[12,'12 команд'],[13,'13 команд']])+
+  '<label>Утверждённый JSON рассадки<input id="protected-json-file" type="file" accept=".json,application/json"></label>'+
+  '<p class="error"><strong>ПОЛНЫЙ СБРОС ЭТАПОВ:</strong> этот тип исправления заменяет схему рассадки, очищает этапы, Secret Jack и голоса. Все опубликованные результаты отзываются; сохраняются старые снимки в журнале и резервной базе.</p>';
+ else if(kind==='photo')html=pselect('protected-player','Игрок (сначала загрузи новую фотографию через карточку игрока)')+
+  '<p class="muted">Для замены: загрузи новый файл в разделе игроков, затем здесь опубликуй его с PIN. Для удаления отметь «Удалить».</p>'+clearField();
  else if(kind==='secret')html=select('protected-slot','Номер Secret Jack',[[1,'Secret Jack №1'],[2,'Secret Jack №2'],[3,'Secret Jack №3']])+pselect('protected-player','Какой игрок — Secret Jack')+tselect('protected-killer-team','Какая команда выбила?')+pselect('protected-killer-player','Кто выбил?')+`<label><input id="protected-confirmed" type="checkbox"> Выбит (начислить бонус +10 000)</label>`+clearField();
  else if(kind==='vote')html=tselect('protected-team','Кто голосовал')+tselect('protected-target','За какую команду')+clearField();
  else if(kind==='vote_mode')html=select('protected-field','Получатель бонуса',[['target','Выбранная команда'],['voter','Голосующая команда']]);
@@ -74,10 +82,18 @@ function prefill(){
   if(state?.published?.winner_decision)el('protected-team').value=String(state.published.winner_decision);
  }
 }
-function requestBody(){
+async function requestBody(){
  const kind=value('protected-kind'),clear=el('protected-clear')?.checked===true;
  const body={kind,clear,expected_version:state.publication_version};
  if(['stage','team_name','captain','vote','winner'].includes(kind))body.team_id=Number(value('protected-team'));
+ if(kind==='photo')body.player_id=Number(value('protected-player'));
+ if(kind==='seat_layout'){body.card_id=value('protected-card');body.value=value('protected-second-card')}
+ if(kind==='seating_import'){
+   const file=el('protected-json-file')?.files?.[0];
+   if(!file)throw Error('Выбери утверждённый JSON рассадки');
+   let document;try{document=JSON.parse(await file.text())}catch{throw Error('Ошибка формата JSON')}
+   body.value={team_count:Number(value('protected-new-count')),document};
+ }
  if(kind==='stage'){body.field=value('protected-field');const raw=value('protected-value');if(!clear){if(raw===''||!Number.isSafeInteger(Number(raw)))throw Error('Введи корректное целое число');body.value=Number(raw)}}
  if(kind==='chip_rate'){body.field=value('protected-field');const raw=value('protected-value');if(raw===''||!Number.isSafeInteger(Number(raw)))throw Error('Введи целое число');body.value=Number(raw)}
  if(kind==='team_name')body.value=value('protected-value');
@@ -130,7 +146,7 @@ el('protected-fields').addEventListener('change',e=>{
 el('protected-preview').addEventListener('click',async()=>{
  try{
   if(!state)throw Error('Войди в админку');
-  const body=requestBody();
+  const body=await requestBody();
   const response=await api('/sochi/api/admin/correction/preview','POST',body);
   pending={...body};
   renderPreview(response.preview);
