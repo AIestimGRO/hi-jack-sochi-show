@@ -247,6 +247,9 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             p['captains'].append({'team_id':r['team_id'],'name':player['name'] if player else 'Капитан не выбран',
                                   'player_id':player['id'] if player else None,'has_photo':bool(player['photo_path']) if player else False})
     old_phases=list(p['published_phases'])
+    old_revealed=list(p.get('revealed_slots',[]))
+    old_votes=bool(p.get('votes_published'))
+    old_final=bool(p.get('final_show'))
     stages={r['team_id']:r for r in c.execute('SELECT * FROM stages ORDER BY team_id')}
     for phase in list(p['published_phases']):
         if phase not in PHASES:
@@ -373,6 +376,9 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
     if p['scene']=='final_show' and 'final_show' not in p:
         p['scene']='pause'
     return {'retracted_phases':[x for x in old_phases if x not in p['published_phases']],
+            'retracted_secrets':[x for x in old_revealed if x not in p['revealed_slots']],
+            'votes_retracted':old_votes and not p['votes_published'],
+            'final_retracted':old_final and not p.get('final_show'),
             'score_changes':[]}
 
 
