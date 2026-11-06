@@ -20,6 +20,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from starlette.middleware.sessions import SessionMiddleware
 
 from .core import blue_points, green_points, published_ranking, red_points, validate_seating
+from .corrections import correction, rebuild as rebuild_corrected, score_delta
 
 HERE = Path(__file__).resolve().parent
 SCENES = {'intro', 'teams', 'green', 'blue', 'captains', 'red', 'secrets', 'votes', 'final', 'winner', 'pause'}
@@ -67,6 +68,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     # Shared failure budget prevents distributed PIN guessing from many IPs.
     # Failed attempts only; never log the supplied secret.
     global_login_failures: list[float] = []
+    correction_failures: dict[str, list[float]] = {}
+    global_correction_failures: list[float] = []
 
     @contextmanager
     def connection(write=False):
@@ -99,6 +102,17 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             CREATE TABLE IF NOT EXISTS votes (voter_team_id INTEGER PRIMARY KEY,target_team_id INTEGER NOT NULL);
             CREATE TABLE IF NOT EXISTS publication (id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL,payload TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT,created_at TEXT NOT NULL,action TEXT NOT NULL,data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS correction_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                field_name TEXT NOT NULL,
+                previous_value TEXT,
+                updated_value TEXT,
+                previous_state TEXT NOT NULL,
+                updated_state TEXT NOT NULL,
+                publication_version INTEGER NOT NULL
+            );
         ''')
         # Non-destructive migration of the existing independent SOCHI database.
         if 'addon_count' not in {row[1] for row in c.execute('PRAGMA table_info(stages)')}:
@@ -956,6 +970,100 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if player_id not in p.get('visible_player_ids', []) or not filename:
                 raise HTTPException(404, 'Фотография не опубликована')
         return FileResponse(media / Path(filename).name, media_type='image/webp', headers={'Cache-Control': 'public,max-age=30'})
+
+    def check_correction_version(version, body):
+        supplied=body.get('expected_version')
+        if type(supplied) is not int or supplied != version:
+            raise HTTPException(409, 'Версия эфира изменилась. Обнови админку и проверь исправление заново')
+
+    def make_correction(c, p, body):
+        old=copy.deepcopy(p)
+        edit=copy.deepcopy(body)
+        edit['_winner_before']=p.get('winner_decision')
+        label,before,after=correction(c,edit)
+        if edit.get('kind')=='winner':
+            p['winner_decision']=after
+        details=rebuild_corrected(c,p,green_snapshot,blue_snapshot,red_snapshot,final_snapshot,vote_snapshot)
+        # A protected edit is a live correction; the full authoritative score
+        # table must be in sync even if the broadcast stays on its current step.
+        result=score_delta(old,p)
+        details['score_changes']=result
+        return {'label':label, 'before':before, 'after':after,
+                'old_scene':old.get('scene'),'new_scene':p.get('scene'),
+                'old_phases':old.get('published_phases',[]),
+                'new_phases':p.get('published_phases',[]),
+                'old_leader':old.get('ranking',[{}])[0].get('name') if old.get('ranking') else None,
+                'new_leader':p.get('ranking',[{}])[0].get('name') if p.get('ranking') else None,
+                **details}
+
+    @app.post('/sochi/api/admin/correction/preview')
+    async def correction_preview(request: Request):
+        require_admin(request, True)
+        body=await request.json()
+        if not isinstance(body,dict):
+            raise HTTPException(422,'Нужен объект исправления')
+        with connection(write=True) as c:
+            version,p=get_pub(c)
+            check_correction_version(version,body)
+            summary=make_correction(c,p,body)
+            # Preview must NEVER commit, audit or trigger live updates.
+            c.rollback()
+        return {'ok':True,'preview':summary,'expected_version':version}
+
+    @app.post('/sochi/api/admin/correction/apply')
+    async def correction_apply(request: Request):
+        require_admin(request,True)
+        body=await request.json()
+        if not isinstance(body,dict):
+            raise HTTPException(422,'Нужен объект исправления')
+        client=request.client.host if request.client else 'unknown'
+        now=time.monotonic()
+        correction_failures[client]=[t for t in correction_failures.get(client,[]) if now-t<300]
+        global_correction_failures[:]=[t for t in global_correction_failures if now-t<3600]
+        if len(correction_failures[client])>=6 or len(global_correction_failures)>=15:
+            raise HTTPException(429,'Защита PIN: слишком много попыток. Обратись к организатору')
+        pin=body.get('pin')
+        if not isinstance(pin,str) or not secrets.compare_digest(pin,password):
+            correction_failures[client].append(now)
+            global_correction_failures.append(now)
+            raise HTTPException(403,'Неверный PIN подтверждения')
+        correction_failures.pop(client,None)
+        if body.get('confirm')!='ИСПРАВИТЬ':
+            raise HTTPException(409,'Для подтверждения введи ИСПРАВИТЬ')
+        reason=str(body.get('reason') or '').strip()
+        if not 8<=len(reason)<=300:
+            raise HTTPException(422,'Укажи причину изменения от 8 до 300 символов')
+        with connection(write=True) as c:
+            version,p=get_pub(c)
+            check_correction_version(version,body)
+            previous=copy.deepcopy(p)
+            summary=make_correction(c,p,body)
+            if summary['before']==summary['after']:
+                raise HTTPException(409,'Данные не изменились')
+            audit(c,'protected-correction',{
+                'label':summary['label'],'before':summary['before'],
+                'after':summary['after'],'reason':reason,
+                'retracted':summary['retracted_phases']})
+            new_version=save_public(c,p,'protected-correction')
+            c.execute('''INSERT INTO correction_history(
+                created_at,reason,field_name,previous_value,updated_value,
+                previous_state,updated_state,publication_version)
+                VALUES (?,?,?,?,?,?,?,?)''',
+                (stamp(),reason,summary['label'],
+                 json.dumps(summary['before'],ensure_ascii=False),
+                 json.dumps(summary['after'],ensure_ascii=False),
+                 json.dumps(previous,ensure_ascii=False),
+                 json.dumps(p,ensure_ascii=False),new_version))
+        return {'ok':True,'version':new_version,'summary':summary}
+
+    @app.get('/sochi/api/admin/corrections/history')
+    def correction_history(request: Request):
+        require_admin(request)
+        with connection() as c:
+            rows=list(c.execute('''SELECT id,created_at,reason,field_name,
+                previous_value,updated_value,publication_version
+                FROM correction_history ORDER BY id DESC LIMIT 50'''))
+        return {'history':[dict(row) for row in rows]}
 
     @app.post('/sochi/api/admin/publish')
     async def publish(request: Request):
