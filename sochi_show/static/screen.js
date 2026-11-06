@@ -13,7 +13,7 @@ function updatePersistentJack(scene){
   const slot=$('show-jack-persistent');
   const img=$('show-jack-persistent-img');
   if(!slot||!img)return;
-  const integrated=['green_show','blue_show','red_show','secret_show','vote_show','final_show'].includes(scene);
+  const integrated=['green_show','blue_show','red_show','secret_show','vote_show','final_show','captains'].includes(scene);
   slot.hidden=integrated;
   if(!integrated&&!img.dataset.ready){
     img.src=window.JackSwordGifB64
@@ -51,7 +51,10 @@ if(scene==='green_show'){
 if(scene==='intro'){panel.innerHTML=`${logo}<div class="mountains">◆ ▲ ◆</div><div class="prelude">7 НОЯБРЯ 2026 · ОДНА КОМАНДА — ДВА МЕСТА В СОЧИ</div>`;return}
 if(scene==='pause'){panel.innerHTML=`${logo}<div class="feature-title">ПАУЗА</div><div class="feature-sub">СКОРО ПРОДОЛЖИМ</div>`;return}
 if(scene==='teams'){panel.innerHTML=header('НАШИ КОМАНДЫ')+`<div class="team-tiles">${Object.entries(state.teams||{}).map(([id,name])=>`<div class="team-tile"><small>КОМАНДА №${id}</small><strong>${esc(name)}</strong></div>`).join('')}</div>`;return}
-if(scene==='captains'){panel.innerHTML=header('КАПИТАНЫ')+`<div class="captain-cards">${(state.captains||[]).map(c=>`<div class="captain-card">${avatar(c.player_id,c.has_photo)}<small>КОМАНДА №${c.team_id}</small><strong>${esc(c.name)}</strong><small>${esc(state.teams[c.team_id])}</small></div>`).join('')}</div>`;return}
+if(scene==='captains'){
+  window.CaptainShow.render(panel,{captains:state.captains||[],teams:state.teams||{},team_count:state.team_count});
+  return;
+}
 if(scene==='secrets'){const revealed=new Map((state.revealed_secrets||[]).map(x=>[x.slot,x]));panel.innerHTML=header('SECRET JACKS')+`<div class="feature-scene"><div class="feature-title">РАСКРЫТИЕ SECRET JACKS</div><div class="secret-cards">${[1,2,3].map(slot=>{let s=revealed.get(slot);return s?`<div class="secret-card">${avatar(s.player_id,s.has_photo)}<div class="jack-name">${esc(s.name)}</div><small>${esc(state.teams[s.jack_team_id])}</small><strong>${s.confirmed?'Выбил '+esc(s.knockout_name)+' · +10 000 → '+esc(state.teams[s.knockout_team_id]):'ОСТАЛСЯ НЕПОБЕЖДЁННЫМ'}</strong></div>`:`<div class="secret-card"><div class="unknown">♠</div><div class="jack-name">SECRET JACK №${slot}</div><small>ЛИЧНОСТЬ СКРЫТА</small></div>`}).join('')}</div></div>`;return}
 if(scene==='votes'){panel.innerHTML=header('ТАЙНОЕ ГОЛОСОВАНИЕ')+`<div class="feature-scene"><div class="feature-title">ГОЛОСА КАПИТАНОВ</div><div class="voting-detail">${state.votes_published?(state.published_votes||[]).map(v=>`№${v.voter_team_id} → ${esc(state.teams[v.target_team_id])}`).join(' &nbsp; · &nbsp; '):'ОЖИДАНИЕ РАСКРЫТИЯ'}</div><div class="feature-sub">+10 000 ЗА КАЖДЫЙ ГОЛОС</div></div>`;return}
 if(scene==='winner'){const max=rows[0]?.total;const tied=rows.filter(x=>x.total===max);const chosen=tied.length===1?tied[0]:tied.find(x=>x.team_id===state.winner_decision);panel.innerHTML=header('ПОБЕДИТЕЛЬ')+`<div class="feature-scene"><div class="winner-headline">ОДНА КОМАНДА — ДВА МЕСТА В СОЧИ</div><div class="winner-team">${chosen?esc(chosen.name):'НИЧЬЯ'}</div><div class="winner-score">${chosen?fmt(chosen.total)+' ОЧКОВ':'РЕШЕНИЕ ОРГАНИЗАТОРА'}</div>${chosen?'<div class="feature-sub">'+(state.roster[String(chosen.team_id)]||[]).map(esc).join(' · ')+'</div>':''}</div>`;return}
