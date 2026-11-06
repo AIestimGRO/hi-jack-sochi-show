@@ -1,0 +1,89 @@
+/* HI, JACK — HI, SOCHI / FINAL CEREMONY
+ * Summit at dusk: burgundy + dark sea-wave + titanium, with copper gold flares.
+ * Extends the same scene geometry, route and animated Jack used in every stage. */
+.projector .final-show-stage{height:100%;min-height:0;overflow:visible}
+.final-experience{background:linear-gradient(125deg,#163c41,#3f364c 58%,#8a4b62)}
+.final-experience .alpine-art{filter:sepia(.13) hue-rotate(329deg) saturate(.73) brightness(.68)}
+.final-experience .gs-atmosphere{background:linear-gradient(90deg,rgba(12,40,44,.98),rgba(50,37,53,.91) 46%,rgba(59,36,55,.47) 81%,rgba(67,40,51,.12)),linear-gradient(0deg,#182f39d5,transparent 53%)}
+.final-experience .gs-kicker{color:#f4ca9e}
+.final-experience .gs-title{font-size:clamp(40px,5.2vw,102px)}
+.final-experience .gs-title em{color:#f9c09c;text-shadow:0 0 37px #f2b2956e}
+.final-experience .gs-section-rule{background:linear-gradient(90deg,#f7ce9d,#c9d4a2,transparent);margin:2vh 0 1.5vh}
+.final-experience .gs-step-label{border-color:#f9d0a6b6;background:#64455dcc}
+.final-experience .gs-live-dot{background:#fff0b5;box-shadow:0 0 15px #fbd48e}
+.final-experience .gs-jack-animation{width:clamp(140px,15.7vw,317px)}
+.final-experience .gs-jack-animation-tagline{color:#fee0b1}
+.final-experience .gs-route-marker.lit i{background:#f4caa2;border-color:#ffecc9;box-shadow:0 0 17px #f5ca92}
+.final-experience .gs-side-bottom b{color:#ffdc9a}
+.final-experience .gs-footer{background:linear-gradient(90deg,#23464bdf,#72465fdb)}
+.final-experience .gs-footer span:nth-child(2){color:#fbe4c7}
+.final-experience .gs-main{padding-top:2.4vh}
+.final-experience .gs-kicker{margin-bottom:.9vh}
+.fs-intro-lead{font-size:clamp(19px,1.9vw,40px);line-height:1.46;color:#fbebda;max-width:28em}
+.fs-intro-lead b{color:#f8d4a1}
+.fs-sealed-podium{display:flex;align-items:flex-end;gap:clamp(10px,1.6vw,32px);max-width:100%;margin-top:4vh}
+.fs-sealed-podium div{width:clamp(108px,12vw,235px);height:clamp(95px,17vh,175px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1vh;border:2px solid #e4c19d9c;border-radius:10px;background:linear-gradient(140deg,#7c4d67be,#425a5cc1);box-shadow:0 11px 22px #152b3ca2}
+.fs-sealed-podium div:nth-child(2){height:clamp(111px,20vh,213px)}
+.fs-sealed-podium div:nth-child(3){height:clamp(128px,23vh,253px);border-color:#ffe4b3}
+.fs-sealed-podium strong{font:700 clamp(42px,4vw,86px)/1 Georgia,serif;color:#f3dbbb}
+.fs-sealed-podium small{font-size:clamp(9px,.89vw,17px);font-weight:900;letter-spacing:.16em}
+.fs-intro-caption{margin-top:2vh;color:#ead5b7;font-size:clamp(10px,.95vw,18px);font-weight:900;letter-spacing:.2em}
+.fs-medal-label{font-size:clamp(12px,1.1vw,22px);color:#f6d8ad;font-weight:900;letter-spacing:.19em;margin-bottom:1.7vh}
+.fs-hero-reveal{max-width:100%;min-width:0;display:flex;align-items:center;gap:clamp(10px,1.5vw,31px);animation:fs-enter .64s cubic-bezier(.2,.85,.2,1) both}
+.fs-hero-symbol{flex:0 0 auto;width:clamp(64px,7.7vw,160px);height:clamp(64px,7.7vw,160px);filter:drop-shadow(0 2px 20px #e7bb98a1)}
+.fs-hero-symbol .gs-rank-symbol{height:100%;width:100%}
+.fs-hero-number{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(9px,1.5vh,19px);font:700 clamp(70px,8.7vw,173px)/1.08 Georgia,serif;min-width:clamp(66px,7vw,142px);color:#f7c597;letter-spacing:-.04em}
+.fs-hero-number small{font:900 clamp(10px,.94vw,19px)/1.2 Inter,system-ui,sans-serif;letter-spacing:.18em;color:#f8e4cc}
+.fs-hero-info{min-width:0;max-width:35vw;display:flex;flex-direction:column;gap:1.3vh}
+.fs-hero-name{font-size:clamp(23px,2.65vw,54px);font-weight:950;line-height:1.04;color:#fff4e8;overflow-wrap:anywhere}
+.fs-hero-total{color:#f9dc9e;font-size:clamp(27px,3.1vw,63px);font-weight:900;white-space:nowrap;line-height:1.05;font-variant-numeric:tabular-nums}
+.fs-hero-total small{font-size:clamp(10px,.91vw,17px);letter-spacing:.17em;color:#e8d0b4}
+.fs-tie-note{font-size:clamp(10px,.9vw,16px);letter-spacing:.11em;font-weight:850;color:#e9c5b4}
+.fs-score-breakdown{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%;max-width:62vw;gap:clamp(4px,.56vw,12px);margin-top:4vh}
+.fs-score-breakdown>div{min-width:0;display:flex;flex-direction:column;gap:1vh;padding:1vw .9vw;border-radius:9px;border:1px solid #ddc4a17b;background:#684b5bc7}
+.fs-score-breakdown small{font-size:clamp(8px,.78vw,15px);font-weight:900;letter-spacing:.09em;color:#e9d2c5}
+.fs-score-breakdown strong{font-size:clamp(13px,1.24vw,24px);white-space:nowrap;color:#f8deb3;font-variant-numeric:tabular-nums}
+.fs-reveal-caption{margin-top:auto;color:#dcd7bb;font-size:clamp(9px,.88vw,18px);font-weight:900;letter-spacing:.19em;padding-bottom:1.4vh}
+.fs-board .gs-main{padding-top:1.5vh}
+.fs-board .gs-title{font-size:clamp(29px,3.45vw,70px)}
+.fs-board .gs-section-rule{margin:1.2vh 0 1vh}
+.fs-board-label{color:#e9d2b1;font-size:clamp(9px,.9vw,17px);letter-spacing:.1em;font-weight:850;margin-bottom:.6vh}
+.fs-board-head,.fs-board-row{display:grid;grid-template-columns:clamp(24px,2.5vw,50px) minmax(0,1fr) clamp(76px,7vw,133px) clamp(76px,7vw,133px) clamp(76px,7vw,133px) clamp(84px,8vw,155px) clamp(98px,9vw,177px);gap:clamp(3px,.6vw,14px);align-items:center}
+.fs-board-head{color:#eddfc8;font-size:clamp(8px,.7vw,13px);font-weight:900;letter-spacing:.09em;padding:0 .7vw .4vh}
+.fs-board-head span:nth-child(n+3){text-align:right}
+.fs-board-list{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(var(--rank-count,11),minmax(0,1fr));gap:clamp(2px,.55vh,9px);flex:1;min-height:0;width:100%;padding-bottom:.6vh}
+.fs-board-row{min-height:0;background:linear-gradient(95deg,#e4e7dded,#d7dad9eb);color:#24434d;border:1px solid #f7f2e1bb;border-radius:8px;padding:0 .72vw;box-shadow:0 2px 8px #1c27386d}
+.fs-board-row.fs-board-podium-1{background:linear-gradient(95deg,#eac8a0,#f4debc);color:#593f35;border-color:#ffe7b8}
+.fs-board-row.fs-board-podium-2{background:linear-gradient(95deg,#d3e0e6,#f0e7dc)}
+.fs-board-row.fs-board-podium-3{background:linear-gradient(95deg,#d5bfaf,#e2cdd5)}
+.fs-board-rank{font:700 clamp(16px,1.6vw,32px)/1 Georgia,serif}
+.fs-board-name{font-weight:900;font-size:clamp(10px,1.14vw,22px);min-width:0;overflow-wrap:anywhere;line-height:1}
+.fs-board-name small{font-size:.64em;letter-spacing:.025em}
+.fs-board-green,.fs-board-blue,.fs-board-red,.fs-board-bonus,.fs-board-total{font-size:clamp(10px,1.04vw,21px);font-weight:800;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fs-board-total{font-size:clamp(11px,1.19vw,23px);font-weight:950;color:#844b56}
+.fs-board-footer{color:#ffe1bc;font-size:clamp(8px,.82vw,16px);letter-spacing:.08em;font-weight:900;padding-bottom:.8vh}
+.fs-champion .gs-main{padding-top:1.6vh}
+.fs-champion .gs-title{font-size:clamp(35px,4.8vw,95px)}
+.fs-champion .gs-section-rule{margin:1.3vh 0 2vh}
+.fs-champion-main{width:100%;display:flex;align-items:center;gap:clamp(14px,1.6vw,30px);position:relative}
+.fs-champion-cup{flex:0 0 auto;position:relative;width:clamp(124px,15vw,310px);filter:drop-shadow(0 0 28px #f8d6a1cb);animation:fs-trophy .9s ease-out both}
+.fs-trophy-svg{display:block;width:100%;height:auto}
+.fs-champion-detail{min-width:0;max-width:45vw;display:flex;flex-direction:column;gap:1.3vh;z-index:2}
+.fs-champion-kicker{color:#f0d2a5;font-size:clamp(10px,.95vw,18px);font-weight:900;letter-spacing:.17em}
+.fs-champion-name{color:#fff1cf;text-shadow:0 3px 16px #e6b6758a;font-size:clamp(27px,3.35vw,71px);font-weight:950;line-height:1.04;overflow-wrap:anywhere}
+.fs-champion-total{font-size:clamp(27px,3vw,65px);font-weight:950;color:#fee4a6;font-variant-numeric:tabular-nums}
+.fs-champion-total small{font-size:clamp(11px,.96vw,18px);font-weight:900;letter-spacing:.12em;color:#ffe7c1}
+.fs-champion-roster{margin-top:3vh;padding:1vw 1.3vw;border:1px solid #f2d3a294;background:#6d4b59c5;border-radius:10px;width:100%;max-width:58vw;display:flex;flex-direction:column;gap:.7vh}
+.fs-champion-roster small{color:#f4d4af;font-size:clamp(9px,.87vw,17px);font-weight:850;letter-spacing:.12em}
+.fs-champion-roster>div{display:flex;gap:1.3vw;flex-wrap:wrap}
+.fs-champion-roster span{font-size:clamp(12px,1.05vw,22px);font-weight:900;color:#fff3e6}
+.fs-victory-tagline{margin-top:2vh;font-size:clamp(11px,1.1vw,22px);font-weight:900;letter-spacing:.13em;color:#e8e6bc}
+.fs-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.fs-confetti i{position:absolute;top:-10%;left:calc((var(--n) * 41px) % 100%);width:8px;height:19px;background:#f3bf96;transform:rotate(calc(var(--n) * 43deg));animation:fs-fall 7s linear calc(var(--delay) * -.73s) infinite;opacity:.8}
+.fs-confetti i:nth-child(3n){background:#bfd3c7}
+.fs-confetti i:nth-child(4n){background:#e9e2a2}
+@keyframes fs-enter{from{opacity:0;transform:translateY(32px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fs-trophy{from{opacity:0;transform:translateY(70px) scale(.7)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fs-fall{from{transform:translate3d(0,-10vh,0) rotate(0)}to{transform:translate3d(18vw,117vh,0) rotate(630deg)}}
+@media(max-width:1050px){.fs-score-breakdown{gap:3px}.fs-score-breakdown strong{font-size:clamp(11px,1.17vw,17px)}.fs-board-head,.fs-board-row{grid-template-columns:22px minmax(0,1fr) 65px 65px 65px 69px 82px;gap:3px}.fs-board-name{font-size:clamp(10px,1.35vw,16px)}.fs-board-green,.fs-board-blue,.fs-board-red,.fs-board-bonus,.fs-board-total{font-size:clamp(9px,1.05vw,13px)}.final-experience .gs-title{font-size:clamp(31px,4.55vw,78px)}.fs-champion-cup{width:clamp(82px,12vw,175px)}}
+@media(prefers-reduced-motion:reduce){.fs-hero-reveal,.fs-champion-cup,.fs-confetti i{animation:none}}
