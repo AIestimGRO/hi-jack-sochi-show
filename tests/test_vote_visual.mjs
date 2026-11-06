@@ -68,7 +68,7 @@ const admin=fs.readFileSync('sochi_show/static/admin.html','utf8');
 const adminJS=fs.readFileSync('sochi_show/static/admin.js','utf8');
 const preview=fs.readFileSync('sochi_show/static/vote-preview.html','utf8');
 assert.match(screen,/scene==='vote_show'/);
-assert.match(screen,/\['green_show','blue_show','red_show','secret_show','vote_show','final_show'\]/);
+assert.match(screen,/\['green_show','blue_show','red_show','secret_show','vote_show','final_show','captains'\]/);
 assert.match(html,/vote-show\.css/);
 assert.match(html,/vote-show\.js/);
 assert.match(admin,/id="vote-show-start"/);
