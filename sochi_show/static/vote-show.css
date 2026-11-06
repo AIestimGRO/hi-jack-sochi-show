@@ -1,0 +1,73 @@
+/* CAPTAINS VOTE · final twists at the summit. Deep sea-wave + olive/titanium/burgundy. */
+.projector .vote-show-stage{height:100%;min-height:0;overflow:visible}
+.vote-experience{background:linear-gradient(112deg,#163f46 0%,#41494e 53%,#735064 100%)}
+.vote-experience .alpine-art{filter:hue-rotate(334deg) saturate(.73) brightness(.72)}
+.vote-experience .gs-atmosphere{background:
+ linear-gradient(90deg,rgba(8,41,47,.97),rgba(34,45,50,.91) 47%,rgba(56,47,58,.52) 79%,rgba(33,42,50,.21)),
+ linear-gradient(0deg,rgba(20,40,46,.82),transparent 53%)}
+.vote-experience .gs-kicker{color:#d6dba0}
+.vote-experience .gs-title{font-size:clamp(36px,4.9vw,99px)}
+.vote-experience .gs-title em{color:#d8e7b0;text-shadow:0 0 35px #b4b9774f}
+.vote-experience .gs-section-rule{background:linear-gradient(90deg,#d3d89c,#e5bd96,transparent);margin:2.2vh 0 1.6vh}
+.vote-experience .gs-step-label{border-color:#dbe0aa96;background:#394f4bcf}
+.vote-experience .gs-live-dot{background:#d6dfa2;box-shadow:0 0 17px #d6dda0}
+.vote-experience .gs-side{padding-top:2.4vh}
+.vote-experience .gs-jack-animation{width:clamp(135px,16vw,320px)}
+.vote-experience .gs-jack-animation-tagline{color:#dbe6b6}
+.vote-experience .gs-route-marker.lit i{background:#cbd89b;border-color:#f1dfb2;box-shadow:0 0 18px #e1d99a}
+.vote-experience .gs-side-bottom b{color:#e1e9ae}
+.vote-experience .gs-footer{background:linear-gradient(90deg,#183f43e8,#5c5564c8)}
+.vote-experience .gs-footer span:nth-child(2){color:#e1e2b6}
+.vote-experience .gs-main{padding-top:2.8vh}
+.vote-experience .gs-kicker{margin-bottom:.85vh}
+.vs-intro-text{color:#f3f1e7;font-size:clamp(19px,1.97vw,41px);line-height:1.45;max-width:27em}
+.vs-intro-text strong{color:#d7e1ae}
+.vs-intro-text b{color:#f8d4a1}
+.vs-intro-stamp{align-self:start;max-width:100%;margin-top:4vh;padding:1.3vw 1.6vw;border:1px solid #dedcb8bd;border-radius:10px;background:#637350a1;color:#f9eccd;letter-spacing:.15em;font-size:clamp(12px,1.3vw,24px);font-weight:900}
+.vs-dramatic-word{margin-top:4vh;color:#cdd6b5;letter-spacing:.21em;font-size:clamp(11px,1vw,20px);font-weight:850}
+.vs-vote-count{font-size:clamp(11px,1.04vw,21px);font-weight:900;letter-spacing:.2em;color:#d5deac;margin-bottom:1vh}
+.vs-vote-card{width:100%;max-width:58vw;display:flex;flex-direction:column;align-items:stretch;gap:clamp(6px,.8vh,14px);background:linear-gradient(133deg,#254c54d4,#504556c9);border:2px solid #dce2c291;border-radius:15px;padding:clamp(13px,1.55vw,29px);box-shadow:0 15px 30px #152e3a66;animation:vs-appear .55s ease-out both}
+.vs-voter{display:flex;gap:clamp(9px,1.2vw,24px);align-items:center;min-height:clamp(56px,8vh,100px)}
+.vs-captain-symbol{flex:0 0 auto;width:clamp(51px,5vw,90px);height:clamp(51px,5vw,90px);display:grid;place-items:center;border:2px solid #e2ca9e;border-radius:50%;background:#734e62a3;font:700 clamp(28px,3vw,55px)/1 Georgia,serif;color:#ffe6b0}
+.vs-captain-photo{width:clamp(51px,5vw,90px);height:clamp(51px,5vw,90px);flex:0 0 auto;border-radius:50%;object-fit:cover;border:2px solid #e3c9a0}
+.vs-voter>div{display:flex;flex-direction:column;gap:.3vh;min-width:0}
+.vs-voter small{font-size:clamp(10px,.84vw,16px);font-weight:900;letter-spacing:.13em;color:#d7e1c4}
+.vs-voter strong{font-size:clamp(21px,2vw,40px);font-weight:900;line-height:1.1;overflow-wrap:anywhere}
+.vs-voter span:not(.vs-captain-symbol){font-size:clamp(11px,1vw,20px);font-weight:650;color:#dfd2c9}
+.vs-vote-arrow{font-size:clamp(24px,2.45vw,46px);font-weight:900;display:flex;align-items:center;justify-content:center;gap:1.3vw;color:#f0c396}
+.vs-vote-arrow span{font-size:clamp(10px,1vw,19px);font-weight:900;letter-spacing:.16em;color:#e7ddc3}
+.vs-target{color:#f8e4b8;font-size:clamp(23px,2.43vw,46px);line-height:1.1;font-weight:900;text-align:center;overflow-wrap:anywhere}
+.vs-award{width:100%;max-width:58vw;margin-top:1.2vh;padding:1.1vw 1.4vw;display:flex;align-items:center;justify-content:space-between;gap:1.3vw;border-radius:11px;border:1px solid #dfc698;background:linear-gradient(110deg,#485d4dc9,#7c535dc2);box-shadow:0 7px 19px #132f3a66}
+.vs-award>div:first-child{display:flex;flex-direction:column;gap:.4vh;min-width:0}
+.vs-award span{font-size:clamp(9px,.82vw,17px);color:#e0dac5;font-weight:850;letter-spacing:.13em}
+.vs-award strong{font-size:clamp(16px,1.52vw,31px);color:#fff0d2;font-weight:900;overflow-wrap:anywhere;line-height:1.1}
+.vs-award-number{font-size:clamp(24px,2.6vw,54px);font-weight:900;color:#e7eca7;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vs-change-row{display:flex;width:100%;max-width:58vw;gap:1.2vw;justify-content:space-between;margin-top:1.4vh;color:#d9e3c1}
+.vs-change-row>div{display:flex;gap:.5vw;flex-wrap:wrap;font-size:clamp(9px,.82vw,16px);font-weight:850;letter-spacing:.08em}
+.vs-change-row strong{font-size:clamp(12px,1.11vw,22px);color:#ffe8b8}
+.vote-experience .gs-reveal-counter{margin-top:auto;margin-bottom:1.6vh}
+.vs-board .gs-main{padding-top:1.7vh}
+.vs-board .gs-title{font-size:clamp(33px,3.5vw,69px)}
+.vs-board .gs-section-rule{margin:1.1vh 0 .6vh}
+.vs-summary-label{font-size:clamp(9px,.86vw,17px);font-weight:850;color:#e5e6c3;letter-spacing:.09em;margin-bottom:.65vh}
+.vs-rank-head,.vs-rank-row{display:grid;grid-template-columns:clamp(19px,2vw,38px) clamp(21px,2.4vw,47px) minmax(0,1fr) clamp(79px,7.4vw,139px) clamp(81px,8vw,159px) clamp(102px,9.6vw,198px);gap:clamp(3px,.56vw,13px);align-items:center}
+.vs-rank-head{font-size:clamp(9px,.71vw,14px);color:#e1e8cf;font-weight:900;letter-spacing:.08em;padding:0 .6vw .4vh}
+.vs-rank-head span:nth-child(n+4){text-align:right}
+.vs-rank-list{flex:1;min-height:0;width:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(var(--rank-count,11),minmax(0,1fr));gap:clamp(2px,.52vh,8px);padding-bottom:.6vh}
+.vs-rank-row{min-height:0;background:linear-gradient(100deg,#d8e3dbf3,#dee5dce9);color:#234747;padding:0 clamp(5px,.72vw,14px);border-radius:7px;border:1px solid #f0f4df99;box-shadow:0 2px 10px #16313756}
+.vs-podium-1{background:linear-gradient(100deg,#e8c79f,#ede1bd);border-color:#ffe4bc;color:#533e32}
+.vs-podium-2{background:linear-gradient(100deg,#d4e0e0,#e3e5db)}
+.vs-podium-3{background:linear-gradient(100deg,#c9c1b2,#dfd9d2)}
+.vs-rank-icon{width:clamp(18px,2.5vh,34px);height:clamp(18px,2.5vh,34px)}
+.vs-rank-icon .gs-rank-symbol{width:100%;height:100%}
+.vs-rank-place{font:700 clamp(17px,1.7vw,31px)/1 Georgia,serif}
+.vs-rank-name{font-size:clamp(11px,1.18vw,22px);font-weight:900;min-width:0;overflow-wrap:anywhere;line-height:1.02}
+.vs-rank-bounty,.vs-rank-votes,.vs-rank-total{font-size:clamp(11px,1.05vw,21px);font-weight:850;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vs-rank-votes{color:#65764a}
+.vs-rank-total{color:#4c5352;font-size:clamp(12px,1.19vw,24px);font-weight:950}
+.vs-winner-teaser{display:flex;justify-content:space-between;gap:1vw;align-items:center;padding-bottom:.7vh;color:#e7e7c0}
+.vs-winner-teaser strong{font-size:clamp(10px,1vw,20px);font-weight:900}
+.vs-winner-teaser span{font-size:clamp(8px,.78vw,15px);font-weight:850;letter-spacing:.09em}
+@keyframes vs-appear{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1050px){.vs-vote-card{max-width:65vw}.vs-rank-head,.vs-rank-row{grid-template-columns:19px 24px minmax(0,1fr) 66px 69px 91px;gap:3px}.vs-rank-name{font-size:clamp(10px,1.3vw,16px)}.vs-rank-bounty,.vs-rank-votes,.vs-rank-total{font-size:clamp(10px,1.13vw,15px)}.vote-experience .gs-title{font-size:clamp(31px,4.2vw,72px)}}
+@media(prefers-reduced-motion:reduce){.vs-vote-card{animation:none}}
