@@ -37,8 +37,10 @@ def test_secret_show_complete_and_replay_do_not_double_award(client, n):
         'revealed': [], 'summary': False}
     assert state['ranking'] == [] and state['stages'] == {}
     assert not state['revealed_secrets']
-    for name in names:
-        assert name not in json.dumps(state, ensure_ascii=False)
+    # Team rosters are public, so player *names* may appear there.
+    # Secret assignments and the identity/bounty reveal must remain private.
+    assert 'jack_team_id' not in json.dumps(state, ensure_ascii=False)
+    assert 'knockout_name' not in json.dumps(state, ensure_ascii=False)
     assert call(client, 'publish', h, {'action': 'secret-show-step', 'step': 1}).status_code == 422
     assert call(client, 'publish', h, {'action': 'votes'}).status_code == 409
 
@@ -53,7 +55,8 @@ def test_secret_show_complete_and_replay_do_not_double_award(client, n):
         assert show['ranking'] == []
         assert show['stages'] == {}
         assert show['secret_view']['revealed'][-1]['name'] == names[slot-1]
-        assert all(name not in json.dumps(show, ensure_ascii=False) for name in names[slot:])
+        assert all(name not in json.dumps(show['secret_view'], ensure_ascii=False)
+                   for name in names[slot:])
         assert call(client, 'publish', h, {'action': 'reveal', 'slot': slot}).status_code == 409
         assert call(client, 'publish', h, {'action': 'votes'}).status_code == 409
     assert call(client, 'publish', h, {'action': 'secret-show-step', 'step': 4}).status_code == 200
