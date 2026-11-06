@@ -62,7 +62,11 @@ for(const count of [10,11]){
   render(host,frame(set,count+1));
   assert.match(host.innerHTML,/class="rs-list"/);
   const positions=[...host.innerHTML.matchAll(/<span class="rs-list-place">(\d+)<\/span>/g)].map(x=>Number(x[1]));
-  assert.deepEqual(positions,Array.from({length:count},(_,i)=>i+1));
+  // RED-stage finish places are 1..N, but cumulative totals can TIE:
+  // the scoreboard must repeat a place when scores are equal.
+  assert.deepEqual(positions,Array.from(set.demo_ranking,r=>r.place));
+  assert.equal(positions[0],1);
+  assert.ok(positions.every((place,i)=>i===0||place>=positions[i-1]));
   assert.equal((host.innerHTML.match(/class="rs-list-row/g)||[]).length,count);
   assert.match(host.innerHTML,/ВПЕРЕДИ — SECRET JACK И ГОЛОСОВАНИЕ/);
   assert.match(host.innerHTML,/ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ/);
