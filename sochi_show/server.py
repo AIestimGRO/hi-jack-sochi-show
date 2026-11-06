@@ -874,51 +874,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     @app.post('/sochi/api/admin/secret-correction')
     async def correct_revealed_secret(request: Request):
         require_admin(request, True)
-        # Legacy endpoint is intentionally retired: browser confirmation alone
-        # is insufficient for changing an already published Secret Jack.
-        raise HTTPException(409, 'Исправь опубликованного Secret Jack через защищённый редактор с PIN')
-        body = await request.json()
-        slot = strict_int(body.get('slot'), 'slot', 1, 3)
-        pid = strict_int(body.get('player_id'), 'player_id', 1)
-        if body.get('confirm_correction') is not True:
-            raise HTTPException(409, 'Для исправления опубликованной роли требуется явное подтверждение')
-        confirmed = body.get('confirmed') is True
-        with connection(write=True) as c:
-            _, p = get_pub(c)
-            if slot not in p['revealed_slots']:
-                raise HTTPException(409, 'Исправление допускается только для раскрытого Jack')
-            player = c.execute('''SELECT p.name,p.photo_path,s.team_id FROM seats s
-                                  JOIN players p ON p.id=s.player_id WHERE s.player_id=?''', (pid,)).fetchone()
-            if not player:
-                raise HTTPException(422, 'Игрок должен быть в активной рассадке')
-            receiver = body.get('knockout_team_id')
-            knockout_pid = body.get('knockout_player_id')
-            if confirmed:
-                receiver = check_team(c, receiver)
-                knockout_pid = strict_int(knockout_pid, 'knockout_player_id', 1)
-                if not c.execute('SELECT 1 FROM seats WHERE player_id=? AND team_id=?', (knockout_pid, receiver)).fetchone():
-                    raise HTTPException(422, 'Выбивший игрок должен принадлежать указанной команде')
-            else:
-                receiver, knockout_pid = None, None
-            try:
-                c.execute('UPDATE secrets SET player_id=?,knockout_team_id=?,knockout_player_id=?,confirmed=? WHERE slot=?',
-                          (pid, receiver, knockout_pid, int(confirmed), slot))
-            except sqlite3.IntegrityError as exc:
-                raise HTTPException(409, 'Игрок уже назначен другим Secret Jack') from exc
-            for secret in p['revealed_secrets']:
-                if secret['slot'] == slot:
-                    secret.update({'player_id': pid, 'name': player['name'], 'has_photo': bool(player['photo_path']),
-                                   'jack_team_id': player['team_id'], 'knockout_team_id': receiver, 'knockout_player_id': knockout_pid, 'knockout_name': (c.execute('SELECT name FROM players WHERE id=?', (knockout_pid,)).fetchone() or {'name': None})['name'], 'confirmed': confirmed})
-            visible = {x['player_id'] for x in p['revealed_secrets']}
-            visible.update(x['player_id'] for x in p['captains'] if x['player_id'])
-            p['visible_player_ids'] = sorted(visible)
-            p['visible_photos'] = {str(k): v for k, v in p.get('visible_photos', {}).items() if int(k) in visible}
-            if player['photo_path']:
-                p['visible_photos'][str(pid)] = player['photo_path']
-            p['scene'] = 'secrets'
-            audit(c, 'revealed-secret-correction', {'slot': slot, 'player_id': pid, 'receiver': receiver})
-            version = save_public(c, p, 'publish-revealed-secret-correction')
-        return {'ok': True, 'version': version}
+        raise HTTPException(409, 'Исправление раскрытого Secret Jack возможно только через защищённый редактор с PIN')
 
     @app.post('/sochi/api/admin/photo/{player_id}')
     async def upload_photo(request: Request, player_id: int, file: UploadFile = File(...)):
