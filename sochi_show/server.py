@@ -476,6 +476,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if step < 4:
                 result['ranking'] = []
                 result['stages'] = {}
+            else:
+                # Canonical final standings, not vote-stage movement metadata.
+                result['ranking'] = copy.deepcopy(final_show['ranking'])
             if step < 3:
                 result['winner_decision'] = None
         return result
