@@ -320,6 +320,8 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
                 break
         p['revealed_slots']=retained
     p['revealed_secrets']=[available[x] for x in p['revealed_slots']]
+    if 'red' in old_phases and 'red' not in p['published_phases']:
+        p.pop('secret_show',None)
     if 'secret_show' in p:
         n=len(p['revealed_slots'])
         p['secret_show']['step']=min(p['secret_show']['step'],n+(1 if n==3 else 0))
