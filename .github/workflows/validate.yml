@@ -56,3 +56,5 @@ jobs:
         run: node tests/test_final_visual.mjs
       - name: CAPTAINS visual smoke tests
         run: node tests/test_captain_visual.mjs
+      - name: Protected editor UI smoke tests
+        run: node tests/test_protected_ui.mjs
