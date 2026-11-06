@@ -47,7 +47,7 @@ for(const count of [10,11]){
       assert.match(host.innerHTML,/vs-rank-list/);
       assert.equal((host.innerHTML.match(/class="vs-rank-row/g)||[]).length,count);
       assert.match(host.innerHTML,/ЦЕРЕМОНИЯ ПОБЕДИТЕЛЕЙ/);
-      assert.match(host.innerHTML,/ГОЛОСА УЧТЕНЫ/);
+      assert.match(host.innerHTML,/ГОЛОСА<br><em>УЧТЕНЫ<\/em>/);
     }
   }
   const end=frame(data,count+1);
