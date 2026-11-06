@@ -980,10 +980,21 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         old=copy.deepcopy(p)
         edit=copy.deepcopy(body)
         edit['_winner_before']=p.get('winner_decision')
+        if edit.get('kind')=='photo':
+            edit['_photo_before']=p.get('visible_photos',{}).get(str(edit.get('player_id')))
         label,before,after=correction(c,edit)
         if edit.get('kind')=='winner':
             p['winner_decision']=after
+        if edit.get('kind')=='seating_import':
+            # A physical seating replacement is explicitly destructive.
+            # Reset the live scenes, bonuses and rankings; draft players remain
+            # bound only when their card and team were retained.
+            p.clear()
+            p.update(empty_public())
+            p['scene']='pause'
         details=rebuild_corrected(c,p,green_snapshot,blue_snapshot,red_snapshot,final_snapshot,vote_snapshot)
+        if edit.get('kind')=='seating_import':
+            details['retracted_phases']=old.get('published_phases',[])
         # A protected edit is a live correction; the full authoritative score
         # table must be in sync even if the broadcast stays on its current step.
         result=score_delta(old,p)
