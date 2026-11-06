@@ -146,7 +146,7 @@ window.GreenShow=(()=>{
             <img class="gs-jack-animation-image"
                  src="${window.JackSwordGifB64 ? 'data:image/gif;base64,'+window.JackSwordGifB64 : '/sochi/static/hi-jack-logo.svg'}"
                  alt="Анимированный Валет HI, JACK с мечом" loading="eager" decoding="async">
-            <div class="gs-jack-animation-tagline">БЛЕФ · СТЕК · ОЛЛ-ИН</div>
+            <div class="gs-jack-animation-tagline">ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ</div>
           </div>
           <div class="gs-route">${progressMarkup()}</div>
           <div class="gs-side-bottom"><b>01</b><span>GREEN<br>BASE CAMP</span><i>↗</i></div>
