@@ -63,9 +63,15 @@ for(const n of [10,11]){
   assert.equal((host.innerHTML.match(/class="bs-icon"/g)||[]).length,n);
   assert.match(host.innerHTML,/bs-move rise/);
   assert.match(host.innerHTML,/bs-move fall/);
-  assert.match(host.innerHTML,/БЛЕФ · СТЕК · ОЛЛ-ИН/);
+  assert.match(host.innerHTML,/ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ/);
 }
 
+const blueJS=fs.readFileSync('sochi_show/static/blue-show.js','utf8');
+const blueCSS=fs.readFileSync('sochi_show/static/blue-show.css','utf8');
+assert.doesNotMatch(blueJS,/ПОТЕРЯ|ПОДЪЁМ НА|без изменений/,'no redundant rank movement labels');
+assert.match(blueJS,/#\$\{r\.green_place\} → #\$\{r\.place\}/,'overview shows old and new place');
+assert.match(blueCSS,/\.bs-hero-place\{\s*line-height:1\.08;\s*gap:/,'BLUE place has explicit caption gap');
+assert.doesNotMatch(blueJS,/bs-change-line">[\s\S]*?<strong class=/,'no extra gain/loss badge');
 const html=fs.readFileSync('sochi_show/static/screen.html','utf8');
 const js=fs.readFileSync('sochi_show/static/screen.js','utf8');
 assert.match(html,/id="show-jack-persistent"/);
