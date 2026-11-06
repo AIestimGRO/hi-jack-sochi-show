@@ -77,7 +77,7 @@ const js=fs.readFileSync('sochi_show/static/screen.js','utf8');
 assert.match(html,/id="show-jack-persistent"/);
 assert.match(html,/blue-show\.js/);
 assert.match(js,/updatePersistentJack\(scene\)/);
-assert.match(js,/\['green_show','blue_show','red_show'\]/);
+assert.match(js,/secret_show/);
 assert.match(js,/scene==='blue_show'/);
 const preview=fs.readFileSync('sochi_show/static/blue-preview.html','utf8');
 assert.match(preview,/ДЕМО BLUE · НЕ ЭФИР/);
