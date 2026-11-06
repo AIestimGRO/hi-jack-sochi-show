@@ -150,6 +150,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         vote_show = payload.get('vote_show')
         if vote_show:
             vote_show['step'] = min(max(0, vote_show['step']), len(vote_show['entries']) + 1)
+        final_show = payload.get('final_show')
+        if final_show:
+            final_show['step'] = min(max(0, final_show['step']), 5)
         return row['version'], payload
 
     def audit(c, action, data):
@@ -294,6 +297,37 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             row['move'] = places[row['team_id']] - row['place']
         return ranked
 
+    def final_snapshot(p):
+        """Freeze final points and an explicit tie-resolved winner for ceremony.
+        Actual competition places are never falsified to break score ties.
+        """
+        if set(PHASES) - set(p['published_phases']) or len(p['revealed_slots']) != 3 or not p['votes_published']:
+            raise HTTPException(409, 'Сначала заверши GREEN, BLUE, RED, Secret Jack и голоса')
+        if p.get('secret_show') and p['secret_show']['step'] != 4:
+            raise HTTPException(409, 'SECRET JACK SHOW ещё не завершён')
+        if p.get('vote_show') and p['vote_show']['step'] != len(p['vote_show']['entries']) + 1:
+            raise HTTPException(409, 'Голоса капитанов ещё не раскрыты')
+        ranking = copy.deepcopy(p['ranking'])
+        if len(ranking) != p['team_count'] or len(ranking) < 3:
+            raise HTTPException(409, 'Полный финальный рейтинг отсутствует')
+        top_score = ranking[0]['total']
+        tied_top = [r for r in ranking if r['total'] == top_score]
+        decision = p.get('winner_decision')
+        if len(tied_top) > 1 and decision not in [r['team_id'] for r in tied_top]:
+            raise HTTPException(409, 'Ничья на первом месте: сначала выбери победителя в админке')
+        champion = next((r for r in ranking if r['team_id'] == decision), ranking[0]) if len(tied_top) > 1 else ranking[0]
+        # Ensure that the chosen tied winner is first on the ceremony podium.
+        order = [champion] + [r for r in ranking if r['team_id'] != champion['team_id']]
+        podium = []
+        for i, row in enumerate(order[:3]):
+            r = copy.deepcopy(row)
+            r['ceremony_place'] = i + 1
+            r['official_place'] = row['place']
+            podium.append(r)
+        return {'step': 0, 'ranking': ranking, 'podium': podium,
+                'winner_team_id': champion['team_id'],
+                'first_place_tie': len(tied_top) > 1}
+
     def require_admin(request: Request, write=False):
         if request.session.get('admin') is not True:
             raise HTTPException(401, 'Требуется вход администратора')
@@ -412,6 +446,38 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             result['ranking'] = ranking
             result['recent_changes'] = []
             result['votes_published'] = step == count + 1
+        final_show = result.get('final_show')
+        if final_show:
+            step = final_show['step']
+            podium = final_show['podium']
+            revealed = ([podium[2]] if step >= 1 else []) + (
+                [podium[1]] if step >= 2 else []) + (
+                [podium[0]] if step >= 3 else [])
+            result['final_view'] = {
+                'step': step, 'max_step': 5, 'count': result['team_count'],
+                'revealed': revealed,
+                'current': ([podium[2], podium[1], podium[0]][step-1]
+                            if 1 <= step <= 3 else None),
+                'board': final_show['ranking'] if step >= 4 else [],
+                'champion': podium[0] if step >= 5 else None,
+                'tie_resolved': final_show['first_place_tie'] if step >= 3 else False,
+                'roster': (result.get('roster', {}).get(str(podium[0]['team_id']), [])
+                           if step >= 5 else []),
+            }
+            # No entire winner list or secret private snapshot over public JSON
+            # until the conductor arrives at the complete board.
+            result['final_show'] = {'step': step, 'max_step': 5}
+            result.pop('vote_view', None)
+            result.pop('red_view', None)
+            result.pop('blue_view', None)
+            result.pop('green_view', None)
+            result['published_votes'] = []
+            result['recent_changes'] = []
+            if step < 4:
+                result['ranking'] = []
+                result['stages'] = {}
+            if step < 3:
+                result['winner_decision'] = None
         return result
 
     def admin_state(c):
@@ -470,6 +536,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     def vote_preview():
         # Public rehearsal is populated entirely with fictional data.
         return (HERE / 'static' / 'vote-preview.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/final', response_class=HTMLResponse)
+    def final_preview():
+        # Public demo is fictional, does not read or mutate live tournament.
+        return (HERE / 'static' / 'final-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -924,7 +995,26 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     (action == 'scene' and body.get('scene') in
                         ('votes', 'final', 'winner', 'secrets'))):
                     raise HTTPException(409, 'Сначала заверши раскрытие голосов капитанов')
-            if action == 'vote-show-start':
+            final_show = p.get('final_show')
+            if final_show and final_show['step'] < 5:
+                if (action in ('vote-show-start', 'vote-show-step', 'winner-decision')
+                    or (action == 'scene' and body.get('scene') in ('final', 'winner'))):
+                    raise HTTPException(409, 'Заверши FINAL SHOW в пульте организатора')
+            if action == 'final-show-start':
+                if not final_show:
+                    p['final_show'] = final_snapshot(p)
+                else:
+                    p['final_show']['step'] = 0
+                p['scene'] = 'final_show'
+            elif action == 'final-show-step':
+                if not final_show:
+                    raise HTTPException(409, 'Сначала запусти FINAL SHOW')
+                step = strict_int(body.get('step'), 'step', 0, 5)
+                if abs(step - final_show['step']) != 1:
+                    raise HTTPException(409, 'Переходи по одному финальному кадру')
+                final_show['step'] = step
+                p['scene'] = 'final_show'
+            elif action == 'vote-show-start':
                 if not vote_show or p['scene'] in ('final', 'winner'):
                     raise HTTPException(409, 'Сначала опубликуй голоса для шоу')
                 vote_show['step'] = 0
