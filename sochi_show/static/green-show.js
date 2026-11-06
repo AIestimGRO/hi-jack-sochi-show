@@ -37,9 +37,11 @@ window.GreenShow=(()=>{
   function alpineArt(phase='green'){
     // BLUE advances the expedition to the second camp exactly once,
     // independent of individual ranking reveals.
-    const isBlue=phase==='blue';
+    const isBlue=phase==='blue'||phase==='red';
+    const isRed=phase==='red';
     const [greenX,greenY]=cablePoint(.28);
-    const [cabinX,cabinY]=isBlue?cablePoint(.64):[greenX,greenY];
+    const [blueX,blueY]=cablePoint(.64);
+    const [cabinX,cabinY]=isRed?cablePoint(.94):isBlue?[blueX,blueY]:[greenX,greenY];
     return `<svg class="alpine-art" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="alpineSky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0d464d"/><stop offset=".43" stop-color="#347773"/><stop offset=".75" stop-color="#b0b9a5"/><stop offset="1" stop-color="#e2b17b"/></linearGradient>
@@ -67,9 +69,12 @@ window.GreenShow=(()=>{
       <circle cx="${greenX.toFixed(1)}" cy="${greenY.toFixed(1)}" r="23" fill="#c9d895" opacity=".28"/>
       <circle cx="${greenX.toFixed(1)}" cy="${greenY.toFixed(1)}" r="11" fill="#dce6ad" stroke="#32565b" stroke-width="3"/>
       <text x="${(greenX+67).toFixed(1)}" y="${(greenY+45).toFixed(1)}" fill="#eff8d1" font-size="23" font-weight="900" letter-spacing="3">GREEN ✓</text>
-      ${isBlue?`<circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="24" fill="#9fc7eb" opacity=".28"/>
-      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="10" fill="#b4d3ec" stroke="#37596d" stroke-width="3"/>
-      <text x="${(cabinX+55).toFixed(1)}" y="${(cabinY+47).toFixed(1)}" fill="#dceefe" font-size="23" font-weight="900" letter-spacing="3">BLUE ✓</text>`:''}
+      ${isBlue?`<circle cx="${blueX.toFixed(1)}" cy="${blueY.toFixed(1)}" r="24" fill="#9fc7eb" opacity=".28"/>
+      <circle cx="${blueX.toFixed(1)}" cy="${blueY.toFixed(1)}" r="10" fill="#b4d3ec" stroke="#37596d" stroke-width="3"/>
+      <text x="${(blueX+55).toFixed(1)}" y="${(blueY+47).toFixed(1)}" fill="#dceefe" font-size="23" font-weight="900" letter-spacing="3">BLUE ✓</text>`:''}
+      ${isRed?`<circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="28" fill="#e6a994" opacity=".3"/>
+      <circle cx="${cabinX.toFixed(1)}" cy="${cabinY.toFixed(1)}" r="10" fill="#ffd8ab" stroke="#8b4a55" stroke-width="4"/>
+      <text x="${(cabinX-255).toFixed(1)}" y="${(cabinY-60).toFixed(1)}" fill="#ffe3c7" font-size="24" font-weight="900" letter-spacing="3">RED ✓</text>`:''}
       <g class="alpine-cabin" transform="translate(${cabinX.toFixed(1)} ${cabinY.toFixed(1)})">
         <circle cx="0" cy="0" r="7" fill="#f8e5c8" stroke="#264950" stroke-width="2"/>
         <path d="M0 4v45" fill="none" stroke="#f0ddbe" stroke-width="5"/>
