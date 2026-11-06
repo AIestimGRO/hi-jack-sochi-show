@@ -180,6 +180,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             {int(k): v for k, v in state['teams'].items()}, state['stages'],
             state['revealed_secrets'], state['published_votes'], state['revealed_slots'],
             state['votes_published'], state['vote_mode'], state['team_count'])
+        # A fully reset seating (or a paused tournament with no published stages)
+        # must not invent a leaderboard of all-zero tied scores.
+        if state.get('scene') == 'pause' and not state['published_phases'] and not state['revealed_slots'] and not state['votes_published']:
+            state['ranking'] = []
         state['recent_changes'] = [
             {'team_id': e['team_id'], 'from': old_places[e['team_id']], 'to': e['place']}
             for e in state['ranking'] if e['team_id'] in old_places and old_places[e['team_id']] != e['place']
