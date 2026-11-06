@@ -79,7 +79,7 @@
 .fs-champion-roster span{font-size:clamp(12px,1.05vw,22px);font-weight:900;color:#fff3e6}
 .fs-victory-tagline{margin-top:2vh;font-size:clamp(11px,1.1vw,22px);font-weight:900;letter-spacing:.13em;color:#e8e6bc}
 .fs-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
-.fs-confetti i{position:absolute;top:-10%;left:calc((var(--n) * 41px) % 100%);width:8px;height:19px;background:#f3bf96;transform:rotate(calc(var(--n) * 43deg));animation:fs-fall 7s linear calc(var(--delay) * -.73s) infinite;opacity:.8}
+.fs-confetti i{position:absolute;top:-10%;left:calc(var(--n) * 3.7%);width:8px;height:19px;background:#f3bf96;transform:rotate(calc(var(--n) * 43deg));animation:fs-fall 7s linear calc(var(--delay) * -.73s) infinite;opacity:.8}
 .fs-confetti i:nth-child(3n){background:#bfd3c7}
 .fs-confetti i:nth-child(4n){background:#e9e2a2}
 @keyframes fs-enter{from{opacity:0;transform:translateY(32px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
