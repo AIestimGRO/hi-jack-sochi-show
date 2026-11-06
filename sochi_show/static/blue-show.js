@@ -33,15 +33,15 @@ window.BlueShow=(()=>{
     return {count,step:n,max_step:count+1,revealed};
   }
   const rankArt=place=>window.SochiRankMascots?.render(place)||'<span class="gs-rank-symbol">♠</span>';
-  const moveDescription=(row)=>{
-    if(row.move>0)return {mark:'▲',className:'rise',text:'+'+row.move+' мест',long:'ПОДЪЁМ НА '+row.move+' МЕСТ'};
-    if(row.move<0)return {mark:'▼',className:'fall',text:'−'+Math.abs(row.move)+' мест',long:'ПОТЕРЯ '+Math.abs(row.move)+' МЕСТ'};
-    return {mark:'—',className:'same',text:'без изменений',long:'ПОЗИЦИЯ СОХРАНЕНА'};
-  };
+  // Movement is conveyed by old/new ranks alone. No redundant
+  // "lost/gained N places" labels on the reveal or the overview.
+  const moveDescription=(row)=>({
+    className:row.move>0?'rise':row.move<0?'fall':'same'
+  });
   const jack=()=>`<div class="gs-jack-animation" aria-label="Валет с мечом — фирменная анимация HI, JACK">
     <img class="gs-jack-animation-image" src="${window.JackSwordGifB64?'data:image/gif;base64,'+window.JackSwordGifB64:'/sochi/static/hi-jack-logo.svg'}"
       alt="Анимированный Валет HI, JACK с мечом" loading="eager" decoding="async">
-    <div class="gs-jack-animation-tagline">БЛЕФ · СТЕК · ОЛЛ-ИН</div>
+    <div class="gs-jack-animation-tagline">ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ</div>
   </div>`;
   function route(){
     return '<div class="gs-route-markers">'+[
@@ -54,7 +54,7 @@ window.BlueShow=(()=>{
        <span class="bs-icon">${rankArt(r.place)}</span>
        <span class="bs-place">${r.place}</span>
        <span class="bs-name">${escapeHTML(r.name)}</span>
-       <span class="bs-move ${movement.className}">${movement.mark} ${escapeHTML(movement.text)}</span>
+       <span class="bs-move ${movement.className}" title="GREEN #${r.green_place} → BLUE #${r.place}" aria-label="GREEN #${r.green_place} → BLUE #${r.place}">#${r.green_place} → #${r.place}</span>
        <span class="bs-blue-points">${fmt(r.blue)}</span>
        <span class="bs-total">${fmt(r.total)}</span>
      </div>`;
@@ -103,7 +103,6 @@ window.BlueShow=(()=>{
                     <div class="bs-hero-name">${escapeHTML(latest?.name||'')}</div>
                     <div class="bs-change-line">
                       <span class="bs-from">GREEN #${latest?.green_place||'—'} → BLUE #${latest?.place||'—'}</span>
-                      <strong class="${movement?.className||'same'}">${escapeHTML(movement?.long||'')}</strong>
                     </div>
                   </div>
                 </div>
