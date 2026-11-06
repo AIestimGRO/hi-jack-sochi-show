@@ -147,6 +147,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             available = len(payload.get('revealed_secrets', []))
             secret_show['step'] = min(max(0, secret_show['step']),
                                        available + (1 if available == 3 else 0))
+        vote_show = payload.get('vote_show')
+        if vote_show:
+            vote_show['step'] = min(max(0, vote_show['step']), len(vote_show['entries']) + 1)
         return row['version'], payload
 
     def audit(c, action, data):
@@ -232,6 +235,64 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                             else index + 1)
             row['move'] = row['blue_place'] - row['place']
         return {'ranking': ranked, 'step': 0}
+
+    def vote_snapshot(p, votes):
+        """Freeze a captain ballot and the last public, pre-vote table once.
+
+        Real ranking continues to use published_ranking. During a reveal, the
+        public endpoint derives partial totals from the frozen ballot prefix.
+        """
+        if not p['published_phases'] or 'red' not in p['published_phases']:
+            raise HTTPException(409, 'Голосование доступно после RED')
+        secret = p.get('secret_show')
+        if secret and secret['step'] != 4:
+            raise HTTPException(409, 'Сначала заверши SECRET JACK SHOW')
+        if len(p.get('revealed_slots', [])) != 3:
+            raise HTTPException(409, 'Сначала раскрой всех трёх Secret Jacks')
+        base = copy.deepcopy(p['ranking'])
+        if len(base) != p['team_count']:
+            raise HTTPException(409, 'Не сформирован рейтинг до голосования')
+        if any(row.get('votes') for row in base):
+            raise HTTPException(409, 'Нельзя повторно начислять голоса')
+        mode = p['vote_mode']
+        captains = {row['team_id']: row for row in p.get('captains', [])}
+        entries = []
+        for row in sorted(votes, key=lambda v: v['voter_team_id']):
+            voter = int(row['voter_team_id'])
+            target = int(row['target_team_id'])
+            receiver = target if mode == 'target' else voter
+            captain = captains.get(voter, {})
+            entries.append({
+                'voter_team_id': voter, 'target_team_id': target,
+                'receiver_team_id': receiver,
+                'voter_name': p['teams'][str(voter)],
+                'target_name': p['teams'][str(target)],
+                'receiver_name': p['teams'][str(receiver)],
+                'captain_name': captain.get('name') or 'Капитан команды',
+                'captain_player_id': captain.get('player_id') if captain.get('has_photo') else None,
+                'points': 10000,
+            })
+        return {'step': 0, 'mode': mode, 'entries': entries, 'base_ranking': base}
+
+    def vote_partial_ranking(snapshot, visible):
+        # Recompute solely from previously revealed ballots: no future vote
+        # may influence positions or cumulative totals on the public projector.
+        ranked = copy.deepcopy(snapshot['base_ranking'])
+        places = {r['team_id']: r['place'] for r in ranked}
+        by_id = {r['team_id']: r for r in ranked}
+        for row in visible:
+            team = by_id[row['receiver_team_id']]
+            team['votes'] += row['points']
+            team['total'] += row['points']
+        ranked.sort(key=lambda r: (-r['total'], r['team_id']))
+        for index, row in enumerate(ranked):
+            row['place'] = (ranked[index - 1]['place']
+                            if index and ranked[index - 1]['total'] == row['total']
+                            else index + 1)
+            row['tied'] = sum(p['total'] == row['total'] for p in ranked) > 1
+            row['before_place'] = places[row['team_id']]
+            row['move'] = places[row['team_id']] - row['place']
+        return ranked
 
     def require_admin(request: Request, write=False):
         if request.session.get('admin') is not True:
@@ -325,6 +386,32 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
+        vote_show = result.get('vote_show')
+        if vote_show:
+            count = len(vote_show['entries'])
+            step = vote_show['step']
+            visible = vote_show['entries'][:min(step, count)]
+            ranking = vote_partial_ranking(vote_show, visible)
+            current = visible[-1].copy() if visible and step <= count else None
+            if current:
+                recipient = next(r for r in ranking if r['team_id'] == current['receiver_team_id'])
+                current['place'] = recipient['place']
+                current['before_place'] = recipient['before_place']
+                current['total'] = recipient['total']
+                current['vote_points'] = recipient['votes']
+            result['vote_view'] = {
+                'step': step, 'count': count, 'max_step': count + 1,
+                'mode': vote_show['mode'], 'revealed': visible,
+                'current': current, 'ranking': ranking,
+                'summary': step == count + 1,
+            }
+            result['vote_show'] = {'step': step, 'count': count, 'max_step': count + 1}
+            result['published_votes'] = [{'voter_team_id': r['voter_team_id'],
+                                           'target_team_id': r['target_team_id']}
+                                          for r in visible]
+            result['ranking'] = ranking
+            result['recent_changes'] = []
+            result['votes_published'] = step == count + 1
         return result
 
     def admin_state(c):
@@ -378,6 +465,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     def secret_preview():
         # Self-contained fictional rehearsal. No private draft or database reads.
         return (HERE / 'static' / 'secret-preview.html').read_text('utf-8')
+
+    @app.get('/sochi/preview/vote', response_class=HTMLResponse)
+    def vote_preview():
+        # Public rehearsal is populated entirely with fictional data.
+        return (HERE / 'static' / 'vote-preview.html').read_text('utf-8')
 
     @app.post('/sochi/api/admin/login')
     async def login(request: Request):
@@ -821,7 +913,28 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     (action == 'scene' and body.get('scene') in
                         ('secrets', 'votes', 'final', 'winner'))):
                     raise HTTPException(409, 'Сначала заверши раскрытие SECRET JACK SHOW')
-            if action == 'secret-show-start':
+            vote_show = p.get('vote_show')
+            if vote_show and action == 'votes':
+                raise HTTPException(409, 'Голоса уже зафиксированы для шоу. Повторная публикация запрещена')
+            if vote_show and vote_show['step'] < len(vote_show['entries']) + 1:
+                if (action in ('secret-show-start', 'winner-decision') or
+                    (action == 'scene' and body.get('scene') in
+                        ('votes', 'final', 'winner', 'secrets'))):
+                    raise HTTPException(409, 'Сначала заверши раскрытие голосов капитанов')
+            if action == 'vote-show-start':
+                if not vote_show or p['scene'] in ('final', 'winner'):
+                    raise HTTPException(409, 'Сначала опубликуй голоса для шоу')
+                vote_show['step'] = 0
+                p['scene'] = 'vote_show'
+            elif action == 'vote-show-step':
+                if not vote_show or p['scene'] in ('final', 'winner'):
+                    raise HTTPException(409, 'Сначала опубликуй голоса для шоу')
+                step = strict_int(body.get('step'), 'step', 0, len(vote_show['entries']) + 1)
+                if abs(step - vote_show['step']) != 1:
+                    raise HTTPException(409, 'Переходи по одному голосу')
+                vote_show['step'] = step
+                p['scene'] = 'vote_show'
+            elif action == 'secret-show-start':
                 if 'red' not in p['published_phases'] or p['votes_published']:
                     raise HTTPException(409, 'SECRET JACK SHOW доступен после RED и до голосования')
                 if len(list(c.execute('SELECT slot FROM secrets'))) != 3:
@@ -1019,10 +1132,16 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 votes = [rowdict(r) for r in c.execute('SELECT * FROM votes')]
                 if len(votes) != count:
                     raise HTTPException(422, 'Нужно по одному голосу каждой команды')
+                p['vote_mode'] = setting(c, 'vote_mode')
+                if body.get('show_mode') == 'cinematic':
+                    # All votes are frozen privately; the intro exposes none.
+                    # Award points in the same existing published_ranking path.
+                    p['vote_show'] = vote_snapshot(p, votes)
+                    p['scene'] = 'vote_show'
+                else:
+                    p['scene'] = 'votes'
                 p['published_votes'] = votes
                 p['votes_published'] = True
-                p['vote_mode'] = setting(c, 'vote_mode')
-                p['scene'] = 'votes'
             elif action == 'scene':
                 scene = body.get('scene')
                 if scene not in SCENES:
