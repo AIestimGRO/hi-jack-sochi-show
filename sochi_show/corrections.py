@@ -185,8 +185,9 @@ def correction(c, body):
             if cap is not None and c.execute('SELECT 1 FROM seats WHERE player_id=? AND team_id=?',(cap,tid)).fetchone():
                 c.execute('UPDATE teams SET captain_player_id=? WHERE team_id=?',(cap,tid))
         c.execute("INSERT OR REPLACE INTO settings(key,value) VALUES ('team_count',?)",(str(count),))
-        return 'Полная замена схемы рассадки',{'teams':previous_count,'cards':len(old_map),'published_reset':True},
-            {'teams':count,'cards':len(cards),'published_reset':True}
+        return ('Полная замена схемы рассадки',
+                {'teams':previous_count,'cards':len(old_map),'published_reset':True},
+                {'teams':count,'cards':len(cards),'published_reset':True})
     if kind == 'vote_mode':
         old = c.execute("SELECT value FROM settings WHERE key='vote_mode'").fetchone()
         new=str(value or '')
