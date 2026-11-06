@@ -41,6 +41,7 @@ jobs:
           node --check sochi_show/static/final-preview.js
           node --check sochi_show/static/captain-show.js
           node --check sochi_show/static/captain-preview.js
+          node --check sochi_show/static/protected-editor.js
       - name: GREEN visual smoke tests
         run: node tests/test_green_visual.mjs
       - name: BLUE visual smoke tests
