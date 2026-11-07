@@ -54,7 +54,7 @@
   function previewTable(policy){
     const ranked=rows();
     if(!ranked.length)return '<p class="muted">Сначала опубликуй GREEN и BLUE — чистые фишки появятся здесь автоматически.</p>';
-    const scores=ranked.map(r=>points(r,policy));
+    const scores=ranked.map(r=>points(r,policy)+r.bonus);
     const gap=Math.max(...scores)-Math.min(...scores);
     const redMaxSwing=(ranked.length-1)*10000;
     return `<div class="bp-summary"><strong>Разрыв между первым и последним:</strong>
@@ -64,7 +64,7 @@
     </div>
     <table class="bp-table"><thead><tr><th>Место</th><th>Команда</th><th>Чистые фишки BLUE</th><th>Выжившие · бонус</th><th>Очки перед RED</th></tr></thead>
     <tbody>${ranked.map((r,i)=>`<tr class="${i===0?'bp-leading':''}"><td>#${r.place}</td><td>${escapeHTML(r.name)}</td>
-      <td>${fmt(r.chips)}</td><td>+${fmt(r.bonus)}</td><td><strong>${fmt(scores[i]+r.bonus)}</strong></td></tr>`).join('')}</tbody></table>`;
+      <td>${fmt(r.chips)}</td><td>+${fmt(r.bonus)}</td><td><strong>${fmt(scores[i])}</strong></td></tr>`).join('')}</tbody></table>`;
   }
   function render(){
     const count=state?.team_count||0, p=phase(),policy=p.blue_policy||null;
