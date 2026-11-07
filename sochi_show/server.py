@@ -1338,8 +1338,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         rate = require_chip_setting(c, 'reentry')
                         if r['reentry_chips'] != r['reentry_count'] * rate:
                             raise HTTPException(409, 'GREEN: сумма re-entry не соответствует настройкам')
+                        entry_rate=chip_setting(c,'entry')
+                        if entry_rate is None:
+                            raise HTTPException(409,'Сначала настрой стоимость одного входа (по правилам 50 000 фишек на игрока)')
                         score = green_points(r['green_stack'],r['reentry_chips'],
-                                             3*(chip_setting(c,'entry') or 0))
+                                             3*entry_rate)
                         p['stages'][team_id]['green_stack_actual'] = r['green_stack']
                     elif action == 'blue':
                         if 'green' not in p['published_phases']:
