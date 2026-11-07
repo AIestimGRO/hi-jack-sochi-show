@@ -48,7 +48,11 @@ def test_player_counters_roll_up_to_team_and_move_projection_live(client):
     assert call(client,'publish',h,{'action':'scene','scene':'teams'}).status_code==200
     legacy=client.get('/sochi/legacy').text
     names=public['teams']
-    assert legacy.index(names['3']) < legacy.index(names['2']) < legacy.index(names['1'])
+    def exact_team_name(team_id):
+        return '<span class="rank-name">' + names[str(team_id)] + '</span>'
+    assert (legacy.index(exact_team_name(3)) <
+            legacy.index(exact_team_name(2)) <
+            legacy.index(exact_team_name(1)))
     assert 'RE-ENTRY: 5' in legacy
     assert 'RE-ENTRY: 2' in legacy
 
