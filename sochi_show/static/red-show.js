@@ -41,14 +41,14 @@ window.RedShow=(()=>{
     const revealed=data.demo_ranking?[...ranking].reverse().slice(0,Math.min(next,count)):ranking;
     return {count,step:next,max_step:count+1,revealed};
   }
-  function placeCell(row){
+  function placeCell(row,finishOrder=false){
     return `<div class="rs-list-row ${row.place<=3?'rs-podium-'+row.place:''}">
        <span class="rs-list-icon">${rankArt(row.place)}</span>
        <span class="rs-list-place">${row.place}</span>
        <span class="rs-list-name">${esc(row.name)}</span>
        <span class="rs-list-shift">#${row.blue_place} → #${row.place}</span>
-       <span class="rs-list-red">${fmt(row.red)}</span>
-       <span class="rs-list-total">${fmt(row.total)}</span>
+       <span class="rs-list-red">${finishOrder?"#"+row.red_place:fmt(row.red)}</span>
+       <span class="rs-list-total">${finishOrder?(row.place===1?"ЧЕМПИОН":"ВЫБЫЛ"):fmt(row.total)}</span>
     </div>`;
   }
   function render(host,data){
@@ -57,6 +57,7 @@ window.RedShow=(()=>{
     const intro=step===0;
     const board=step===count+1;
     const rows=data.revealed||[];
+    const finishOrder=!!data.finish_order;
     const protagonist=rows.length?rows[rows.length-1]:null;
     const leader=protagonist?.place===1;
     const converted=rows.some(r=>r.base_points!=null&&r.base_points!==r.chip_net);
@@ -82,10 +83,10 @@ window.RedShow=(()=>{
                <div class="rs-intro-notice">RED ЗАВЕРШЁН · НАЧИНАЕМ РАСКРЫТИЕ</div>
                <div class="rs-unrevealed">РЕЗУЛЬТАТЫ ЕЩЁ НЕ ОТКРЫТЫ</div>`:
             board?
-              `<div class="rs-list-head"><span></span><span>№</span><span>КОМАНДА</span><span>К BLUE</span><span>RED</span><span>ИТОГО</span></div>
-                <div class="rs-list" style="--rank-count:${count}">${[...rows].sort((a,b)=>a.place-b.place||b.total-a.total||a.team_id-b.team_id).map(placeCell).join('')}</div>
-                <div class="rs-afterward">ВПЕРЕДИ — SECRET JACK И ГОЛОСОВАНИЕ · ИТОГИ ЕЩЁ МОГУТ ИЗМЕНИТЬСЯ</div>`:
-              `<div class="rs-reveal-kicker">${leader?'ЛИДЕР ПОСЛЕ ТРЁХ ЭТАПОВ':'НОВАЯ ПОЗИЦИЯ В ОБЩЕМ РЕЙТИНГЕ'}</div>
+              `<div class="rs-list-head"><span></span><span>№</span><span>КОМАНДА</span><span>К BLUE</span><span>${finishOrder?'ФИНИШ':'RED'}</span><span>${finishOrder?'СТАТУС':'ИТОГО'}</span></div>
+                <div class="rs-list" style="--rank-count:${count}">${[...rows].sort((a,b)=>a.place-b.place||b.total-a.total||a.team_id-b.team_id).map(row=>placeCell(row,finishOrder)).join('')}</div>
+                <div class="rs-afterward">${finishOrder?'МЕСТА ОПРЕДЕЛИЛ RED · ДАЛЕЕ НАГРАЖДЕНИЕ':'ВПЕРЕДИ — SECRET JACK И ГОЛОСОВАНИЕ · ИТОГИ ЕЩЁ МОГУТ ИЗМЕНИТЬСЯ'}</div>`:
+              `<div class="rs-reveal-kicker">${finishOrder?(leader?'ПОБЕДИТЕЛЬ ФИНАЛЬНОГО СТОЛА':'МЕСТО ПО ВЫБЫВАНИЮ'):leader?'ЛИДЕР ПОСЛЕ ТРЁХ ЭТАПОВ':'НОВАЯ ПОЗИЦИЯ В ОБЩЕМ РЕЙТИНГЕ'}</div>
                <div class="rs-hero">
                  <span class="rs-hero-mascot">${rankArt(protagonist?.place)}</span>
                  <span class="rs-hero-place">${protagonist?.place||'—'}<small>МЕСТО</small></span>
@@ -95,8 +96,8 @@ window.RedShow=(()=>{
                </div>
                <div class="rs-score-panels">
                   <div><small>МЕСТО В RED-ТУРЕ</small><strong>#${protagonist?.red_place||'—'}</strong></div>
-                  <div><small>ОЧКИ RED</small><strong>${fmt(protagonist?.red)}</strong></div>
-                  <div class="rs-cumulative"><small>${converted?'ОЧКИ BLUE + RED':'GREEN + BLUE + RED'}</small><strong>${fmt(protagonist?.total)}</strong></div>
+                  <div><small>${finishOrder?'ФИНИШ RED':'ОЧКИ RED'}</small><strong>${finishOrder?'#'+protagonist?.red_place:fmt(protagonist?.red)}</strong></div>
+                  <div class="rs-cumulative"><small>${finishOrder?'ИТОГОВОЕ МЕСТО':converted?'ОЧКИ BLUE + RED':'GREEN + BLUE + RED'}</small><strong>${finishOrder?'#'+protagonist?.place:fmt(protagonist?.total)}</strong></div>
                </div>
                <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(count,rows.length)} / ${count}</div>`}
         </div>

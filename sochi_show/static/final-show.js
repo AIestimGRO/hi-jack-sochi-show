@@ -52,25 +52,25 @@ window.FinalShow=(()=>{
      roster:n>=5?data.demo_roster:[]};
  }
  const isConverted=p=>p?.base_points!=null&&p.base_points!==p.chip_net;
- function scoreRibbon(p){
+ function scoreRibbon(p,finishOrder=false){
   const converted=isConverted(p);
   return `<div class="fs-score-breakdown">
     <div><small>${converted?'ЧИСТЫЕ ФИШКИ':'GREEN'}</small><strong>${fmt(converted?p.chip_net:p.green)}</strong></div>
     <div><small>${converted?'ОЧКИ BLUE':'BLUE'}</small><strong>${fmt(converted?p.base_points:p.blue)}</strong></div>
-    <div><small>RED</small><strong>${fmt(p.red)}</strong></div>
+    <div><small>${finishOrder?'МЕСТО RED':'RED'}</small><strong>${finishOrder?'#'+p.red_place:fmt(p.red)}</strong></div>
     <div><small>SECRET JACK</small><strong>${fmt(p.secret)}</strong></div>
     <div><small>ГОЛОСА</small><strong>${fmt(p.votes)}</strong></div>
   </div>`;
  }
- function boardRow(r){
+ function boardRow(r,finishOrder=false){
    return `<div class="fs-board-row ${r.place<=3?'fs-board-podium-'+r.place:''}">
       <span class="fs-board-rank">${r.place}</span>
-      <span class="fs-board-name">${esc(r.name)}${r.tied?'<small> • РАВЕНСТВО ОЧКОВ</small>':''}</span>
+      <span class="fs-board-name">${esc(r.name)}${!finishOrder&&r.tied?'<small> • РАВЕНСТВО ОЧКОВ</small>':''}</span>
       <span class="fs-board-green">${fmt(isConverted(r)?r.chip_net:r.green)}</span>
       <span class="fs-board-blue">${fmt(isConverted(r)?r.base_points:r.blue)}</span>
-      <span class="fs-board-red">${fmt(r.red)}</span>
+      <span class="fs-board-red">${finishOrder?'#'+r.red_place:fmt(r.red)}</span>
       <span class="fs-board-bonus">${fmt((r.secret||0)+(r.votes||0))}</span>
-      <span class="fs-board-total">${fmt(r.total)}</span>
+      <span class="fs-board-total">${finishOrder?'#'+r.place:fmt(r.total)}</span>
    </div>`;
  }
  function podiumTile(p){
@@ -86,6 +86,7 @@ window.FinalShow=(()=>{
   const step=Math.min(5,Math.max(0,Number(data?.step)||0));
   const intro=step===0,board=step===4,champion=step===5;
   const p=data?.current,win=data?.champion;
+   const finishOrder=!!data?.finish_order;
   const converted=(data?.board||[]).some(isConverted)||isConverted(p)||isConverted(win);
   const titles=[
     'ВРЕМЯ<br><em>ПОБЕДИТЕЛЕЙ</em>',
@@ -121,9 +122,9 @@ window.FinalShow=(()=>{
           </div>
           <div class="fs-intro-caption">ВПЕРЕДИ — ТРИ ГЛАВНЫХ ОБЪЯВЛЕНИЯ</div>`:
           board?
-            `<div class="fs-board-label">ВСЕ ТУРНИРЫ + SECRET JACK + ГОЛОСА КАПИТАНОВ</div>
-              <div class="fs-board-head"><span>№</span><span>КОМАНДА</span><span>${converted?'ФИШКИ':'GREEN'}</span><span>${converted?'ОЧКИ':'BLUE'}</span><span>RED</span><span>БОНУС</span><span>ИТОГО</span></div>
-              <div class="fs-board-list" style="--rank-count:${data.count}">${(data.board||[]).map(boardRow).join('')}</div>
+            `<div class="fs-board-label">${finishOrder?'ИТОГОВЫЕ МЕСТА · ПОРЯДОК ВЫБЫВАНИЯ RED':'ВСЕ ТУРНИРЫ + SECRET JACK + ГОЛОСА КАПИТАНОВ'}</div>
+              <div class="fs-board-head"><span>№</span><span>КОМАНДА</span><span>${converted?'ФИШКИ':'GREEN'}</span><span>${converted?'ОЧКИ':'BLUE'}</span><span>${finishOrder?'ФИНИШ':'RED'}</span><span>БОНУС</span><span>${finishOrder?'МЕСТО':'ИТОГО'}</span></div>
+              <div class="fs-board-list" style="--rank-count:${data.count}">${(data.board||[]).map(r=>boardRow(r,finishOrder)).join('')}</div>
               <div class="fs-board-footer">РЕЙТИНГ ЗАФИКСИРОВАН · ВПЕРЕДИ — ЧЕМПИОНСКАЯ ЦЕРЕМОНИЯ</div>`:
           champion?
             `<div class="fs-confetti" aria-hidden="true">${Array.from({length:26},(_,i)=>`<i style="--n:${i};--delay:${i%7}"></i>`).join('')}</div>
@@ -132,7 +133,7 @@ window.FinalShow=(()=>{
                 <div class="fs-champion-detail">
                   <div class="fs-champion-kicker">ПОБЕДИТЕЛЬ HI, JACK — HI, SOCHI</div>
                   <div class="fs-champion-name">${esc(winningTeam)}</div>
-                  <div class="fs-champion-total">${fmt(win?.total)} <small>ОЧКОВ</small></div>
+                  <div class="fs-champion-total">${finishOrder?'1':fmt(win?.total)} <small>${finishOrder?'МЕСТО RED':'ОЧКОВ'}</small></div>
                   ${data.tie_resolved?'<div class="fs-tie-note">НИЧЬЯ ПО ОЧКАМ · РЕШЕНИЕ ОРГАНИЗАТОРА</div>':''}
                 </div>
               </div>
@@ -146,11 +147,11 @@ window.FinalShow=(()=>{
                 <div class="fs-hero-number">${currentCeremony}<small>МЕСТО</small></div>
                 <div class="fs-hero-info">
                   <div class="fs-hero-name">${esc(p?.name||'')}</div>
-                  <div class="fs-hero-total">${fmt(p?.total)} <small>ОЧКОВ</small></div>
-                  ${p?.official_place!==currentCeremony?'<div class="fs-tie-note">МЕСТО ПО ОЧКАМ #'+p.official_place+' · НИЧЬЯ</div>':''}
+                  <div class="fs-hero-total">${finishOrder?currentCeremony:fmt(p?.total)} <small>${finishOrder?'МЕСТО RED':'ОЧКОВ'}</small></div>
+                  ${!finishOrder&&p?.official_place!==currentCeremony?'<div class="fs-tie-note">МЕСТО ПО ОЧКАМ #'+p.official_place+' · НИЧЬЯ</div>':''}
                 </div>
               </div>
-              ${scoreRibbon(p||{})}
+              ${scoreRibbon(p||{},finishOrder)}
               <div class="fs-reveal-caption">ОБЪЯВЛЕНО ПРИЗЁРОВ: ${step} / 3</div>`}
       </div>
       <aside class="gs-side">

@@ -98,9 +98,11 @@ function renderFinalDirector(){
   const vote=p.vote_show;
   const votesReady=p.votes_published && (!vote || vote.step>=((vote.entries?.length||state.team_count||0)+1));
   const ranking=p.ranking||[];
-  const tied=ranking.length>1&&ranking[0].total===ranking[1].total;
+  const redFinished=(p.published_phases||[]).includes('red');
+  const finishOrder=p.blue_policy?.mode==='final_table'&&redFinished;
+  const tied=!finishOrder&&ranking.length>1&&ranking[0].total===ranking[1].total;
   const decisionRequired=tied&&!p.winner_decision;
-  const ready=votesReady && ranking.length>=3 && (!decisionRequired||!!show);
+  const ready=votesReady && redFinished && ranking.length>=3 && (!decisionRequired||!!show);
   const step=show?.step??0;
   $('final-show-start').disabled=!ready;
   $('final-show-start').textContent=show?'↻ Начать финал сначала':'▶ Начать FINAL SHOW';
@@ -110,6 +112,7 @@ function renderFinalDirector(){
   $('final-show-progress').textContent=show?
     'Кадр '+step+' / 5'+(step===5?' · шоу завершено':' · раскрытие финала'):
     !votesReady?'Сначала заверши голосование':
+    !redFinished?'Сначала заверши RED и внеси итоговые места':
     decisionRequired?'НИЧЬЯ: выбери победителя в блоке протокола':
     !ready?'Ожидаем полный рейтинг':'Можно начинать';
 }
@@ -234,8 +237,8 @@ $('stages').querySelector('tbody').innerHTML=state.teams.map(t=>{
 }).join('');
 const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2,3].map(slot=>{let sec=state.secrets.find(x=>x.slot===slot),locked=pub.revealed_slots.includes(slot);return `<div class="secret-item"><strong>#${slot}</strong><select id="secret-player-${slot}"><option value="">Не назначен</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id} · стол ${s.table_no}</option>`).join('')}</select><select id="secret-killer-${slot}">${optionTeams(sec?.knockout_team_id)}</select><select id="secret-knockout-player-${slot}"><option value="">Кто выбил?</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.knockout_player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id}</option>`).join('')}</select><div><label><input type="checkbox" id="secret-confirm-${slot}" ${sec?.confirmed?'checked':''}>Выбит</label><button data-save-secret="${slot}" class="secondary">Сохранить</button></div></div>`}).join('');
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}" ${pub.votes_published?'disabled':''}>${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary" ${pub.votes_published?'disabled':''}>✓</button></div>`}).join('');
-let rk=pub.ranking;$('ranking-preview').innerHTML=rk.length?`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
-const ties=rk.length>1?rk.filter(r=>r.total===rk[0].total):[];$('tie-resolution').innerHTML=ties.length>1?`<span class="note">НИЧЬЯ НА ПЕРВОМ МЕСТЕ · решение организатора:</span><select id="tie-winner">${ties.map(t=>`<option value="${t.team_id}" ${pub.winner_decision===t.team_id?'selected':''}>${esc(t.name)}</option>`).join('')}</select><button id="save-tie" class="gold">Зафиксировать решение</button>`:'';
+let rk=pub.ranking;const finishedByRed=pub.blue_policy?.mode==='final_table'&&(pub.published_phases||[]).includes('red');$('ranking-preview').innerHTML=rk.length?(finishedByRed?'<p><strong>МЕСТА ОПРЕДЕЛЯЕТ ВЫБЫВАНИЕ КАПИТАНОВ RED.</strong> Очки только справочно.</p>':'')+`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
+const ties=finishedByRed?[]:rk.length>1?rk.filter(r=>r.total===rk[0].total):[];$('tie-resolution').innerHTML=ties.length>1?`<span class="note">НИЧЬЯ НА ПЕРВОМ МЕСТЕ · решение организатора:</span><select id="tie-winner">${ties.map(t=>`<option value="${t.team_id}" ${pub.winner_decision===t.team_id?'selected':''}>${esc(t.name)}</option>`).join('')}</select><button id="save-tie" class="gold">Зафиксировать решение</button>`:'';
 $('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.created_at)} · ${esc(x.action)} · ${esc(x.data).slice(0,300)}</div>`).join('');updateWorkflow();renderGreenDirector();renderBlueDirector();renderRedDirector();renderSecretDirector();renderVoteDirector();renderFinalDirector();}
 $('login-form').onsubmit=async e=>{e.preventDefault();try{await api('/sochi/api/admin/login','POST',{password:$('password').value});$('password').value='';await refresh()}catch(err){toast(err.message,true)}};
 $('logout').onclick=async()=>{await change('/sochi/api/admin/logout',{});location.reload()};
@@ -334,7 +337,7 @@ async function bulkStage(stage){
       detail=`стек на конец BLUE ${fmt(r.blue_stack)} − входы ${fmt(entry)} − re-entry ${fmt(reentry)} − add-on ${fmt(chips)}; +${fmt(5000*r.survivors)} бонусных ОЧКОВ за выживших (отдельно, на место BLUE не влияет)`;
     }else{
       score=130000-10000*(r.red_place-1);
-      detail=`место №${r.red_place}`;
+      detail=state.published?.blue_policy?.mode==='final_table'?`финиш RED №${r.red_place} → ИТОГОВОЕ МЕСТО КОМАНДЫ №${r.red_place}`:`место №${r.red_place}`;
     }
     return `№${t.team_id} · ${t.display_name}: ${fmt(score)} ${stage==='red'?'очков':'чистых фишек'} [${detail}]`;
   }).join('\n');
