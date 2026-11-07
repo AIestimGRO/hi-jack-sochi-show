@@ -19,7 +19,8 @@
     const arr=Object.entries(published.stages||{}).filter(([id,r])=>
       Number.isSafeInteger(r.green)&&Number.isSafeInteger(r.blue)).map(([id,r])=>
         ({id:Number(id),name:names.get(Number(id))||'Команда #'+id,
-          chips:r.green+r.blue,green:r.green,blue:r.blue}));
+          chips:r.blue_net_chips??(r.green+r.blue),bonus:r.survivor_bonus||0,
+          green:r.green,blue:r.blue}));
     arr.sort((a,b)=>b.chips-a.chips||a.id-b.id);
     arr.forEach((r,i)=>r.place=i&&r.chips===arr[i-1].chips?arr[i-1].place:i+1);
     return arr;
@@ -57,12 +58,13 @@
     const gap=Math.max(...scores)-Math.min(...scores);
     const redMaxSwing=(ranked.length-1)*10000;
     return `<div class="bp-summary"><strong>Разрыв между первым и последним:</strong>
-      ${fmt(gap)} очков <span>· разница RED от лучшего до последнего места: ${fmt(redMaxSwing)} очков</span>
+      ${fmt(gap)} очков <span>· разница RED между первым и последним местом: ${fmt(redMaxSwing)} очков</span>
+      <span>Бонус +5 000 за выжившего считается отдельно и не определяет места BLUE.</span>
       ${gap>redMaxSwing?'<b class="bp-warning">Большой разрыв — RED может не изменить лидера</b>':'<b class="bp-good">Борьба за места после RED сохраняется</b>'}
     </div>
-    <table class="bp-table"><thead><tr><th>Место</th><th>Команда</th><th>Чистые фишки BLUE</th><th>Очки перед RED</th></tr></thead>
+    <table class="bp-table"><thead><tr><th>Место</th><th>Команда</th><th>Чистые фишки BLUE</th><th>Выжившие · бонус</th><th>Очки перед RED</th></tr></thead>
     <tbody>${ranked.map((r,i)=>`<tr class="${i===0?'bp-leading':''}"><td>#${r.place}</td><td>${escapeHTML(r.name)}</td>
-      <td>${fmt(r.chips)}</td><td><strong>${fmt(scores[i])}</strong></td></tr>`).join('')}</tbody></table>`;
+      <td>${fmt(r.chips)}</td><td>+${fmt(r.bonus)}</td><td><strong>${fmt(scores[i]+r.bonus)}</strong></td></tr>`).join('')}</tbody></table>`;
   }
   function render(){
     const count=state?.team_count||0, p=phase(),policy=p.blue_policy||null;
