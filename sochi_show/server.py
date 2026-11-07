@@ -41,6 +41,15 @@ def empty_public():
             'captains': [], 'ranking': [], 'recent_changes': [], 'winner_decision': None}
 
 
+class NoCacheStaticFiles(StaticFiles):
+    """Projector browsers must revalidate live event assets after hotfixes."""
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers['Cache-Control'] = 'no-store, max-age=0'
+        return response
+
+
 def app_factory(db_path: str | None = None, media_path: str | None = None,
                 admin_password: str | None = None, session_secret: str | None = None,
                 secure_cookie: bool | None = None) -> FastAPI:
@@ -63,7 +72,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     app.add_middleware(SessionMiddleware, secret_key=session_key,
                        session_cookie='sochi_session', same_site='strict', https_only=secure,
                        max_age=12 * 3600)
-    app.mount('/sochi/static', StaticFiles(directory=HERE / 'static'), name='sochi_static')
+    app.mount('/sochi/static', NoCacheStaticFiles(directory=HERE / 'static'), name='sochi_static')
     login_attempts: dict[str, list[float]] = {}
     # Shared failure budget prevents distributed PIN guessing from many IPs.
     # Failed attempts only; never log the supplied secret.
@@ -592,11 +601,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
 
     @app.get('/sochi/admin', response_class=HTMLResponse)
     def admin_page():
-        return (HERE / 'static' / 'admin.html').read_text('utf-8')
+        return HTMLResponse((HERE / 'static' / 'admin.html').read_text('utf-8'), headers={'Cache-Control': 'no-store, max-age=0'})
 
     @app.get('/sochi/screen', response_class=HTMLResponse)
     def public_page():
-        return (HERE / 'static' / 'screen.html').read_text('utf-8')
+        return HTMLResponse((HERE / 'static' / 'screen.html').read_text('utf-8'), headers={'Cache-Control': 'no-store, max-age=0'})
 
     @app.get('/sochi/preview/green', response_class=HTMLResponse)
     def green_preview():
@@ -671,7 +680,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     def get_public_state():
         with connection() as c:
             version, payload = get_pub(c)
-        return {'version': version, 'state': public_safe(payload)}
+        return JSONResponse({'version': version, 'state': public_safe(payload)}, headers={'Cache-Control': 'no-store, max-age=0'})
 
     @app.get('/sochi/api/public/events')
     async def public_events(request: Request):
