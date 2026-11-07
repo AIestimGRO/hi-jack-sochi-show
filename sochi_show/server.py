@@ -529,6 +529,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = copy.deepcopy(final_show['ranking'])
             if step < 3:
                 result['winner_decision'] = None
+        # This also covers legacy BLUE results published without cinematic mode.
+        if policy and not points_public:
+            result['ranking']=[]
+            result['stages']={}
+            result['recent_changes']=[]
         return result
 
     def admin_state(c):
@@ -1003,7 +1008,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 p.pop('blue_policy',None)
             else:
                 policy=after.copy()
-                policy['revealed']=bool(previous.get('revealed',False))
+                policy['revealed']=bool(previous.get('revealed',False)) or 'red' in p['published_phases']
                 p['blue_policy']=policy
         if edit.get('kind')=='seating_import':
             # A physical seating replacement is explicitly destructive.
