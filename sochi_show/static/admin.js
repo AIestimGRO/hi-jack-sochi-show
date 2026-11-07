@@ -43,20 +43,23 @@ function updateWorkflow(){
   const phases=pub.published_phases||[];
   const teamTotal=Number(state.team_count||0);
   const teamsDone=teamTotal>0&&Object.keys(pub.teams||{}).length===teamTotal;
+  const finalStacksReady=pub.blue_policy?.mode==='final_table' && !!pub.blue_policy?.revealed;
   const steps=[
     teamTotal>0,teamsDone,phases.includes('green'),phases.includes('blue'),
-    phases.includes('red'),(pub.revealed_slots||[]).length===3,
-    !!pub.votes_published,['final','winner'].includes(pub.scene)
+    finalStacksReady,(pub.revealed_slots||[]).length===3,
+    !!pub.votes_published,phases.includes('red'),
+    ['final','winner'].includes(pub.scene)
   ];
   const prompts=[
     'Шаг 1: выбери 10 или 11 команд и импортируй файл рассадки.',
     'Шаг 2: проверь имена и нажми «Опубликовать все названия».',
     'Шаг 3: заполни GREEN для всех команд и нажми «Опубликовать GREEN».',
     'Шаг 4: заполни BLUE и опубликуй результаты после GREEN.',
-    'Шаг 5: внеси уникальные места RED и опубликуй их.',
-    'Шаг 6: сохрани трёх Secret Jacks и раскрывай их по одному.',
-    'Шаг 7: запиши голоса всех команд и нажми «Раскрыть голоса».',
-    'Шаг 8: открой финальную таблицу через пульт эфира.'
+    'Шаг 5: утверди и объяви капитанам стеки 100 000–1 000 000 в BLUE → ФИНАЛЬНЫЙ СТОЛ.',
+    'Шаг 6: сохрани трёх Secret Jacks и раскрой их по одному.',
+    'Шаг 7: запиши голоса и заверши показ голосования на экране.',
+    'Шаг 8: после розыгрыша финального стола внеси и опубликуй места RED.',
+    'Шаг 9: открой финальную таблицу через пульт эфира.'
   ];
   const done=steps.filter(Boolean).length;
   $('guide-done').textContent=done+' из '+steps.length;
@@ -79,7 +82,11 @@ function updateWorkflow(){
     if(el)el.textContent=label;
   }
   if(!guideOpened){
-    const next=teamTotal===0?'seating-panel':!teamsDone?'teams-panel':!phases.includes('red')?'scores-panel':(pub.revealed_slots||[]).length<3?'secrets-panel':!pub.votes_published?'votes-panel':'control-panel';
+    const next=teamTotal===0?'seating-panel':!teamsDone?'teams-panel':
+      !phases.includes('blue')||!finalStacksReady?'scores-panel':
+      (pub.revealed_slots||[]).length<3?'secrets-panel':
+      !pub.votes_published?'votes-panel':
+      !phases.includes('red')?'scores-panel':'control-panel';
     const module=$('module-'+next);
     if(module)module.open=true;
     guideOpened=true;
@@ -264,7 +271,8 @@ $('final-show-next').onclick=async()=>{
   const slot=(state.published.revealed_slots?.length||0)+1;
   if(!state.published.secret_show)return toast('Сначала запусти SECRET JACK SHOW',true);
   if(slot>3)return toast('Все три Валета раскрыты');
-  publish({action:'reveal',slot},`ВПЕРВЫЕ раскрыть SECRET JACK №${slot} на проекторе? Если он выбит, бонус +10 000 будет учтён один раз.`);
+  const bonus=state.published?.blue_policy?.mode==='final_table'?'5 000 фишек':'10 000 очков';
+  publish({action:'reveal',slot},`ВПЕРВЫЕ раскрыть SECRET JACK №${slot} на проекторе? При подтверждённом выбивании начислится +${bonus} один раз.`);
 };
 $('secret-show-start').onclick=()=>publish({action:'secret-show-start'},'Запустить или повторить SECRET JACK SHOW? Это не начисляет дополнительные очки.');
 $('secret-show-back').onclick=async()=>{
@@ -330,7 +338,7 @@ async function bulkStage(stage){
     }
     return `№${t.team_id} · ${t.display_name}: ${fmt(score)} ${stage==='red'?'очков':'чистых фишек'} [${detail}]`;
   }).join('\n');
-  previewText(`<p>${stage==='blue'?'Проверь ОКОНЧАТЕЛЬНЫЕ чистые фишки BLUE. Места считаются только по фишкам; бонус выживших +5 000 за человека начисляется к очкам отдельно. После раскрытия мест выбери систему очков для RED в блоке BLUE → POINTS.':stage==='green'?'Проверь ПРОМЕЖУТОЧНЫЕ чистые фишки GREEN. Этот результат не суммируется повторно с итогом BLUE. Далее раскрывай места в GREEN SHOW.':stage==='red'?'Проверь места RED (1..N). После публикации на проекторе начнётся вступление RED. Новые места и общий рейтинг будут скрыты до кнопки «Далее» в RED SHOW.':'Проверь расчёты. После подтверждения данные этапа будут опубликованы на проекторе.'}</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
+  previewText(`<p>${stage==='blue'?'Проверь ОКОНЧАТЕЛЬНЫЕ чистые фишки BLUE. Места считаются только по фишкам; бонус выживших +5 000 за человека начисляется к очкам отдельно. После раскрытия мест утверди и объяви пропорциональные стеки капитанам в блоке BLUE → ФИНАЛЬНЫЙ СТОЛ.':stage==='green'?'Проверь ПРОМЕЖУТОЧНЫЕ чистые фишки GREEN. Этот результат не суммируется повторно с итогом BLUE. Далее раскрывай места в GREEN SHOW.':stage==='red'?'Проверь места RED (1..N). После публикации на проекторе начнётся вступление RED. Новые места и общий рейтинг будут скрыты до кнопки «Далее» в RED SHOW.':'Проверь расчёты. После подтверждения данные этапа будут опубликованы на проекторе.'}</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
   $('confirm-pub-stage').onclick=async()=>{
     try{
       await api('/sochi/api/admin/stages/bulk','POST',{phase:stage,teams:rows});
