@@ -1198,8 +1198,15 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if not count:
                 raise HTTPException(409, 'Сначала импортируйте утверждённую рассадку')
             if p['published_phases']:
-                if action in ('teams','name','refresh-photo') or (
-                    action == 'captains' and p.get('captains')):
+                # A live operator may complete or correct captain selections
+                # before captain votes are revealed. Reject silent legacy
+                # republishing and post-vote rewrites of the tournament roster.
+                captain_locked = (action == 'captains' and p.get('captains')
+                                  and (body.get('captain_assignments') is None
+                                       or p.get('votes_published')
+                                       or p.get('vote_show')
+                                       or 'red' in p['published_phases']))
+                if action in ('teams','name','refresh-photo') or captain_locked:
                     raise HTTPException(409, 'Опубликованные данные исправляй через 🔐 Защищённое исправление с PIN')
             show = p.get('green_show')
             if show and action == 'green':
