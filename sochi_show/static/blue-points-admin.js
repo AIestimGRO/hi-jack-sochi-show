@@ -53,7 +53,7 @@
         <td>#${r.place}</td><td>${escapeHTML(r.name)}</td><td>${fmt(r.net)}</td>
         <td><strong>${fmt(r.starting)}</strong></td><td>+${fmt(r.survivors)}</td>
         <td><strong>${fmt(r.starting+r.survivors)}</strong></td></tr>`).join('')}</tbody></table>
-      <p class="muted"><strong>Важно:</strong> +5 000 за выбитого Secret Jack и +10 000 за голос
+      <p class="muted"><strong>Важно:</strong> +10 000 за выбитого Secret Jack и +20 000 за голос
         будут добавляться <em>после</em> объявления стартовых стеков. Чистые фишки BLUE и
         места BLUE не меняются.</p>`;
   };
