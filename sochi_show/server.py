@@ -411,6 +411,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
+        policy = result.get('blue_policy')
+        points_public = bool(policy and policy.get('revealed'))
+        if policy:
+            result['blue_policy']={'mode':policy['mode'] if points_public else 'pending',
+                                   'revealed':points_public}
         blue_show = result.get('blue_show')
         if blue_show:
             count = len(blue_show['ranking'])
@@ -418,10 +423,14 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             # Never deliver unrevealed BLUE totals or positions to the projector,
             # public JSON, or SSE before the organizer advances the scene.
             visible = list(reversed(blue_show['ranking']))[:min(step, count)]
+            if not points_public:
+                for row in visible:
+                    row.pop('award',None)
             result['blue_view'] = {'count': count, 'step': step,
-                                   'max_step': count + 1, 'revealed': visible}
+                                   'max_step': count + 1, 'revealed': visible,
+                                   'points_revealed':points_public}
             result['blue_show'] = {'step': step, 'max_step': count + 1}
-            if step < count + 1:
+            if step < count + 1 or (policy and not points_public):
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
@@ -979,6 +988,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         label,before,after=correction(c,edit)
         if edit.get('kind')=='winner':
             p['winner_decision']=after
+        if edit.get('kind')=='blue_policy':
+            policy=after.copy()
+            previous=p.get('blue_policy') or {}
+            policy['revealed']=bool(previous.get('revealed',False))
+            p['blue_policy']=policy
         if edit.get('kind')=='seating_import':
             # A physical seating replacement is explicitly destructive.
             # Reset the live scenes, bonuses and rankings; draft players remain
@@ -1194,6 +1208,17 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     raise HTTPException(409, 'Переходи по одному шагу')
                 red_show['step'] = step
                 p['scene'] = 'red_show'
+            elif action == 'blue-policy-reveal':
+                policy=p.get('blue_policy')
+                if not policy or 'blue' not in p['published_phases'] or 'red' in p['published_phases']:
+                    raise HTTPException(409,'Сначала настрой систему очков после BLUE')
+                if not blue_show or blue_show['step'] < len(blue_show['ranking'])+1:
+                    raise HTTPException(409,'Сначала открой полный итог BLUE по чистым фишкам')
+                policy['revealed']=True
+                update_blue_policy_points(p)
+                p['blue_show']=blue_snapshot(p)
+                p['blue_show']['step']=len(p['blue_show']['ranking'])+1
+                p['scene']='blue_show'
             elif action == 'blue-show-start':
                 if 'blue' not in p['published_phases'] or 'red' in p['published_phases']:
                     raise HTTPException(409, 'Шоу BLUE доступно после BLUE и до RED')
@@ -1277,6 +1302,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if len(rows) != count:
                     raise HTTPException(409, 'Несоответствие количества команд')
                 if action == 'red':
+                    if p.get('blue_policy') and not p['blue_policy'].get('revealed'):
+                        raise HTTPException(409,'Перед RED сначала покажи начисленные очки BLUE')
                     places = [r['red_place'] for r in rows]
                     if any(place is None for place in places) or sorted(places) != list(range(1, count + 1)):
                         raise HTTPException(422, 'RED: места 1..N без пропусков и повторов')
