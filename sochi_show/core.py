@@ -1,6 +1,10 @@
 """Pure calculations and the strict, organiser-approved seating importer."""
 from collections import Counter, defaultdict
 
+# Actual chip awards before RED in the final-table tournament format.
+FINAL_TABLE_JACK_CHIPS = 10_000
+FINAL_TABLE_VOTE_CHIPS = 20_000
+
 EXPECTED_OCCUPANCY = {10: [10, 10, 10], 11: [8, 8, 8, 9],
                       12: [9, 9, 9, 9], 13: [10, 10, 10, 9]}
 
@@ -163,12 +167,12 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
     secret_awards = Counter()
     for secret in secrets:
         if int(secret['slot']) in revealed_slots and secret.get('confirmed') and secret.get('knockout_team_id'):
-            secret_awards[int(secret['knockout_team_id'])] += (5_000 if final_table_mode else 10_000)
+            secret_awards[int(secret['knockout_team_id'])] += (FINAL_TABLE_JACK_CHIPS if final_table_mode else 10_000)
     vote_awards = Counter()
     if votes_published:
         for vote in votes:
             recipient = vote['target_team_id'] if vote_recipient == 'target' else vote['voter_team_id']
-            vote_awards[int(recipient)] += 10_000
+            vote_awards[int(recipient)] += FINAL_TABLE_VOTE_CHIPS if final_table_mode else 10_000
     ranking = []
     for team_id in sorted(team_names):
         entry = stages.get(str(team_id), {})
