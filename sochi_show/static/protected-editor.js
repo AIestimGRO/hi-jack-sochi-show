@@ -26,7 +26,7 @@ function changeFields(){
  const kind=el('protected-kind').value;
  let html='';
  if(kind==='stage')html=tselect('protected-team','Команда')+select('protected-field','Показатель',stageLabels)+textField('number','Новое целое число')+clearField();
- else if(kind==='chip_rate')html=select('protected-field','Норматив',[['reentry','Число фишек за re-entry'],['addon','Число фишек за add-on']])+textField('number','Новое значение (больше 0)');
+ else if(kind==='chip_rate')html=select('protected-field','Норматив',[['entry','Фишек за вход одного игрока (команда = 3 входа)'],['reentry','Число фишек за re-entry'],['addon','Число фишек за add-on']])+textField('number','Новое значение (больше 0)');
  else if(kind==='team_name')html=tselect('protected-team','Команда')+textField('text','Новое название');
  else if(kind==='captain')html=tselect('protected-team','Команда')+pselect('protected-player','Новый капитан')+clearField();
  else if(kind==='player_name')html=pselect('protected-player','Игрок')+textField('text','Новое имя или никнейм');
