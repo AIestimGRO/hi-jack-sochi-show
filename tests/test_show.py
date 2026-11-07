@@ -77,6 +77,9 @@ def call(client, endpoint, headers, data):
 
 def prepare(client, headers, n=10, players=False):
     assert call(client, 'seating', headers, {'team_count': n, 'document': approved_shape()}).status_code == 200
+    # Historical test fixtures used zero-cost initial entries. Production now
+    # requires the organiser to explicitly choose a per-player entry rate.
+    assert call(client,'chips-settings',headers,{'entry':0}).status_code == 200
     state = client.get('/sochi/api/admin/state').json()
     if players:
         for seat in state['seats']:
