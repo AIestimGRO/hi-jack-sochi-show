@@ -53,6 +53,8 @@ window.SecretShow=(()=>{
   }
   function summaryCard(data,card){
     const receiver=card.confirmed?teamName(data,card.knockout_team_id):'ВЫБИВАНИЕ НЕ ПОДТВЕРЖДЕНО';
+    const bonus=Number(data.jack_chips)||10000;
+    const unit=data.final_table?'ФИШЕК':'ОЧКОВ';
     return `<div class="ss-summary-card">
       <div class="ss-summary-symbol">♛</div>
       <div class="ss-summary-slot">SECRET JACK ${card.slot}</div>
@@ -60,8 +62,8 @@ window.SecretShow=(()=>{
       <div class="ss-summary-team">${teamName(data,card.jack_team_id)}</div>
       <div class="ss-summary-divider"></div>
       <div class="ss-summary-result ${card.confirmed?'bounty':'safe'}">
-        <strong>${card.confirmed?'+10 000':'0'}</strong>
-        <small>${card.confirmed?'БОНУС ЗА ВЫБИВАНИЕ':'НЕ ВЫБИТ'}</small>
+        <strong>${card.confirmed?'+'+new Intl.NumberFormat('ru-RU').format(bonus):'0'}</strong>
+        <small>${card.confirmed?'БОНУС ЗА ВЫБИВАНИЕ · '+unit:'НЕ ВЫБИТ'}</small>
       </div>
       <div class="ss-summary-receiver">${receiver}</div>
     </div>`;
@@ -72,6 +74,8 @@ window.SecretShow=(()=>{
     const summary=step===4&&revealed.length===3;
     const active=step>=1&&step<=3?revealed.find(s=>s.slot===step):null;
     const counted=revealed.filter(s=>s.confirmed).length;
+    const bonus=Number(data?.jack_chips)||10000;
+    const unit=data?.final_table?'ФИШЕК':'ОЧКОВ';
     const title=step===0?'ТАЙНЫЕ<br><em>ВАЛЕТЫ</em>':summary?'ТРИ<br><em>ВАЛЕТА</em>':'МАСКИ<br><em>СБРОШЕНЫ</em>';
     host.className='scene green-show-stage secret-show-stage';
     host.innerHTML=`<div class="green-experience secret-experience ss-${step===0?'intro':summary?'summary':'reveal'}" data-step="${step}">
@@ -95,7 +99,7 @@ window.SecretShow=(()=>{
           summary?
           `<div class="ss-summary-header">ТРИ РОЛИ РАСКРЫТЫ · НАЧИСЛЕННЫЕ БОНУСЫ</div>
             <div class="ss-summary-grid">${revealed.slice(0,3).map(s=>summaryCard(data,s)).join('')}</div>
-            <div class="ss-summary-bottom"><strong>ВСЕГО БОНУСОВ: ${new Intl.NumberFormat('ru-RU').format(counted*10000)}</strong>
+            <div class="ss-summary-bottom"><strong>ВСЕГО БОНУСОВ: ${new Intl.NumberFormat('ru-RU').format(counted*bonus)}</strong>
               <span>ДАЛЬШЕ — ГОЛОСОВАНИЕ КАПИТАНОВ</span></div>`:
           active?
           `<div class="ss-current-label">SECRET JACK № ${active.slot} / 3</div>
@@ -111,7 +115,7 @@ window.SecretShow=(()=>{
                 <div class="ss-team-name">${teamName(data,active.jack_team_id)}</div>
                 <div class="ss-result-block ${active.confirmed?'bounty':'safe'}">
                   ${active.confirmed?
-                    `<strong>+10 000 ОЧКОВ</strong><span>БОНУС КОМАНДЕ</span>
+                    `<strong>+${new Intl.NumberFormat('ru-RU').format(bonus)} ${unit}</strong><span>БОНУС КОМАНДЕ</span>
                        <b>${teamName(data,active.knockout_team_id)}</b>
                        <small>ВЫБИЛ: ${esc(active.knockout_name||'игрок не указан')}</small>`:
                     `<strong>SECRET JACK ВЫСТОЯЛ</strong><span>ВЫБИВАНИЕ НЕ ПОДТВЕРЖДЕНО</span>
