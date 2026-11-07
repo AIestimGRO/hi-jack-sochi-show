@@ -5,8 +5,9 @@ EXPECTED_OCCUPANCY = {10: [10, 10, 10], 11: [8, 8, 8, 9],
                       12: [9, 9, 9, 9], 13: [10, 10, 10, 9]}
 
 
-def green_points(green_stack: int, reentry_chips: int) -> int:
-    return green_stack - reentry_chips
+def green_points(green_stack: int, reentry_chips: int, entry_chips: int = 0) -> int:
+    """Net GREEN chips, including the initial entry for each participant."""
+    return green_stack - reentry_chips - entry_chips
 
 
 def blue_points(green_stack: int, blue_stack: int, addon_chips: int, survivors: int) -> int:
@@ -82,9 +83,56 @@ def validate_seating(document: dict, team_count: int) -> tuple[list[dict], list[
     return [teams_by_id[x] for x in range(1, team_count + 1)], parsed
 
 
+def blue_points_from_policy(chips: dict[int, int], policy: dict, team_count: int) -> dict[str, int]:
+    """Map end-of-BLUE NET CHIPS to tournament points without altering chip accounting.
+
+    chips: cumulative GREEN+BLUE net chips for each team.
+    chips/scale/places modes preserve the sporting ranking by *net chips*.
+    Equal chips get equal sporting places, therefore the same place-points.
+    """
+    if set(chips) != set(range(1, team_count + 1)):
+        raise ValueError('BLUE: нет чистых фишек для всех команд')
+    if not isinstance(policy, dict):
+        raise ValueError('BLUE: не выбрана система начисления')
+    mode = policy.get('mode')
+    if mode not in ('chips', 'scale', 'places'):
+        raise ValueError('BLUE: неизвестная система начисления')
+    percent = policy.get('percent', 100)
+    if mode == 'scale':
+        if type(percent) is not int or not 1 <= percent <= 100:
+            raise ValueError('Коэффициент: целое число 1–100%')
+    points = policy.get('place_points', [])
+    if mode == 'places':
+        if not isinstance(points, list) or len(points) != team_count:
+            raise ValueError('Нужны очки для каждого места BLUE')
+        if any(type(x) is not int or not 0 <= x <= 10_000_000 for x in points):
+            raise ValueError('Очки за место: целые числа от 0 до 10 000 000')
+        if any(points[i] > points[i-1] for i in range(1,len(points))):
+            raise ValueError('Очки должны убывать или оставаться равными с ухудшением места')
+    ranked = sorted(chips, key=lambda tid: (-chips[tid], tid))
+    result = {}
+    previous = None
+    place = 0
+    for index, tid in enumerate(ranked):
+        raw = chips[tid]
+        if previous is None or raw != previous:
+            place = index + 1
+        if mode == 'chips':
+            assigned = raw
+        elif mode == 'scale':
+            numerator = abs(raw) * percent
+            assigned = (numerator + 50) // 100 * (-1 if raw < 0 else 1)
+        else:
+            assigned = points[place - 1]
+        result[str(tid)] = assigned
+        previous = raw
+    return result
+
+
 def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[dict],
                       votes: list[dict], revealed_slots: list[int], votes_published: bool,
-                      vote_recipient: str, team_count: int) -> list[dict]:
+                      vote_recipient: str, team_count: int,
+                      blue_base_points: dict | None = None) -> list[dict]:
     """Only receives frozen published stage data, never draft data."""
     secret_awards = Counter()
     for secret in secrets:
@@ -103,9 +151,12 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
         r = entry.get('red') or 0
         s = secret_awards[team_id]
         v = vote_awards[team_id]
+        chip_net = g + b
+        award = (blue_base_points or {}).get(str(team_id), chip_net)
         ranking.append({'team_id': team_id, 'name': team_names[team_id],
-                        'green': g, 'blue': b, 'red': r, 'secret': s, 'votes': v,
-                        'total': g + b + r + s + v})
+                        'green': g, 'blue': b, 'chip_net': chip_net,
+                        'base_points': award, 'red': r, 'secret': s, 'votes': v,
+                        'total': award + r + s + v})
     ranking.sort(key=lambda x: (-x['total'], x['team_id']))
     for idx, entry in enumerate(ranking):
         entry['place'] = idx + 1 if idx == 0 or entry['total'] != ranking[idx - 1]['total'] else ranking[idx - 1]['place']
