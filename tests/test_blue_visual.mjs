@@ -46,8 +46,8 @@ for(const n of [10,11]){
   render(host,frame(all,1));
   assert.match(host.innerHTML,/GREEN #/);
   assert.match(host.innerHTML,/BLUE #/);
-  assert.match(host.innerHTML,/ОЧКИ ЭТАПА BLUE/);
-  assert.match(host.innerHTML,/СУММА GREEN \+ BLUE/);
+  assert.match(host.innerHTML,/ИЗМЕНЕНИЕ ЧИСТЫХ ФИШЕК BLUE/);
+  assert.match(host.innerHTML,/ЧИСТЫЕ ФИШКИ ПОСЛЕ BLUE/);
   assert.ok(!host.innerHTML.includes(all.demo_ranking[0].name) ||
     all.demo_ranking[0].team_id===all.demo_ranking[n-1].team_id,
     'the leader is not revealed first');
