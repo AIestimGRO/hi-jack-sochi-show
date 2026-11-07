@@ -12,8 +12,8 @@ window.VoteShow=(()=>{
        src="${window.JackSwordGifB64?'data:image/gif;base64,'+window.JackSwordGifB64:'/sochi/static/hi-jack-logo.svg'}" loading="eager">
      <div class="gs-jack-animation-tagline">ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ</div>
   </div>`;
-  const route=()=>'<div class="gs-route-markers">'+[
-    ['GREEN ✓',true],['BLUE ✓',true],['RED ✓',true],['ГОЛОСА',true]
+  const route=(table=false)=>'<div class="gs-route-markers">'+[
+    ['GREEN ✓',true],['BLUE ✓',true],[table?'СТЕКИ ✓':'RED ✓',true],['ГОЛОСА',true]
   ].map(([s,lit])=>`<div class="gs-route-marker ${lit?'lit':''}"><i></i><span>${s}</span></div>`).join('')+'</div>';
 
   // Used exclusively for an independent anonymous rehearsal.
@@ -99,7 +99,7 @@ window.VoteShow=(()=>{
       </header>
       <div class="gs-content">
         <div class="gs-main">
-          <div class="gs-kicker">ПОСЛЕ SECRET JACK / ПОСЛЕДНЯЯ ИНТРИГА</div>
+          <div class="gs-kicker">${data.final_table?'ПЕРЕД RED · ВЫДАЧА ФИШЕК ПО ГОЛОСАМ':'ПОСЛЕ SECRET JACK / ПОСЛЕДНЯЯ ИНТРИГА'}</div>
           <h1 class="gs-title">${title}</h1>
           <div class="gs-section-rule"></div>
           ${intro?
@@ -136,7 +136,7 @@ window.VoteShow=(()=>{
         </div>
         <aside class="gs-side">
           ${jack()}
-          <div class="gs-route">${route()}</div>
+          <div class="gs-route">${route(!!data.final_table)}</div>
           <div class="gs-side-bottom"><b>♠</b><span>CAPTAINS<br>VOTE</span><i>✦</i></div>
         </aside>
       </div>
