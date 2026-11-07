@@ -95,8 +95,22 @@ def test_real_final_table_before_red_with_jack_and_voting_chips(client,n):
     after=client.get('/sochi/api/admin/state').json()['published']
     for x in after['red_show']['ranking']:
         assert x['total']==stacks[str(x['team_id'])]+x['survivor_bonus']+x['red']+next(r for r in pub['ranking'] if r['team_id']==x['team_id'])['secret']+next(r for r in pub['ranking'] if r['team_id']==x['team_id'])['votes']
+    # Current tournament rule: even the poorest starting stack wins by
+    # finishing first at the RED final table. Points no longer determine place.
+    assert [r['team_id'] for r in after['ranking']] == list(range(1,n+1))
+    assert [r['place'] for r in after['ranking']] == list(range(1,n+1))
+    assert after['ranking'][0]['total'] < max(r['total'] for r in after['ranking'])
+    assert after['red_show']['ranking'][0]['red_place'] == 1
+    assert call(client,'publish',h,{'action':'winner-decision','team_id':n}).status_code==409
     assert call(client,'publish',h,{'action':'final-show-start'}).status_code==200
     assert client.get('/sochi/api/admin/state').json()['published']['final_show']['step']==0
+    for step in range(1,6):
+        assert call(client,'publish',h,{'action':'final-show-step','step':step}).status_code==200
+    last=client.get('/sochi/api/public/state').json()['state']
+    assert last['final_view']['finish_order'] is True
+    assert last['final_view']['champion']['team_id'] == 1
+    assert [r['team_id'] for r in last['final_view']['board']] == list(range(1,n+1))
+    assert last['final_view']['tie_resolved'] is False
 
 
 def test_proportions_ties_negative_stacks_extremes():
