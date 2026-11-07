@@ -193,7 +193,7 @@ def correction(c, body):
         previous=body.get('_policy_before')
         if clear:
             return 'Система очков после BLUE',previous,None
-        if not isinstance(value,dict) or value.get('mode') not in ('chips','scale','places'):
+        if not isinstance(value,dict) or value.get('mode') not in ('chips','scale','places','final_table'):
             fail(422,'Выбери режим: chips, scale или places')
         mode=value['mode']
         percent=value.get('percent',100)
@@ -208,7 +208,7 @@ def correction(c, body):
                 fail(422,'Очки за места должны быть целыми числами')
             if any(places[i]>places[i-1] for i in range(1,len(places))):
                 fail(422,'Очки должны убывать по местам')
-        return ('Система очков после BLUE',previous,
+        return ('Распределение стеков финального стола',previous,
                 {'mode':mode,'percent':percent if mode=='scale' else 100,
                  'place_points':places if mode=='places' else []})
     if kind == 'vote_mode':
@@ -341,7 +341,7 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             'jack_team_id':row['jack_team_id'],'knockout_team_id':row['knockout_team_id'],
             'knockout_player_id':row['knockout_player_id'],'knockout_name':row['knockout_name'],
             'confirmed':bool(row['confirmed']),'has_photo':bool(row['photo_path'])}
-    if 'red' in old_phases and 'red' not in p['published_phases']:
+    if 'red' in old_phases and 'red' not in p['published_phases'] and p.get('blue_policy',{}).get('mode')!='final_table':
         # A once-published RED has been withdrawn, so downstream bonuses
         # cannot remain public. Legacy shows without RED are left intact.
         p['revealed_slots']=[]
@@ -358,13 +358,16 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
                 break
         p['revealed_slots']=retained
     p['revealed_secrets']=[available[x] for x in p['revealed_slots']]
-    if 'red' in old_phases and 'red' not in p['published_phases']:
+    if 'red' in old_phases and 'red' not in p['published_phases'] and p.get('blue_policy',{}).get('mode')!='final_table':
         p.pop('secret_show',None)
     if 'secret_show' in p:
         n=len(p['revealed_slots'])
         p['secret_show']['step']=min(p['secret_show']['step'],n+(1 if n==3 else 0))
     votes=[dict(r) for r in c.execute('SELECT voter_team_id,target_team_id FROM votes ORDER BY voter_team_id')]
-    if p.get('votes_published') and (len(votes)!=p['team_count'] or len(p['revealed_slots'])<3 or 'red' not in p['published_phases']):
+    if p.get('votes_published') and (len(votes)!=p['team_count'] or len(p['revealed_slots'])<3
+          or ('red' not in p['published_phases'] and not
+              (p.get('blue_policy',{}).get('mode')=='final_table'
+               and p.get('blue_policy',{}).get('revealed')))):
         # Incomplete ballots or withdrawn Secret Jack => no valid published vote score.
         p['votes_published']=False
         p['published_votes']=[]
@@ -376,14 +379,16 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
     p['ranking']=published_ranking(
         {int(k):v for k,v in p['teams'].items()},p['stages'],p['revealed_secrets'],
         p['published_votes'],p['revealed_slots'],p['votes_published'],p['vote_mode'],p['team_count'],
-        p.get('blue_policy',{}).get('points'))
+        p.get('blue_policy',{}).get('points'),
+        p.get('blue_policy',{}).get('mode')=='final_table')
     if 'vote_show' in p:
         old_step=p['vote_show']['step']
         prematch=copy.deepcopy(p)
         prematch['ranking']=published_ranking(
             {int(k):v for k,v in p['teams'].items()},p['stages'],p['revealed_secrets'],
             [],p['revealed_slots'],False,p['vote_mode'],p['team_count'],
-            p.get('blue_policy',{}).get('points'))
+            p.get('blue_policy',{}).get('points'),
+        p.get('blue_policy',{}).get('mode')=='final_table')
         prematch['votes_published']=False
         p['vote_show']=vote_snapshot(prematch,votes)
         p['vote_show']['step']=min(old_step,len(votes)+1)
