@@ -1417,6 +1417,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             elif action == 'reveal':
                 if not p['teams']:
                     raise HTTPException(409, 'Сначала опубликуйте команды')
+                if 'red' not in p['published_phases'] and not final_table_ready(p):
+                    raise HTTPException(409, 'Сначала утверди и объяви стартовые стеки финального стола')
                 slot = strict_int(body.get('slot'), 'slot', 1, 3)
                 if slot in p['revealed_slots']:
                     raise HTTPException(409, 'Jack уже раскрыт; повторите только анимацию на экране')
@@ -1450,6 +1452,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 else:
                     p['scene'] = 'secrets'
             elif action == 'votes':
+                if 'red' not in p['published_phases'] and not final_table_ready(p):
+                    raise HTTPException(409, 'Перед голосованием объяви стеки финального стола')
+                if len(p.get('revealed_slots',[]))!=3 or (p.get('secret_show') and p['secret_show']['step']!=4):
+                    raise HTTPException(409, 'Перед голосами раскрой трёх Secret Jack')
                 votes = [rowdict(r) for r in c.execute('SELECT * FROM votes')]
                 if len(votes) != count:
                     raise HTTPException(422, 'Нужно по одному голосу каждой команды')
