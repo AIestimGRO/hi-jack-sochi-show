@@ -51,10 +51,12 @@ window.FinalShow=(()=>{
      tie_resolved:n>=3&&data.first_place_tie,
      roster:n>=5?data.demo_roster:[]};
  }
+ const isConverted=p=>p?.base_points!=null&&p.base_points!==p.chip_net;
  function scoreRibbon(p){
+  const converted=isConverted(p);
   return `<div class="fs-score-breakdown">
-    <div><small>GREEN</small><strong>${fmt(p.green)}</strong></div>
-    <div><small>BLUE</small><strong>${fmt(p.blue)}</strong></div>
+    <div><small>${converted?'ЧИСТЫЕ ФИШКИ':'GREEN'}</small><strong>${fmt(converted?p.chip_net:p.green)}</strong></div>
+    <div><small>${converted?'ОЧКИ BLUE':'BLUE'}</small><strong>${fmt(converted?p.base_points:p.blue)}</strong></div>
     <div><small>RED</small><strong>${fmt(p.red)}</strong></div>
     <div><small>SECRET JACK</small><strong>${fmt(p.secret)}</strong></div>
     <div><small>ГОЛОСА</small><strong>${fmt(p.votes)}</strong></div>
@@ -64,8 +66,8 @@ window.FinalShow=(()=>{
    return `<div class="fs-board-row ${r.place<=3?'fs-board-podium-'+r.place:''}">
       <span class="fs-board-rank">${r.place}</span>
       <span class="fs-board-name">${esc(r.name)}${r.tied?'<small> • РАВЕНСТВО ОЧКОВ</small>':''}</span>
-      <span class="fs-board-green">${fmt(r.green)}</span>
-      <span class="fs-board-blue">${fmt(r.blue)}</span>
+      <span class="fs-board-green">${fmt(isConverted(r)?r.chip_net:r.green)}</span>
+      <span class="fs-board-blue">${fmt(isConverted(r)?r.base_points:r.blue)}</span>
       <span class="fs-board-red">${fmt(r.red)}</span>
       <span class="fs-board-bonus">${fmt((r.secret||0)+(r.votes||0))}</span>
       <span class="fs-board-total">${fmt(r.total)}</span>
@@ -84,6 +86,7 @@ window.FinalShow=(()=>{
   const step=Math.min(5,Math.max(0,Number(data?.step)||0));
   const intro=step===0,board=step===4,champion=step===5;
   const p=data?.current,win=data?.champion;
+  const converted=(data?.board||[]).some(isConverted)||isConverted(p)||isConverted(win);
   const titles=[
     'ВРЕМЯ<br><em>ПОБЕДИТЕЛЕЙ</em>',
     'ТРЕТЬЯ<br><em>ВЕРШИНА</em>',
@@ -119,7 +122,7 @@ window.FinalShow=(()=>{
           <div class="fs-intro-caption">ВПЕРЕДИ — ТРИ ГЛАВНЫХ ОБЪЯВЛЕНИЯ</div>`:
           board?
             `<div class="fs-board-label">ВСЕ ТУРНИРЫ + SECRET JACK + ГОЛОСА КАПИТАНОВ</div>
-              <div class="fs-board-head"><span>№</span><span>КОМАНДА</span><span>GREEN</span><span>BLUE</span><span>RED</span><span>БОНУС</span><span>ИТОГО</span></div>
+              <div class="fs-board-head"><span>№</span><span>КОМАНДА</span><span>${converted?'ФИШКИ':'GREEN'}</span><span>${converted?'ОЧКИ':'BLUE'}</span><span>RED</span><span>БОНУС</span><span>ИТОГО</span></div>
               <div class="fs-board-list" style="--rank-count:${data.count}">${(data.board||[]).map(boardRow).join('')}</div>
               <div class="fs-board-footer">РЕЙТИНГ ЗАФИКСИРОВАН · ВПЕРЕДИ — ЧЕМПИОНСКАЯ ЦЕРЕМОНИЯ</div>`:
           champion?
