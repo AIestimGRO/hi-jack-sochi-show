@@ -1374,6 +1374,36 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 name = c.execute('SELECT display_name FROM teams WHERE team_id=?', (team_id,)).fetchone()[0]
                 p['teams'][str(team_id)] = name
             elif action == 'captains':
+                assignments = body.get('captain_assignments')
+                if assignments is not None:
+                    if not isinstance(assignments, list) or len(assignments) != count:
+                        raise HTTPException(422, 'Передайте выбор капитана для каждой команды')
+                    incoming = {}
+                    for assignment in assignments:
+                        if not isinstance(assignment, dict) or set(assignment) != {'team_id', 'captain_player_id'}:
+                            raise HTTPException(422, 'Неверная запись капитана')
+                        team_id = check_team(c, assignment['team_id'])
+                        if team_id in incoming:
+                            raise HTTPException(422, 'Команда указана дважды')
+                        player_id = assignment['captain_player_id']
+                        if player_id is not None:
+                            player_id = strict_int(player_id, 'captain_player_id', 1)
+                            if not c.execute(
+                                'SELECT 1 FROM seats WHERE team_id=? AND player_id=?',
+                                (team_id, player_id)
+                            ).fetchone():
+                                raise HTTPException(422, f'Капитан команды №{team_id} не состоит в команде')
+                        incoming[team_id] = player_id
+                    if len(incoming) != count:
+                        raise HTTPException(422, 'Указаны не все команды')
+                    # All assignments are validated before the first update.
+                    # SQLite transaction commits selections and publication together.
+                    for team_id, player_id in incoming.items():
+                        c.execute('UPDATE teams SET captain_player_id=? WHERE team_id=?',
+                                  (player_id, team_id))
+                    audit(c, 'captains-save-on-publish',
+                          {'teams': count,
+                           'selected': sum(pid is not None for pid in incoming.values())})
                 captains = []
                 visible = set(p.get('visible_player_ids', []))
                 for row in c.execute('''SELECT t.team_id,t.captain_player_id,p.name,p.photo_path FROM teams t

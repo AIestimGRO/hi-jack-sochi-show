@@ -243,7 +243,17 @@ $('audit').innerHTML=state.audit.map(x=>`<div class="audit-entry">${esc(x.create
 $('login-form').onsubmit=async e=>{e.preventDefault();try{await api('/sochi/api/admin/login','POST',{password:$('password').value});$('password').value='';await refresh()}catch(err){toast(err.message,true)}};
 $('logout').onclick=async()=>{await change('/sochi/api/admin/logout',{});location.reload()};
 $('import').onclick=async()=>{const file=$('json-file').files[0];if(!file)return toast('Выберите файл JSON',true);let obj;try{obj=JSON.parse(await file.text())}catch{return toast('Неверный JSON',true)}let n=Number($('count').value);let assigned=state.seats.some(s=>s.player_id);let confirm_replace_cards=false;if(assigned){confirm_replace_cards=confirm(`ВНИМАНИЕ: у участников уже есть карточки. Смена схемы требует ФИЗИЧЕСКОЙ ЗАМЕНЫ карточек. Подтвердить?`);if(!confirm_replace_cards)return}await change('/sochi/api/admin/seating',{document:obj,team_count:n,confirm_replace_cards})};
-$('publish-teams').onclick=()=>publish({action:'teams'},'Опубликовать названия всех команд?');$('publish-captains').onclick=()=>publish({action:'captains'},'Показать капитанов и их фотографии?');$('publish-votes').onclick=()=>publish(
+$('publish-teams').onclick=()=>publish({action:'teams'},'Опубликовать названия всех команд?');$('publish-captains').onclick=()=>{
+  if(!state.team_count)return toast('Сначала импортируй рассадку',true);
+  const captain_assignments=state.teams.map(t=>{
+    const value=$('capt-'+t.team_id).value;
+    return {team_id:t.team_id,captain_player_id:value?Number(value):null};
+  });
+  const selected=captain_assignments.filter(x=>x.captain_player_id!==null).length;
+  if(!selected)return toast('Сначала выбери хотя бы одного капитана',true);
+  return publish({action:'captains',captain_assignments},
+    'СОХРАНИТЬ и ОПУБЛИКОВАТЬ '+selected+' капитанов из '+state.team_count+' команд? '+(selected<state.team_count?'Не выбранные капитаны останутся пустыми.':''));
+};$('publish-votes').onclick=()=>publish(
   {action:'votes',show_mode:'cinematic'},
   'Зафиксировать все голоса и открыть только ЗАСТАВКУ голосования? Кнопка «Далее» будет раскрывать голоса по одному.'
 );
