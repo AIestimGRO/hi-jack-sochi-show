@@ -55,7 +55,7 @@ window.BlueShow=(()=>{
        <span class="bs-place">${r.place}</span>
        <span class="bs-name">${escapeHTML(r.name)}</span>
        <span class="bs-move ${movement.className}" title="GREEN #${r.green_place} → BLUE #${r.place}" aria-label="GREEN #${r.green_place} → BLUE #${r.place}">#${r.green_place} → #${r.place}</span>
-       <span class="bs-blue-points">${fmt(converted?r.total:r.blue)}</span>
+       <span class="bs-blue-points">${fmt(converted?r.total:(r.survivor_bonus||0))}</span>
        <span class="bs-total">${fmt(converted?r.award:r.total)}</span>
      </div>`;
   }
@@ -69,7 +69,7 @@ window.BlueShow=(()=>{
     const latest=visible.length?visible[visible.length-1]:null;
     const winner=latest?.place===1;
     const movement=latest?moveDescription(latest):null;
-    const subtitle=intro?'ВТОРАЯ ВЫСОТА':board?(converted?'ФИНАЛЬНЫЕ ОЧКИ ПОСЛЕ BLUE':'ЧИСТЫЕ ФИШКИ GREEN + BLUE'):'НОВОЕ МЕСТО ПО ЧИСТЫМ ФИШКАМ';
+    const subtitle=intro?'ВТОРАЯ ВЫСОТА':board?(converted?'ФИНАЛЬНЫЕ ОЧКИ ПОСЛЕ BLUE':'ЧИСТЫЕ ФИШКИ И БОНУСЫ'):'НОВОЕ МЕСТО ПО ЧИСТЫМ ФИШКАМ';
     const topper=intro?'СМЕНА<br><em>ВЫСОТЫ</em>':board?(converted?'ЗАРАБОТАННЫЕ<br><em>ОЧКИ</em>':'РЕЙТИНГ<br><em>BLUE</em>'):'ГОНКА ЗА<br><em>ВЕРШИНОЙ</em>';
     host.className='scene green-show-stage blue-show-stage';
     host.innerHTML=`<div class="green-experience blue-experience bs-${intro?'intro':board?'board':winner?'champion':'reveal'}" data-step="${step}">
@@ -91,7 +91,7 @@ window.BlueShow=(()=>{
               <div class="bs-intro-footer">НОВЫЕ ПОЗИЦИИ · ${count} КОМАНД</div>`:
             board?
               `<div class="bs-table-head">
-                <span></span><span>№</span><span>КОМАНДА</span><span>К GREEN</span><span>${converted?'ЧИСТЫЕ ФИШКИ':'Δ BLUE'}</span><span>${converted?'ОЧКИ':'ЧИСТЫЕ ФИШКИ'}</span>
+                <span></span><span>№</span><span>КОМАНДА</span><span>К GREEN</span><span>${converted?'ЧИСТЫЕ ФИШКИ':'БОНУС +5К'}</span><span>${converted?'ОЧКИ + БОНУС':'ЧИСТЫЕ ФИШКИ'}</span>
               </div>
               <div class="bs-ranking-list" style="--rank-count:${count}">
                 ${[...visible].sort((a,b)=>a.place-b.place||b.total-a.total||a.team_id-b.team_id).map(r=>rankingRow(r,converted)).join('')}
@@ -108,7 +108,7 @@ window.BlueShow=(()=>{
                   </div>
                 </div>
                 <div class="bs-score-panels">
-                  <div><small>ИЗМЕНЕНИЕ ЧИСТЫХ ФИШЕК BLUE</small><strong>${fmt(latest?.blue)}</strong></div>
+                  <div><small>БОНУС ЗА ВЫЖИВШИХ · ОТДЕЛЬНО</small><strong>+${fmt(latest?.survivor_bonus||0)}</strong></div>
                   <div class="bs-cumulative"><small>ЧИСТЫЕ ФИШКИ ПОСЛЕ BLUE</small><strong>${fmt(latest?.total)}</strong></div>
                 </div>
                 <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(visible.length,count)} / ${count}</div>`}
