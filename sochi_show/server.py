@@ -522,6 +522,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 result['stages'] = {}
                 result['recent_changes'] = []
         vote_show = result.get('vote_show')
+        if vote_show and policy and policy.get('mode') == 'final_table' and 'red' in result.get('published_phases', []):
+            # The already completed vote ceremony must never overwrite or
+            # prematurely disclose the new RED finishing order on the projector.
+            result.pop('vote_show', None)
+            if red_show and red_show['step'] < len(red_show['ranking']) + 1:
+                result['published_votes'] = []
+            vote_show = None
         if vote_show:
             count = len(vote_show['entries'])
             step = vote_show['step']
