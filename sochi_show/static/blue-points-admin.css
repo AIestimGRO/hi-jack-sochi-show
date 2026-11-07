@@ -1,0 +1,26 @@
+
+#blue-points-panel{border:2px solid #4c8081;background:linear-gradient(145deg,#f4fbf8,#fff9ef)}
+#blue-points-panel h2{color:#204d57}
+#blue-points-panel label{min-width:170px;display:flex;flex-direction:column;gap:6px;font-weight:750}
+#blue-points-panel .row{gap:12px;align-items:end}
+#blue-points-panel .row label:first-child{flex:2}
+#blue-points-panel #bp-scale-label{flex:1}
+#blue-points-panel #bp-help{margin:16px 0;line-height:1.5}
+#blue-points-panel .bp-summary{padding:12px 16px;border:1px solid #a1c4bc;border-radius:10px;background:#e6efeb;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-weight:750}
+#blue-points-panel .bp-warning{color:#9e3f2c}
+#blue-points-panel .bp-good{color:#2e6c56}
+#blue-points-panel .bp-table{border-collapse:collapse;width:100%;margin:16px 0;font-variant-numeric:tabular-nums}
+#blue-points-panel .bp-table th{font-size:.83rem;letter-spacing:.05em;color:#506968;text-align:left;border-bottom:2px solid #9dbeb8;padding:8px}
+#blue-points-panel .bp-table td{padding:9px 8px;border-bottom:1px solid #d5e3dc}
+#blue-points-panel .bp-table td:last-child{font-weight:900;color:#275e62}
+#blue-points-panel .bp-leading{background:#ebd2b1}
+#blue-points-panel .bp-manual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin:12px 0}
+#blue-points-panel .bp-manual-grid label{min-width:0;background:#f1e4ce;padding:10px;border-radius:7px;font-size:.88rem}
+#blue-points-panel .bp-manual-grid input{width:100%;min-width:0}
+#blue-points-panel #bp-result{margin-top:12px}
+#blue-points-panel #bp-result .bp-preview-title{padding:12px;background:#e3efed;border:1px solid #b5cfc8;border-radius:8px}
+#blue-points-panel #bp-confirm{margin-top:14px;padding:16px;border:2px solid #947453;border-radius:12px;background:#fffbf4}
+#blue-points-panel #bp-confirm.hidden{display:none}
+#blue-points-panel #bp-confirm label{max-width:550px;margin:8px 0}
+#blue-points-panel #bp-confirm textarea,#blue-points-panel #bp-confirm input{width:100%}
+@media(max-width:700px){#blue-points-panel .bp-table{font-size:.82rem}#blue-points-panel .bp-table td,#blue-points-panel .bp-table th{padding:5px 3px}}
