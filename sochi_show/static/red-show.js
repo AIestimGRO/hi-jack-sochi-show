@@ -59,6 +59,7 @@ window.RedShow=(()=>{
     const rows=data.revealed||[];
     const protagonist=rows.length?rows[rows.length-1]:null;
     const leader=protagonist?.place===1;
+    const converted=rows.some(r=>r.base_points!=null&&r.base_points!==r.chip_net);
     const banner=intro?'ФИНАЛЬНЫЙ<br><em>ШТУРМ</em>':board?'РЕЙТИНГ<br><em>RED</em>':'ШТУРМ<br><em>ВЕРШИНЫ</em>';
     host.className='scene green-show-stage red-show-stage';
     host.innerHTML=`<div class="green-experience red-experience rs-${intro?'intro':board?'board':leader?'champion':'reveal'}" data-step="${step}">
@@ -95,7 +96,7 @@ window.RedShow=(()=>{
                <div class="rs-score-panels">
                   <div><small>МЕСТО В RED-ТУРЕ</small><strong>#${protagonist?.red_place||'—'}</strong></div>
                   <div><small>ОЧКИ RED</small><strong>${fmt(protagonist?.red)}</strong></div>
-                  <div class="rs-cumulative"><small>GREEN + BLUE + RED</small><strong>${fmt(protagonist?.total)}</strong></div>
+                  <div class="rs-cumulative"><small>${converted?'ОЧКИ BLUE + RED':'GREEN + BLUE + RED'}</small><strong>${fmt(protagonist?.total)}</strong></div>
                </div>
                <div class="gs-reveal-counter">РАСКРЫТО: ${Math.min(count,rows.length)} / ${count}</div>`}
         </div>
