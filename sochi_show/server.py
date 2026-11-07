@@ -177,7 +177,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         policy=p.get('blue_policy')
         if not policy or 'blue' not in p.get('published_phases',[]):
             return
-        net={int(k):row['green']+row['blue'] for k,row in p['stages'].items()
+        net={int(k):row.get('blue_net_chips',row['green']+row['blue'])
+             for k,row in p['stages'].items()
              if 'green' in row and 'blue' in row}
         try:
             policy['points']=blue_points_from_policy(net,policy,p['team_count'])
@@ -232,12 +233,14 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 raise HTTPException(409, 'Нет опубликованных GREEN / BLUE очков для всех команд')
             green = stage['green']
             blue = stage['blue']
-            net = green + blue
+            net = stage.get('blue_net_chips',green+blue)
+            survivors = stage.get('survivor_bonus',0)
             policy = p.get('blue_policy') or {}
-            points = policy.get('points',{}).get(team_id,net)
+            points = policy.get('points',{}).get(team_id,net) + survivors
             ranked.append({'team_id': int(team_id), 'name': name,
                            'green': green, 'blue': blue, 'total': net,
-                           'chip_net': net, 'award': points,
+                           'chip_net': net, 'survivor_bonus':survivors,
+                           'award': points,
                            'green_place': green_places[int(team_id)]})
         ranked.sort(key=lambda row: (-row['total'], row['team_id']))
         for index, row in enumerate(ranked):
@@ -261,10 +264,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if any(stage.get(phase) is None for phase in PHASES):
                 raise HTTPException(409, 'Для RED нужны опубликованные очки всех трёх этапов')
             green, blue, red = (stage[k] for k in PHASES)
-            net=green+blue
-            base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)
+            net=stage.get('blue_net_chips',green+blue)
+            survivor_bonus=stage.get('survivor_bonus',0)
+            base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)+survivor_bonus
             ranked.append({'team_id': int(team_id), 'name': name,
                            'green': green, 'blue': blue, 'chip_net': net,
+                           'survivor_bonus':survivor_bonus,
                            'base_points':base, 'red': red,
                            'red_place': 1 + (130000 - red) // 10000,
                            'total': base + red,
@@ -1345,6 +1350,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         if r['addon_chips'] != r['addon_count'] * rate:
                             raise HTTPException(409, 'BLUE: сумма add-on не соответствует настройкам')
                         score = blue_points(p['stages'][team_id]['green_stack_actual'], r['blue_stack'], r['addon_chips'], r['survivors'])
+                        # Persist the TRUE end-of-BLUE net chips separately
+                        # from the 5k-per-survivor award. Neither is added twice.
+                        initial_entries=3*(chip_setting(c,'entry') or 0)
+                        p['stages'][team_id]['blue_net_chips'] = (
+                            r['blue_stack'] - initial_entries - r['reentry_chips'] - r['addon_chips'])
+                        p['stages'][team_id]['survivor_bonus'] = 5000 * r['survivors']
                     else:
                         score = red_points(r['red_place'], count)
                     p['stages'][team_id][action] = score
