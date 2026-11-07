@@ -90,6 +90,14 @@ def test_real_final_table_before_red_with_jack_and_voting_chips(client,n):
     for team_id in range(1,n+1):
         assert call(client,'stage',h,{'team_id':team_id,'red_place':team_id}).status_code==200
     assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code==200
+    # The previous vote show is already over: it must not leak the newly
+    # determined RED champion before the director reveals the positions.
+    hidden=client.get('/sochi/api/public/state').json()['state']
+    assert hidden['scene']=='red_show'
+    assert hidden['ranking']==[]
+    assert hidden['red_view']['revealed']==[]
+    assert hidden['red_view']['finish_order'] is True
+    assert 'vote_view' not in hidden
     for step in range(1,n+2):
         assert call(client,'publish',h,{'action':'red-show-step','step':step}).status_code==200
     after=client.get('/sochi/api/admin/state').json()['published']
