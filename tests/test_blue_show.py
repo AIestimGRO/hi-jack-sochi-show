@@ -66,7 +66,7 @@ def test_blue_publish_is_atomic_and_does_not_spoil_results(client, n):
     finished = client.get('/sochi/api/public/state').json()['state']
     assert finished['blue_view']['max_step'] == n + 1
     assert finished['blue_view']['revealed'][-1]['place'] == 1
-    assert len(finished['ranking']) == n
+    assert finished['ranking'] == []  # no point leaderboard before protected BLUE decision
     assert call(client, 'publish', h, {'action': 'blue-show-step', 'step': n + 2}).status_code == 422
     assert call(client, 'publish', h, {'action': 'blue-show-step', 'step': n}).status_code == 200
     assert client.get('/sochi/api/public/state').json()['state']['ranking'] == []
