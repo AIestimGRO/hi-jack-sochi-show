@@ -1034,11 +1034,16 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             p['winner_decision']=after
         if edit.get('kind')=='blue_policy':
             previous=p.get('blue_policy') or {}
+            changed=after is None or previous.get('mode')!=after.get('mode')
+            if changed and (p.get('revealed_slots') or p.get('votes_published')) and 'red' not in p['published_phases']:
+                raise HTTPException(409,'Нельзя переключить систему стеков после начала Secret Jack/голосования без отдельного сброса этапов')
             if after is None:
                 p.pop('blue_policy',None)
             else:
                 policy=after.copy()
-                policy['revealed']=bool(previous.get('revealed',False)) or 'red' in p['published_phases']
+                # Switching scoring modes must not auto-reveal the newly
+                # calculated physical stacks just because old points were public.
+                policy['revealed']=(bool(previous.get('revealed',False)) and not changed) or 'red' in p['published_phases']
                 p['blue_policy']=policy
         if edit.get('kind')=='seating_import':
             # A physical seating replacement is explicitly destructive.
