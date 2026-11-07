@@ -40,7 +40,7 @@ for(const step of [1,2,3]){
     assert.match(host.innerHTML,/БОНУС НЕ НАЧИСЛЕН/);
     assert.doesNotMatch(host.innerHTML,/class="ss-result-block bounty"/);
   }else{
-    assert.match(host.innerHTML,/\+10 000 ОЧКОВ/);
+    assert.match(host.innerHTML,/\+10[\s\u00a0\u202f]000 ОЧКОВ/);
     assert.match(host.innerHTML,/class="ss-result-block bounty"/);
     assert.match(host.innerHTML,/ВЫБИЛ:/);
   }
