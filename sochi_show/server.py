@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from starlette.middleware.sessions import SessionMiddleware
 
-from .core import blue_points, green_points, published_ranking, red_points, validate_seating
+from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy
 from .corrections import correction, rebuild as rebuild_corrected, score_delta
 
 HERE = Path(__file__).resolve().parent
@@ -173,13 +173,26 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         c.execute('INSERT INTO audit(created_at,action,data) VALUES (?,?,?)',
                   (stamp(), action, json.dumps(data, ensure_ascii=False)))
 
+    def update_blue_policy_points(p):
+        policy=p.get('blue_policy')
+        if not policy or 'blue' not in p.get('published_phases',[]):
+            return
+        net={int(k):row['green']+row['blue'] for k,row in p['stages'].items()
+             if 'green' in row and 'blue' in row}
+        try:
+            policy['points']=blue_points_from_policy(net,policy,p['team_count'])
+        except ValueError as error:
+            raise HTTPException(422,str(error))
+
     def save_public(c, state, action='publication'):
         previous_version, previous_state = get_pub(c)
+        update_blue_policy_points(state)
         old_places = {r['team_id']: r['place'] for r in previous_state.get('ranking', [])}
         state['ranking'] = published_ranking(
             {int(k): v for k, v in state['teams'].items()}, state['stages'],
             state['revealed_secrets'], state['published_votes'], state['revealed_slots'],
-            state['votes_published'], state['vote_mode'], state['team_count'])
+            state['votes_published'], state['vote_mode'], state['team_count'],
+            state.get('blue_policy', {}).get('points'))
         # A fully reset seating (or a paused tournament with no published stages)
         # must not invent a leaderboard of all-zero tied scores.
         if state.get('scene') == 'pause' and not state['published_phases'] and not state['revealed_slots'] and not state['votes_published']:
@@ -219,8 +232,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 raise HTTPException(409, 'Нет опубликованных GREEN / BLUE очков для всех команд')
             green = stage['green']
             blue = stage['blue']
+            net = green + blue
+            policy = p.get('blue_policy') or {}
+            points = policy.get('points',{}).get(team_id,net)
             ranked.append({'team_id': int(team_id), 'name': name,
-                           'green': green, 'blue': blue, 'total': green + blue,
+                           'green': green, 'blue': blue, 'total': net,
+                           'chip_net': net, 'award': points,
                            'green_place': green_places[int(team_id)]})
         ranked.sort(key=lambda row: (-row['total'], row['team_id']))
         for index, row in enumerate(ranked):
@@ -244,10 +261,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if any(stage.get(phase) is None for phase in PHASES):
                 raise HTTPException(409, 'Для RED нужны опубликованные очки всех трёх этапов')
             green, blue, red = (stage[k] for k in PHASES)
+            net=green+blue
+            base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)
             ranked.append({'team_id': int(team_id), 'name': name,
-                           'green': green, 'blue': blue, 'red': red,
+                           'green': green, 'blue': blue, 'chip_net': net,
+                           'base_points':base, 'red': red,
                            'red_place': 1 + (130000 - red) // 10000,
-                           'total': green + blue + red,
+                           'total': base + red,
                            'blue_place': blue_places[int(team_id)]})
         ranked.sort(key=lambda row: (-row['total'], row['team_id']))
         for index, row in enumerate(ranked):
@@ -514,7 +534,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         vote_rows = [rowdict(r) for r in c.execute('SELECT * FROM votes ORDER BY voter_team_id')]
         return {'csrf': None, 'team_count': team_count(c), 'vote_mode': setting(c, 'vote_mode'),
                 'chip_settings': {'reentry': chip_setting(c, 'reentry'),
-                                  'addon': chip_setting(c, 'addon')},
+                                  'addon': chip_setting(c, 'addon'),
+                                  'entry': chip_setting(c,'entry')},
                 'teams': list(entries.values()), 'seats': seats, 'stages': stage,
                 'secrets': secret_rows, 'votes': vote_rows, 'publication_version': version,
                 'published': published,
@@ -670,12 +691,22 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         require_admin(request, True)
         body = await request.json()
         card_id, name = str(body.get('card_id', '')), str(body.get('name', '')).strip()
-        if not name or len(name) > 90:
-            raise HTTPException(422, 'Имя обязательно, максимум 90 символов')
+        if len(name) > 90:
+            raise HTTPException(422, 'Имя не более 90 символов')
         with connection(write=True) as c:
             seat = c.execute('SELECT * FROM seats WHERE card_id=?', (card_id,)).fetchone()
             if not seat:
                 raise HTTPException(404, 'Карточка не найдена')
+            if not name:
+                if seat['player_id'] is None:
+                    return {'ok':True,'player_id':None}
+                _,p=get_pub(c)
+                if p.get('published_phases'):
+                    raise HTTPException(409,'После публикации очисти игрока через защищённое исправление с PIN')
+                c.execute('UPDATE teams SET captain_player_id=NULL WHERE captain_player_id=?',(seat['player_id'],))
+                c.execute('UPDATE seats SET player_id=NULL WHERE card_id=?',(card_id,))
+                audit(c,'player-unbind',{'card_id':card_id,'player_id':seat['player_id']})
+                return {'ok':True,'player_id':None}
             if seat['player_id'] is not None and body.get('confirm_rebind') is not True:
                 raise HTTPException(409, 'Игрок уже назначен; укажите confirm_rebind')
             if seat['player_id'] is None:
@@ -717,24 +748,24 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     async def update_chip_settings(request: Request):
         require_admin(request, True)
         body = await request.json()
-        if not isinstance(body, dict) or not body or set(body) - {'reentry', 'addon'}:
-            raise HTTPException(422, 'Передайте reentry и/или addon')
+        if not isinstance(body, dict) or not body or set(body) - {'entry','reentry', 'addon'}:
+            raise HTTPException(422, 'Передайте entry, reentry и/или addon')
         with connection(write=True) as c:
             _, published = get_pub(c)
             for kind, value in body.items():
-                strict_int(value, f'{kind}_chips_per_entry', 1, CHIP_LIMIT)
-                phase = 'green' if kind == 'reentry' else 'blue'
+                strict_int(value, f'{kind}_chips_per_entry', 0 if kind == 'entry' else 1, CHIP_LIMIT)
+                phase = 'green' if kind in ('entry','reentry') else 'blue'
                 previous = chip_setting(c, kind)
                 if phase in published['published_phases'] and value != previous:
                     raise HTTPException(409, f'{phase.upper()} уже опубликован: норматив фишек заблокирован')
             for kind, value in body.items():
                 c.execute('INSERT OR REPLACE INTO settings(key,value) VALUES (?,?)',
                           (f'{kind}_chips_per_entry', str(value)))
-                amount_column = 'reentry_chips' if kind == 'reentry' else 'addon_chips'
-                count_column = 'reentry_count' if kind == 'reentry' else 'addon_count'
-                # Keep saved drafts coherent with the newly configured chip amount.
-                c.execute(f'UPDATE stages SET {amount_column}={count_column}*? '
-                          f'WHERE {count_column} IS NOT NULL', (value,))
+                if kind in ('reentry','addon'):
+                    amount_column = 'reentry_chips' if kind == 'reentry' else 'addon_chips'
+                    count_column = 'reentry_count' if kind == 'reentry' else 'addon_count'
+                    c.execute(f'UPDATE stages SET {amount_column}={count_column}*? '
+                              f'WHERE {count_column} IS NOT NULL', (value,))
             audit(c, 'chips-settings', {'configured': list(body)})
         return {'ok': True}
 
@@ -1258,7 +1289,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         rate = require_chip_setting(c, 'reentry')
                         if r['reentry_chips'] != r['reentry_count'] * rate:
                             raise HTTPException(409, 'GREEN: сумма re-entry не соответствует настройкам')
-                        score = green_points(r['green_stack'], r['reentry_chips'])
+                        score = green_points(r['green_stack'],r['reentry_chips'],
+                                             3*(chip_setting(c,'entry') or 0))
                         p['stages'][team_id]['green_stack_actual'] = r['green_stack']
                     elif action == 'blue':
                         if 'green' not in p['published_phases']:
