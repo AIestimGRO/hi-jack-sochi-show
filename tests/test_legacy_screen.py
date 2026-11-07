@@ -21,6 +21,7 @@ def test_projector_fallback_requires_no_javascript_and_never_caches(client):
 def test_projector_fallback_respects_private_unpublished_scores(client):
     h = auth(client)
     prepare(client, h, 10)
+    assert call(client, 'chips-settings', h, {'reentry': 30000, 'addon': 50000}).status_code == 200
     assert call(client, 'stage', h, {'team_id':1, 'green_stack':123456,
                                      'reentry_count':0, 'blue_stack':444444,
                                      'addon_count':0, 'survivors':0,
