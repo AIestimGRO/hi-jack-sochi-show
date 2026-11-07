@@ -11,12 +11,12 @@ for(const name of ['blue-points-panel','bp-mode','bp-preview','bp-confirm','bp-r
   'bp-points-table','bp-reason','bp-pin','chips-per-entry']){
  assert.match(html,new RegExp('id="'+name+'"'),'missing BLUE director field '+name);
 }
-assert.match(html,/ЧИСТЫЕ ФИШКИ/);
-assert.match(html,/Места BLUE распределяются только по чистым фишкам/);
-assert.match(html,/5 000 за каждого выжившего/);
+assert.match(html,/чистым фишкам BLUE/);
+assert.match(html,/Лучшая команда — ровно 1 000 000, последняя — ровно 100 000/);
+assert.match(html,/5 000 на каждого/);
 assert.match(blue,/r\.blue_net_chips\?\?/);
 assert.match(blue,/r\.survivor_bonus\|\|0/);
-assert.match(blue,/policy\.place_points\[row\.place-1\]/);
+assert.match(blue,/900000\*\(r\.net-lo\)/);
 assert.match(blue,/correction\/preview/);
 assert.match(blue,/correction\/apply/);
 assert.match(blue,/blue-policy-reveal/);
@@ -29,4 +29,4 @@ assert.match(core,/chip_net = entry\.get\('blue_net_chips', g \+ b\)/);
 assert.match(core,/award = converted \+ survivor_bonus/);
 assert.match(projector,/БОНУС ЗА ВЫЖИВШИХ · ОТДЕЛЬНО/);
 assert.match(admin,/Сначала сохрани стоимость ВХОДА одного игрока/);
-console.log('BLUE POLICY UI PASS: net chips, separate survivor bonus, PIN choice and on-air reveal');
+console.log('BLUE FINAL TABLE UI PASS: net chips, 100k–1m scaling, 5k separate survivor, PIN and on-air reveal');
