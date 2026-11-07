@@ -308,6 +308,7 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
                 record['survivor_bonus']=5000*row['survivors']
             if 'red' in p['published_phases']:
                 record['red']=red_points(row['red_place'],p['team_count'])
+                record['red_place']=row['red_place']
             p['stages'][str(tid)]=record
     if p.get('blue_policy') and 'blue' in p['published_phases']:
         net={int(k):row.get('blue_net_chips',row['green']+row['blue'])

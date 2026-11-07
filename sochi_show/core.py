@@ -183,13 +183,30 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
         chip_net = entry.get('blue_net_chips', g + b)
         converted = (blue_base_points or {}).get(str(team_id), chip_net)
         award = converted + survivor_bonus
-        ranking.append({'team_id': team_id, 'name': team_names[team_id],
-                        'green': g, 'blue': b, 'chip_net': chip_net,
-                        'survivor_bonus': survivor_bonus,
-                        'base_points': award, 'red': r, 'secret': s, 'votes': v,
-                        'total': award + r + s + v})
-    ranking.sort(key=lambda x: (-x['total'], x['team_id']))
-    for idx, entry in enumerate(ranking):
-        entry['place'] = idx + 1 if idx == 0 or entry['total'] != ranking[idx - 1]['total'] else ranking[idx - 1]['place']
-        entry['tied'] = sum(x['total'] == entry['total'] for x in ranking) > 1
+        result = {'team_id': team_id, 'name': team_names[team_id],
+                  'green': g, 'blue': b, 'chip_net': chip_net,
+                  'survivor_bonus': survivor_bonus,
+                  'base_points': award, 'red': r, 'secret': s, 'votes': v,
+                  'total': award + r + s + v}
+        if final_table_mode and 'red' in entry:
+            # Compatible with snapshots published before red_place was stored:
+            # the legacy RED score uniquely encodes the elimination order.
+            result['red_place'] = entry.get('red_place') or (
+                1 + (130_000 - int(entry['red'])) // 10_000)
+        ranking.append(result)
+    if final_table_mode and all('red_place' in row for row in ranking):
+        places = sorted(row['red_place'] for row in ranking)
+        if places != list(range(1, team_count + 1)):
+            raise ValueError('RED: итоговые места должны быть уникальными 1..N')
+        # The champion is the captain who won the RED table. A higher stack
+        # or old 130k.. scoring cannot rescue an eliminated captain.
+        ranking.sort(key=lambda row: row['red_place'])
+        for row in ranking:
+            row['place'] = row['red_place']
+            row['tied'] = False
+    else:
+        ranking.sort(key=lambda x: (-x['total'], x['team_id']))
+        for idx, entry in enumerate(ranking):
+            entry['place'] = idx + 1 if idx == 0 or entry['total'] != ranking[idx - 1]['total'] else ranking[idx - 1]['place']
+            entry['tied'] = sum(x['total'] == entry['total'] for x in ranking) > 1
     return ranking

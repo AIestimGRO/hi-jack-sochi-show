@@ -295,13 +295,18 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                            'red_place': 1 + (130000 - red) // 10000,
                            'total': base + red + pre_awards,
                            'blue_place': blue_places[int(team_id)]})
-        ranked.sort(key=lambda row: (-row['total'], row['team_id']))
+        finish_order = final_table_ready(p)
+        ranked.sort(key=(lambda row: (row['red_place'], row['team_id'])) if finish_order
+                    else (lambda row: (-row['total'], row['team_id'])))
         for index, row in enumerate(ranked):
-            row['place'] = (ranked[index - 1]['place']
-                            if index and row['total'] == ranked[index - 1]['total']
-                            else index + 1)
+            row['place'] = row['red_place'] if finish_order else (
+                ranked[index - 1]['place'] if index and
+                row['total'] == ranked[index - 1]['total'] else index + 1)
             row['move'] = row['blue_place'] - row['place']
-        return {'ranking': ranked, 'step': 0}
+        snapshot = {'ranking': ranked, 'step': 0}
+        if finish_order:
+            snapshot['finish_order'] = True
+        return snapshot
 
     def final_table_ready(p):
         return (p.get('blue_policy') or {}).get('mode') == 'final_table' and bool(
@@ -378,12 +383,20 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         ranking = copy.deepcopy(p['ranking'])
         if len(ranking) != p['team_count'] or len(ranking) < 3:
             raise HTTPException(409, 'Полный финальный рейтинг отсутствует')
-        top_score = ranking[0]['total']
-        tied_top = [r for r in ranking if r['total'] == top_score]
-        decision = p.get('winner_decision')
-        if len(tied_top) > 1 and decision not in [r['team_id'] for r in tied_top]:
-            raise HTTPException(409, 'Ничья на первом месте: сначала выбери победителя в админке')
-        champion = next((r for r in ranking if r['team_id'] == decision), ranking[0]) if len(tied_top) > 1 else ranking[0]
+        if final_table_ready(p):
+            # In the approved physical-chip format places come exclusively from
+            # RED elimination order; equal scores never require adjudication.
+            if [r['place'] for r in ranking] != list(range(1, p['team_count'] + 1)):
+                raise HTTPException(409, 'RED: итоговые места капитанов ещё не зафиксированы')
+            tied_top = [ranking[0]]
+            champion = ranking[0]
+        else:
+            top_score = ranking[0]['total']
+            tied_top = [r for r in ranking if r['total'] == top_score]
+            decision = p.get('winner_decision')
+            if len(tied_top) > 1 and decision not in [r['team_id'] for r in tied_top]:
+                raise HTTPException(409, 'Ничья на первом месте: сначала выбери победителя в админке')
+            champion = next((r for r in ranking if r['team_id'] == decision), ranking[0]) if len(tied_top) > 1 else ranking[0]
         # Ensure that the chosen tied winner is first on the ceremony podium.
         order = [champion] + [r for r in ranking if r['team_id'] != champion['team_id']]
         podium = []
@@ -477,6 +490,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             visible = list(reversed(red_show['ranking']))[:min(step, count)]
             result['red_view'] = {'count': count, 'step': step,
                                   'max_step': count + 1, 'revealed': visible}
+            if red_show.get('finish_order') or (
+                policy and policy.get('mode') == 'final_table'):
+                result['red_view']['finish_order'] = True
             # Private full ranking is omitted from all public response formats.
             result['red_show'] = {'step': step, 'max_step': count + 1}
             if step < count + 1:
@@ -551,6 +567,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'roster': (result.get('roster', {}).get(str(podium[0]['team_id']), [])
                            if step >= 5 else []),
             }
+            if policy and policy.get('mode') == 'final_table':
+                result['final_view']['finish_order'] = True
             # No entire winner list or secret private snapshot over public JSON
             # until the conductor arrives at the complete board.
             result['final_show'] = {'step': step, 'max_step': 5}
@@ -1405,6 +1423,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         p['stages'][team_id]['survivor_bonus'] = 5000 * r['survivors']
                     else:
                         score = red_points(r['red_place'], count)
+                        # Store the actual captain finish separately from
+                        # historical place points for unambiguous final ranking.
+                        p['stages'][team_id]['red_place'] = r['red_place']
                     p['stages'][team_id][action] = score
                 if action not in p['published_phases']:
                     p['published_phases'].append(action)
@@ -1487,10 +1508,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if scene in ('final', 'winner') and (set(PHASES) - set(p['published_phases']) or
                                                        len(p['revealed_slots']) != 3 or not p['votes_published']):
                     raise HTTPException(409, 'Финал доступен после публикации всех этапов и бонусов')
-                if scene == 'winner' and len(p['ranking']) >= 2 and p['ranking'][0]['total'] == p['ranking'][1]['total'] and not p.get('winner_decision'):
+                if (scene == 'winner' and not final_table_ready(p) and len(p['ranking']) >= 2
+                    and p['ranking'][0]['total'] == p['ranking'][1]['total'] and not p.get('winner_decision')):
                     raise HTTPException(409, 'Ничья: требуется решение организатора')
                 p['scene'] = scene
             elif action == 'winner-decision':
+                if final_table_ready(p) and 'red' in p['published_phases']:
+                    raise HTTPException(409, 'Победителя определяет только первое место капитана в RED')
                 winning_team_id = check_team(c, body.get('team_id'))
                 if not p['ranking'] or winning_team_id not in [r['team_id'] for r in p['ranking'] if r['total'] == p['ranking'][0]['total']]:
                     raise HTTPException(422, 'Решение допустимо только среди команд с равным максимумом')
