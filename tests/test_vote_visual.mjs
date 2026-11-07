@@ -38,7 +38,7 @@ for(const count of [10,11]){
     if(step<=count){
       assert.match(host.innerHTML,/vs-vote-card/);
       assert.match(host.innerHTML,/vs-target/);
-      assert.match(host.innerHTML,/\+10 000/);
+      assert.match(host.innerHTML.replace(/\u00a0/g,' '),/\+10 000/);
       assert.match(host.innerHTML,/ПРОМЕЖУТОЧНОЕ МЕСТО/);
       assert.doesNotMatch(host.innerHTML,/vs-rank-row/,'final table not yet shown');
       assert.ok(!host.innerHTML.includes(data.all_demo_votes[step]?.captain_name||'UNLIKELY'),
@@ -61,6 +61,15 @@ for(const count of [10,11]){
     mode==='target'?first.current.target_team_id:first.current.voter_team_id);
  }
 }
+
+// Live final-table vote chips are 20k, while historical demos stay 10k.
+const live=frame(demo(10,'target'),1);
+live.final_table=true;
+live.vote_chips=20000;
+live.current={...live.current,points:20000};
+render(host,live);
+assert.match(host.innerHTML.replace(/\u00a0/g,' '),/\+20 000/);
+assert.match(host.innerHTML,/ФИШЕК/);
 
 const screen=fs.readFileSync('sochi_show/static/screen.js','utf8');
 const html=fs.readFileSync('sochi_show/static/screen.html','utf8');
