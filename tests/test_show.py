@@ -291,7 +291,7 @@ def test_configured_chip_rates_are_multiplied_and_frozen(client):
     prepare(client,h,10)
     assert call(client,'chips-settings',h,{'reentry':30000,'addon':50000}).status_code==200
     s=client.get('/sochi/api/admin/state').json()
-    assert s['chip_settings']=={'reentry':30000,'addon':50000}
+    assert s['chip_settings']=={'reentry':30000,'addon':50000,'entry':None}
     assert call(client,'stage',h,{'team_id':1,'green_stack':300000,'reentry_count':2,
                                   'blue_stack':410000,'addon_count':3,'survivors':2}).status_code==200
     s=client.get('/sochi/api/admin/state').json()['stages']['1']
