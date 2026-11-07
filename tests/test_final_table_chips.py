@@ -61,29 +61,31 @@ def test_real_final_table_before_red_with_jack_and_voting_chips(client,n):
         assert call(client,'secret',h,data).status_code==200
     assert call(client,'publish',h,{'action':'secret-show-start'}).status_code==200
     state=client.get('/sochi/api/public/state').json()['state']
-    assert state['secret_view']['jack_chips']==5000
+    assert state['secret_view']['jack_chips']==10000
     assert state['revealed_secrets']==[]
     assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code==409
     for slot in (1,2,3):
         assert call(client,'publish',h,{'action':'reveal','slot':slot}).status_code==200
     assert call(client,'publish',h,{'action':'secret-show-step','step':4}).status_code==200
     result=client.get('/sochi/api/admin/state').json()['published']
-    assert sum(r['secret'] for r in result['ranking'])==10000
-    assert next(r for r in result['ranking'] if r['team_id']==2)['secret']==10000
+    assert sum(r['secret'] for r in result['ranking'])==20000
+    assert next(r for r in result['ranking'] if r['team_id']==2)['secret']==20000
     for voter in range(1,n+1):
         target=2 if voter!=2 else 1
         assert call(client,'vote',h,{'voter_team_id':voter,'target_team_id':target}).status_code==200
     assert call(client,'publish',h,{'action':'votes','show_mode':'cinematic'}).status_code==200
     state=client.get('/sochi/api/public/state').json()['state']
     assert state['vote_view']['final_table'] is True
+    assert state['vote_view']['vote_chips'] == 20000
     assert state['vote_view']['revealed']==[]
+    assert all(row['points'] == 20000 for row in client.get('/sochi/api/admin/state').json()['published']['vote_show']['entries'])
     assert state['published_votes']==[]
     assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code==409
     for step in range(1,n+2):
         assert call(client,'publish',h,{'action':'vote-show-step','step':step}).status_code==200
     pub=client.get('/sochi/api/public/state').json()['state']
-    assert sum(x['votes'] for x in pub['ranking'])==n*10000
-    assert sum(x['secret'] for x in pub['ranking'])==10000
+    assert sum(x['votes'] for x in pub['ranking'])==n*20000
+    assert sum(x['secret'] for x in pub['ranking'])==20000
     for x in pub['ranking']:
         assert x['total']==stacks[str(x['team_id'])]+x['survivor_bonus']+x['secret']+x['votes']
     # RED finishing places are entered after everyone is seated and rewarded.
