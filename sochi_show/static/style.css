@@ -209,3 +209,29 @@
   display:block;width:100%;height:auto;max-height:19vh;object-fit:contain;
   background:transparent;border:0;
 }
+
+
+/* Live tournament operations: per-player entry counters, manual team adjustments. */
+.admin .player-totals{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.admin .player-total{padding:7px 11px;border:1px solid #dec9b5;border-radius:8px;background:#faf3ea;color:#543c27;font-size:12px}
+.admin .player-total b{color:#914d18;font-size:15px}
+.admin .player-entry-table{min-width:750px}
+.admin .player-entry-table td:first-child{width:38%;line-height:1.35}
+.admin .player-place{display:block;color:#685b4d;margin-top:4px;font-size:12px}
+.admin .player-counter{display:flex;gap:4px;align-items:center;white-space:nowrap}
+.admin .player-counter input[type=number]{width:64px;min-width:60px;text-align:center;padding:7px 4px}
+.admin .player-counter button{padding:7px 10px;min-width:36px}
+.admin .player-counter button:disabled,.admin .player-counter input:disabled{opacity:.45;cursor:not-allowed}
+.admin #player-chips-panel .row{align-items:flex-start}
+/* A single ranked list makes a team visibly move down as its re-entry count rises. */
+.projector .teams-live-heading{display:grid;grid-template-columns:9% 71% 20%;gap:0;padding:1vh 1.4vw .65vh;font-size:clamp(11px,1.1vw,20px);font-weight:800;color:#d0ac81;letter-spacing:.13em}
+.projector .teams-live-heading span:last-child{text-align:right}
+.projector .teams-live-board{flex:1;min-height:0;display:grid;grid-template-rows:repeat(var(--team-rows,11),minmax(0,1fr));gap:.5vh;margin:0 0 1vh}
+.projector .teams-live-row{min-height:0;display:grid;grid-template-columns:9% 71% 20%;align-items:center;padding:.3vh 1.35vw;border-radius:10px;border:1px solid #5d4d3b;background:linear-gradient(95deg,#252927,#131d21);animation:rise .45s ease both}
+.projector .teams-live-row:first-child{background:linear-gradient(95deg,#50412d,#183535);border-color:#c59a5f}
+.projector .teams-live-rank{font-size:clamp(20px,2.3vw,46px);font-weight:900;color:#e5b47e}
+.projector .teams-live-title{min-width:0;display:flex;flex-direction:column;gap:1px}
+.projector .teams-live-title strong{font-size:clamp(17px,2.15vw,41px);font-weight:900;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.projector .teams-live-title small{font-size:clamp(11px,1.1vw,22px);color:#b8d3ce;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.projector .teams-live-reentries{font-size:clamp(25px,2.65vw,56px);font-weight:950;color:#f4c18b;display:flex;flex-direction:column;text-align:right;line-height:1}
+.projector .teams-live-reentries small{font-size:clamp(10px,.9vw,18px);letter-spacing:.08em;color:#bbc1c1;margin-top:2px}
