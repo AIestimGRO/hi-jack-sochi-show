@@ -50,7 +50,19 @@ if(scene==='green_show'){
 }
 if(scene==='intro'){panel.innerHTML=`${logo}<div class="mountains">◆ ▲ ◆</div><div class="prelude">7 НОЯБРЯ 2026 · ОДНА КОМАНДА — ДВА МЕСТА В СОЧИ</div>`;return}
 if(scene==='pause'){panel.innerHTML=`${logo}<div class="feature-title">ПАУЗА</div><div class="feature-sub">СКОРО ПРОДОЛЖИМ</div>`;return}
-if(scene==='teams'){panel.innerHTML=header('НАШИ КОМАНДЫ')+`<div class="team-tiles">${Object.entries(state.teams||{}).map(([id,name])=>`<div class="team-tile"><small>КОМАНДА №${id}</small><strong>${esc(name)}</strong></div>`).join('')}</div>`;return}
+if(scene==='teams'){
+ const totals=state.team_reentries||{},captains=state.team_captains||{};
+ const teams=Object.entries(state.teams||{}).map(([id,name])=>({
+   id,name,count:Number(totals[id]||0),captain:captains[id]||''
+ })).sort((a,b)=>a.count-b.count||Number(a.id)-Number(b.id));
+ panel.innerHTML=header('КОМАНДЫ · РЕ-ЭНТРИ')+
+   '<div class="teams-live-heading"><span>МЕСТО</span><span>КОМАНДА / КАПИТАН</span><span>RE-ENTRY</span></div>'+
+   `<div class="teams-live-board" style="--team-rows:${Math.max(teams.length,1)}">${teams.map((t,i)=>
+     `<div class="teams-live-row"><span class="teams-live-rank">${i+1}</span><span class="teams-live-title"><strong>${esc(t.name)}</strong><small>КОМАНДА №${esc(t.id)}${t.captain?' · КАПИТАН: '+esc(t.captain):''}</small></span><span class="teams-live-reentries">${t.count}<small>RE-ENTRY</small></span></div>`
+   ).join('')}</div>`+
+   '<div class="scene-footer">МЕНЬШЕ RE-ENTRY — ВЫШЕ В СПИСКЕ · ДАННЫЕ ОБНОВЛЯЮТСЯ В ПРЯМОМ ЭФИРЕ</div>';
+ return;
+}
 if(scene==='captains'){
   window.CaptainShow.render(panel,{captains:state.captains||[],teams:state.teams||{},team_count:state.team_count});
   return;
