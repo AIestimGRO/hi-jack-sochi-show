@@ -193,7 +193,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             {int(k): v for k, v in state['teams'].items()}, state['stages'],
             state['revealed_secrets'], state['published_votes'], state['revealed_slots'],
             state['votes_published'], state['vote_mode'], state['team_count'],
-            state.get('blue_policy', {}).get('points'))
+            state.get('blue_policy', {}).get('points'),
+            state.get('blue_policy', {}).get('mode') == 'final_table')
         # A fully reset seating (or a paused tournament with no published stages)
         # must not invent a leaderboard of all-zero tied scores.
         if state.get('scene') == 'pause' and not state['published_phases'] and not state['revealed_slots'] and not state['votes_published']:
@@ -282,14 +283,18 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             row['move'] = row['blue_place'] - row['place']
         return {'ranking': ranked, 'step': 0}
 
+    def final_table_ready(p):
+        return (p.get('blue_policy') or {}).get('mode') == 'final_table' and bool(
+            (p.get('blue_policy') or {}).get('revealed')) and 'blue' in p.get('published_phases',[])
+
     def vote_snapshot(p, votes):
         """Freeze a captain ballot and the last public, pre-vote table once.
 
         Real ranking continues to use published_ranking. During a reveal, the
         public endpoint derives partial totals from the frozen ballot prefix.
         """
-        if not p['published_phases'] or 'red' not in p['published_phases']:
-            raise HTTPException(409, 'Голосование доступно после RED')
+        if not p['published_phases'] or ('red' not in p['published_phases'] and not final_table_ready(p)):
+            raise HTTPException(409, 'Голосование доступно после финального стола/RED')
         secret = p.get('secret_show')
         if secret and secret['step'] != 4:
             raise HTTPException(409, 'Сначала заверши SECRET JACK SHOW')
@@ -1201,7 +1206,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 vote_show['step'] = step
                 p['scene'] = 'vote_show'
             elif action == 'secret-show-start':
-                if 'red' not in p['published_phases'] or p['votes_published']:
+                if ('red' not in p['published_phases'] and not final_table_ready(p)) or p['votes_published']:
                     raise HTTPException(409, 'SECRET JACK SHOW доступен после RED и до голосования')
                 if len(list(c.execute('SELECT slot FROM secrets'))) != 3:
                     raise HTTPException(409, 'Сначала назначьте всех трёх Secret Jacks')
@@ -1218,7 +1223,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 secret_show['step'] = step
                 p['scene'] = 'secret_show'
             elif action == 'red-show-start':
-                if 'red' not in p['published_phases'] or p['revealed_slots'] or p['votes_published']:
+                if 'red' not in p['published_phases'] or ((p['revealed_slots'] or p['votes_published']) and not final_table_ready(p)):
                     raise HTTPException(409, 'Шоу RED доступно после RED, до Secret Jack и голосов')
                 if not red_show:
                     p['red_show'] = red_snapshot(p)
@@ -1226,7 +1231,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     p['red_show']['step'] = 0
                 p['scene'] = 'red_show'
             elif action == 'red-show-step':
-                if not red_show or p['revealed_slots'] or p['votes_published']:
+                if not red_show or ((p['revealed_slots'] or p['votes_published']) and not final_table_ready(p)):
                     raise HTTPException(409, 'Сначала запусти RED SHOW')
                 step = strict_int(body.get('step'), 'step', 0, len(red_show['ranking']) + 1)
                 if abs(step - red_show['step']) != 1:
@@ -1236,7 +1241,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             elif action == 'blue-policy-reveal':
                 policy=p.get('blue_policy')
                 if not policy or 'blue' not in p['published_phases'] or 'red' in p['published_phases']:
-                    raise HTTPException(409,'Сначала настрой систему очков после BLUE')
+                    raise HTTPException(409,'Сначала подготовь стартовые стеки после BLUE')
                 if not blue_show or blue_show['step'] < len(blue_show['ranking'])+1:
                     raise HTTPException(409,'Сначала открой полный итог BLUE по чистым фишкам')
                 policy['revealed']=True
@@ -1328,7 +1333,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     raise HTTPException(409, 'Несоответствие количества команд')
                 if action == 'red':
                     if p.get('blue_policy') and not p['blue_policy'].get('revealed'):
-                        raise HTTPException(409,'Перед RED сначала покажи начисленные очки BLUE')
+                        raise HTTPException(409,'Перед RED сначала покажи стеки финального стола')
+                    if final_table_ready(p) and (len(p.get('revealed_slots',[]))!=3
+                          or not p.get('votes_published')
+                          or (p.get('vote_show') and p['vote_show']['step'] <
+                              len(p['vote_show']['entries'])+1)):
+                        raise HTTPException(409,'Сначала раскрой Secret Jack и все голоса, выдай бонусы к стекам, затем RED')
                     places = [r['red_place'] for r in rows]
                     if any(place is None for place in places) or sorted(places) != list(range(1, count + 1)):
                         raise HTTPException(422, 'RED: места 1..N без пропусков и повторов')
