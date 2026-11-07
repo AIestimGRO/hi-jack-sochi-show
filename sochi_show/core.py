@@ -83,6 +83,29 @@ def validate_seating(document: dict, team_count: int) -> tuple[list[dict], list[
     return [teams_by_id[x] for x in range(1, team_count + 1)], parsed
 
 
+def final_table_stacks(chips: dict[int, int], team_count: int) -> dict[str, int]:
+    """Proportional physical chips at the final table, to 1,000-chip increments.
+
+    The smallest BLUE NET stack receives 100,000 and the largest 1,000,000.
+    Equal raw net stacks are equal at the final table. An exact tie across all
+    participants is neutralised at 550,000 each: no arbitrary first/last.
+    A 1,000-chip denomination is practical and keeps the endpoints exact.
+    """
+    if set(chips) != set(range(1, team_count + 1)):
+        raise ValueError('Финальный стол: нужны чистые фишки BLUE всех команд')
+    if any(type(v) is not int for v in chips.values()):
+        raise ValueError('Финальный стол: чистые фишки должны быть целыми')
+    lo, hi = min(chips.values()), max(chips.values())
+    if hi == lo:
+        return {str(tid): 550000 for tid in chips}
+    span=hi-lo
+    stacks={}
+    for tid,raw in chips.items():
+        scaled=100000+(900000*(raw-lo)*2+span)//(2*span)
+        stacks[str(tid)]=max(100000,min(1000000,((scaled+500)//1000)*1000))
+    return stacks
+
+
 def blue_points_from_policy(chips: dict[int, int], policy: dict, team_count: int) -> dict[str, int]:
     """Map end-of-BLUE NET CHIPS to tournament points without altering chip accounting.
 
@@ -95,8 +118,10 @@ def blue_points_from_policy(chips: dict[int, int], policy: dict, team_count: int
     if not isinstance(policy, dict):
         raise ValueError('BLUE: не выбрана система начисления')
     mode = policy.get('mode')
-    if mode not in ('chips', 'scale', 'places'):
+    if mode not in ('chips', 'scale', 'places', 'final_table'):
         raise ValueError('BLUE: неизвестная система начисления')
+    if mode == 'final_table':
+        return final_table_stacks(chips,team_count)
     percent = policy.get('percent', 100)
     if mode == 'scale':
         if type(percent) is not int or not 1 <= percent <= 100:
@@ -137,7 +162,7 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
     secret_awards = Counter()
     for secret in secrets:
         if int(secret['slot']) in revealed_slots and secret.get('confirmed') and secret.get('knockout_team_id'):
-            secret_awards[int(secret['knockout_team_id'])] += 10_000
+            secret_awards[int(secret['knockout_team_id'])] += (5_000 if (blue_base_points or {}).get('_final_table') else 10_000)
     vote_awards = Counter()
     if votes_published:
         for vote in votes:
