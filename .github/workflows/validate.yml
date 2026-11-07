@@ -47,6 +47,8 @@ jobs:
         run: node tests/test_green_visual.mjs
       - name: BLUE visual smoke tests
         run: node tests/test_blue_visual.mjs
+      - name: BLUE policy/admin smoke tests
+        run: node tests/test_blue_policy_ui.mjs
       - name: RED visual smoke tests
         run: node tests/test_red_visual.mjs
       - name: SECRET JACK visual smoke tests
