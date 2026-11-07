@@ -427,8 +427,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 for row in visible:
                     row.pop('award',None)
             result['blue_view'] = {'count': count, 'step': step,
-                                   'max_step': count + 1, 'revealed': visible,
-                                   'points_revealed':points_public}
+                                   'max_step': count + 1, 'revealed': visible}
+            if policy:
+                result['blue_view']['points_revealed'] = points_public
             result['blue_show'] = {'step': step, 'max_step': count + 1}
             if step < count + 1 or (policy and not points_public):
                 result['ranking'] = []
