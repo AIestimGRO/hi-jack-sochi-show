@@ -55,6 +55,44 @@
   </div>
   <p class="muted">После проверки черновых очков «Опубликовать BLUE» открывает заставку без результатов. Кнопка «Далее» объявляет команды от последнего места к первому. После первого места — полный рейтинг. Баллы не начисляются повторно.</p>
 </section>
+<section class="panel" id="blue-points-panel">
+ <div class="row between wrap">
+  <div><div class="eyebrow">BROADCAST 2.0 · BLUE → POINTS</div>
+    <h2>🎯 Что начисляем командам после BLUE?</h2>
+    <p class="muted">Сначала покажи всем ЧИСТЫЕ ФИШКИ и места BLUE. Затем выбери способ перевода в очки. Фишки останутся в базе и не изменятся.</p>
+  </div>
+ </div>
+ <div class="row wrap">
+   <label>Система очков
+     <select id="bp-mode">
+      <option value="chips">Чистые фишки = очки (как раньше)</option>
+      <option value="scale">Уменьшить разрывы коэффициентом</option>
+      <option value="places">Фиксированные очки за места</option>
+     </select>
+   </label>
+   <label id="bp-scale-label" class="hidden">Оставить от разрыва, %
+     <input type="number" id="bp-percent" min="1" max="100" step="1" value="10">
+   </label>
+ </div>
+ <p id="bp-help" class="muted">Система применяется ко ВСЕЙ сумме после BLUE, чтобы большие стеки GREEN не сохраняли прежний разрыв.</p>
+ <div id="bp-points-table"></div>
+ <div class="row wrap">
+    <button type="button" id="bp-preview" class="secondary">Сравнить варианты и последствия</button>
+    <button type="button" id="bp-reveal" class="gold" disabled>▶ Показать назначенные очки на экране</button>
+    <span id="bp-progress" class="chip">Доступно после завершения BLUE SHOW</span>
+ </div>
+ <div id="bp-result"></div>
+ <form id="bp-confirm" class="hidden">
+   <p><strong>Подтверди выбранный вариант:</strong> числовой результат BLUE будет переведён в общую базу очков перед RED.</p>
+   <label>Причина решения
+     <textarea id="bp-reason" rows="2" maxlength="300">Фиксируем систему очков после BLUE, чтобы сохранить конкуренцию в финале</textarea>
+   </label>
+   <label>PIN администратора
+      <input id="bp-pin" type="password" required autocomplete="off">
+   </label>
+   <button type="submit" class="gold">🔐 Зафиксировать систему очков</button>
+ </form>
+</section>
 <section class="panel" id="red-director">
   <div class="row between wrap">
     <div><div class="eyebrow">BROADCAST 2.0 · RED</div>
@@ -168,4 +206,4 @@
   </form>
   <div id="protected-history" class="hidden"></div>
 </section>
-<section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">После публикации GREEN норматив re-entry блокируется, после BLUE — норматив add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=final-v1" defer></script><link rel="stylesheet" href="/sochi/static/protected-editor.css?v=corrections-v1"><script src="/sochi/static/protected-editor.js?v=corrections-v1" defer></script></body></html>
+<section class="panel" id="review-panel"><div class="row between"><div><h2>6. Проверка, история, протокол</h2><p class="muted">Любое изменение записывается в журнал.</p></div><a class="button secondary" href="/sochi/api/admin/export.csv" id="csv-link">Скачать CSV</a></div><div id="ranking-preview"></div><div id="tie-resolution" class="row wrap"></div><details><summary>Журнал действий</summary><div id="audit"></div></details></section></div></main><dialog id="chips-settings-modal"><div class="row between"><h2>Настройки фишек</h2><button id="close-chips-settings" type="button" class="secondary">Закрыть</button></div><p class="muted">Укажи, сколько фишек выдаётся за одно действие. Значения применяются ко всем командам.</p><form id="chips-settings-form"><label>Вход на одного игрока (по Excel: 50 000)<input id="chips-per-entry" type="number" min="0" max="1000000000" step="1" placeholder="50 000 · для 3 игроков 150 000"></label><label>Фишек за одно re-entry<input id="chips-per-reentry" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><label>Фишек за один add-on<input id="chips-per-addon" type="number" min="1" max="1000000000" step="1" placeholder="Введите норматив"></label><p class="muted">GREEN: вычитаются три входа и re-entry. После публикации GREEN вход и re-entry исправляются через 🔐 защищённый редактор. После BLUE — так же add-on.</p><button type="submit" class="gold">Сохранить настройки</button></form></dialog><dialog id="preview-modal"><div class="row between"><h2>Предпросмотр публикации</h2><button id="close-preview" class="secondary">Закрыть</button></div><div id="preview-body"></div></dialog><div id="toast" role="status" aria-live="polite"></div><script src="/sochi/static/admin.js?v=final-v1" defer></script><link rel="stylesheet" href="/sochi/static/protected-editor.css?v=corrections-v1"><script src="/sochi/static/protected-editor.js?v=corrections-v1" defer></script><script src="/sochi/static/blue-points-admin.js?v=blue-points-v1" defer></script></body></html>
