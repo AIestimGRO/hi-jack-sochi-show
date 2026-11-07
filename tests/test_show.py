@@ -199,6 +199,16 @@ def test_revealed_correction_recomputes_once(client):
         assert call(client, 'secret', h, {'slot': idx, 'player_id': seat['player_id'],
                     'knockout_team_id': 2, 'knockout_player_id': killer['player_id'], 'confirmed': True}).status_code == 200
     assert call(client, 'publish', h, {'action': 'teams'}).status_code == 200
+    # The tested correction applies to an already valid published RED show;
+    # direct reveal is intentionally forbidden before any scored phase.
+    assert call(client, 'publish', h, {'action': 'reveal', 'slot': 1}).status_code == 409
+    assert call(client, 'chips-settings', h, {'reentry':30000,'addon':50000}).status_code == 200
+    for tid in range(1,11):
+        assert call(client,'stage',h,{'team_id':tid,'green_stack':500000,
+            'reentry_count':0,'blue_stack':750000,'addon_count':0,
+            'survivors':0,'red_place':tid}).status_code == 200
+    for phase in ('green','blue','red'):
+        assert call(client,'publish',h,{'action':phase}).status_code == 200
     assert call(client, 'publish', h, {'action': 'reveal', 'slot': 1}).status_code == 200
     raw = client.get('/sochi/api/public/state').json()['state']
     assert sum(x['secret'] for x in raw['ranking']) == 10000
