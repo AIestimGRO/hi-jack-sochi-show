@@ -151,10 +151,15 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
         r = entry.get('red') or 0
         s = secret_awards[team_id]
         v = vote_awards[team_id]
-        chip_net = g + b
-        award = (blue_base_points or {}).get(str(team_id), chip_net)
+        # BLUE is a final *raw-chip* snapshot. The survival award is not
+        # part of the chip stack and must not determine BLUE sporting places.
+        survivor_bonus = int(entry.get('survivor_bonus', 0))
+        chip_net = entry.get('blue_net_chips', g + b)
+        converted = (blue_base_points or {}).get(str(team_id), chip_net)
+        award = converted + survivor_bonus
         ranking.append({'team_id': team_id, 'name': team_names[team_id],
                         'green': g, 'blue': b, 'chip_net': chip_net,
+                        'survivor_bonus': survivor_bonus,
                         'base_points': award, 'red': r, 'secret': s, 'votes': v,
                         'total': award + r + s + v})
     ranking.sort(key=lambda x: (-x['total'], x['team_id']))
