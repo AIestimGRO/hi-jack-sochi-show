@@ -109,7 +109,7 @@ window.FinalShow=(()=>{
     </div><div class="gs-step-label"><span class="gs-live-dot"></span> FINAL / SUMMIT</div></header>
     <div class="gs-content">
       <div class="gs-main">
-        <div class="gs-kicker">ПОСЛЕ GREEN · BLUE · RED · SECRET JACK · ГОЛОСОВ</div>
+        <div class="gs-kicker">ПОСЛЕ GREEN · BLUE · SECRET JACK · ГОЛОСОВ · RED</div>
         <h1 class="gs-title">${titles[step]}</h1>
         <div class="gs-section-rule"></div>
         ${intro?
