@@ -268,12 +268,23 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             net=stage.get('blue_net_chips',green+blue)
             survivor_bonus=stage.get('survivor_bonus',0)
             base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)+survivor_bonus
+            # In new mode RED follows the already-announced Jack and vote chips.
+            # Keep their bonuses in every RED scene, rather than reverting the
+            # public totals to the pre-bonus stack.
+            pre_awards=0
+            if final_table_ready(p):
+                pre_awards=sum(5000 for x in p.get('revealed_secrets',[])
+                               if x.get('confirmed') and x.get('knockout_team_id')==int(team_id))
+                if p.get('votes_published'):
+                    pre_awards+=sum(10000 for x in p.get('published_votes',[])
+                       if (x['target_team_id'] if p.get('vote_mode')=='target'
+                           else x['voter_team_id'])==int(team_id))
             ranked.append({'team_id': int(team_id), 'name': name,
                            'green': green, 'blue': blue, 'chip_net': net,
                            'survivor_bonus':survivor_bonus,
                            'base_points':base, 'red': red,
                            'red_place': 1 + (130000 - red) // 10000,
-                           'total': base + red,
+                           'total': base + red + pre_awards,
                            'blue_place': blue_places[int(team_id)]})
         ranked.sort(key=lambda row: (-row['total'], row['team_id']))
         for index, row in enumerate(ranked):
@@ -440,6 +451,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                                    'max_step': count + 1, 'revealed': visible}
             if policy:
                 result['blue_view']['points_revealed'] = points_public
+                if points_public:
+                    result['blue_view']['table_mode'] = policy.get('mode')
             result['blue_show'] = {'step': step, 'max_step': count + 1}
             if step < count + 1 or ('red' not in result.get('published_phases',[]) and not points_public):
                 # Complete BLUE positions are public; the later point decision
@@ -471,6 +484,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'max_step': available + (1 if available == 3 else 0),
                 'revealed': visible,
                 'summary': step == 4 and available == 3,
+                'jack_chips': 5000 if policy and policy.get('mode')=='final_table' else 10000,
+                'final_table': bool(policy and policy.get('mode')=='final_table'),
             }
             result['secret_show'] = {'step': step, 'revealed_count': available}
             result['revealed_secrets'] = visible
@@ -496,7 +511,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 current['vote_points'] = recipient['votes']
             result['vote_view'] = {
                 'step': step, 'count': count, 'max_step': count + 1,
-                'mode': vote_show['mode'], 'revealed': visible,
+                'mode': vote_show['mode'],
+                'final_table': bool(policy and policy.get('mode')=='final_table'),
+                'revealed': visible,
                 'current': current, 'ranking': ranking,
                 'summary': step == count + 1,
             }
