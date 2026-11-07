@@ -1,7 +1,7 @@
 'use strict';
 /* HI, JACK — HI, SOCHI: CAPTAINS' VOTE SHOW.
  * Only the already-revealed ballot prefix is ever received by the projector.
- * The source of all real +10k awards remains the server's frozen published votes.
+ * The source of all chip awards remains the server's frozen published votes.
  */
 window.VoteShow=(()=>{
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -86,6 +86,7 @@ window.VoteShow=(()=>{
     const mode=data.mode==='voter'?'ГОЛОСУЮЩЕЙ':'ВЫБРАННОЙ';
     const unit=data.final_table?'фишек':'очков';
     const unitBig=data.final_table?'ФИШЕК':'ОЧКОВ';
+    const bonus=Number(data.vote_chips)||(data.final_table?20000:10000);
     const title=intro?'ПОСЛЕДНИЙ<br><em>ХОД</em>':board?'ГОЛОСА<br><em>УЧТЕНЫ</em>':'РЕШЕНИЕ<br><em>КАПИТАНА</em>';
     host.className='scene green-show-stage vote-show-stage';
     host.innerHTML=`<div class="green-experience vote-experience vs-${intro?'intro':board?'board':'reveal'}" data-step="${step}">
@@ -104,7 +105,7 @@ window.VoteShow=(()=>{
           <div class="gs-section-rule"></div>
           ${intro?
             `<div class="vs-intro-text"><strong>${count} КАПИТАНОВ.</strong> У каждого — один голос.<br>
-            Каждый голос даёт <b>10 000 ${unit}</b> и может изменить итоговый рейтинг.</div>
+            Каждый голос даёт <b>${fmt(bonus)} ${unit}</b> и может изменить итоговый рейтинг.</div>
             <div class="vs-intro-stamp">БОНУС ПОЛУЧАЕТ ${mode} КОМАНДА</div>
             <div class="vs-dramatic-word">ПУСТЬ РЕШАТ ГОЛОСА ♠</div>`:
             board?
@@ -125,8 +126,8 @@ window.VoteShow=(()=>{
                   <div class="vs-target">${esc(vote?.target_name||'')}</div>
                 </div>
                 <div class="vs-award">
-                  <div><span>+10 000 ${unitBig} ПОЛУЧАЕТ</span><strong>${esc(vote?.receiver_name||'')}</strong></div>
-                  <div class="vs-award-number">+10 000</div>
+                  <div><span>+${fmt(vote?.points||bonus)} ${unitBig} ПОЛУЧАЕТ</span><strong>${esc(vote?.receiver_name||'')}</strong></div>
+                  <div class="vs-award-number">+${fmt(vote?.points||bonus)}</div>
                 </div>
                 <div class="vs-change-row">
                   <div>ПРОМЕЖУТОЧНОЕ МЕСТО <strong>#${received?.before_place||'—'} → #${vote?.place||'—'}</strong></div>
