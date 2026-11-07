@@ -301,11 +301,17 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             if 'blue' in p['published_phases']:
                 b=row['blue_stack']; add=row['addon_count']*rate_add
                 record['blue']=blue_points(row['green_stack'],b,add,row['survivors'])
+                # Raw NET chips determine BLUE sporting places.
+                # The survival bonus is separate and only adds to points.
+                record['blue_net_chips']=(b-3*(current_rate(c,'entry') or 0)
+                                         -row['reentry_count']*rate_re-add)
+                record['survivor_bonus']=5000*row['survivors']
             if 'red' in p['published_phases']:
                 record['red']=red_points(row['red_place'],p['team_count'])
             p['stages'][str(tid)]=record
     if p.get('blue_policy') and 'blue' in p['published_phases']:
-        net={int(k):row['green']+row['blue'] for k,row in p['stages'].items()
+        net={int(k):row.get('blue_net_chips',row['green']+row['blue'])
+             for k,row in p['stages'].items()
              if 'green' in row and 'blue' in row}
         try:
             p['blue_policy']['points']=blue_points_from_policy(net,p['blue_policy'],p['team_count'])
