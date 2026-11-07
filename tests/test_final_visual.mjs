@@ -82,7 +82,7 @@ const admin=fs.readFileSync('sochi_show/static/admin.html','utf8');
 const adminJS=fs.readFileSync('sochi_show/static/admin.js','utf8');
 const preview=fs.readFileSync('sochi_show/static/final-preview.html','utf8');
 const css=fs.readFileSync('sochi_show/static/final-show.css','utf8');
-assert.match(html,/final-show.js\?v=final-v1/);
+assert.match(html,/final-show.js\?v=blue-net-v2/);
 assert.match(html,/final-show.css\?v=final-v1/);
 assert.match(screen,/scene==='final_show'/);
 assert.match(screen,/\['green_show','blue_show','red_show','secret_show','vote_show','final_show','captains'\]/);
