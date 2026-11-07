@@ -56,49 +56,39 @@
   <p class="muted">После проверки черновых очков «Опубликовать BLUE» открывает заставку без результатов. Кнопка «Далее» объявляет команды от последнего места к первому. После первого места — полный рейтинг. Баллы не начисляются повторно.</p>
 </section>
 <section class="panel" id="blue-points-panel">
- <div class="row between wrap">
-  <div><div class="eyebrow">BROADCAST 2.0 · BLUE → POINTS</div>
-    <h2>🎯 Что начисляем командам после BLUE?</h2>
-    <p class="muted">Сначала покажи всем ЧИСТЫЕ ФИШКИ и места BLUE. Затем выбери способ перевода в очки. Фишки останутся в базе и не изменятся.</p>
-  </div>
- </div>
- <div class="row wrap">
-   <label>Система очков
-     <select id="bp-mode">
-      <option value="chips">Чистые фишки = очки (+ отдельно бонусы выживших)</option>
-      <option value="scale">Уменьшить разрывы коэффициентом</option>
-      <option value="places">Фиксированные очки за места</option>
-     </select>
-   </label>
-   <label id="bp-scale-label" class="hidden">Оставить от разрыва, %
-     <input type="number" id="bp-percent" min="1" max="100" step="1" value="10">
-   </label>
- </div>
- <p class="muted">Система переводит в очки <strong>один окончательный результат BLUE</strong>, а не сумму двух промежуточных рейтингов. Выживание (+5 000 на человека) прибавляется к назначенным очкам отдельно.</p>
- <div id="bp-help" class="muted"></div>
+ <div class="row between wrap"><div>
+   <div class="eyebrow">BLUE → ФИНАЛЬНЫЙ СТОЛ</div>
+   <h2>♠ Распределение реальных фишек капитанам</h2>
+   <p class="muted">GREEN и BLUE остаются без изменений. После полного BLUE SHOW рассчитай <strong>стартовые стеки финального стола по чистым фишкам BLUE</strong>. Лучшая команда — ровно 1 000 000, последняя — ровно 100 000, остальные пропорционально между ними с округлением до 1 000. При равных чистых фишках одинаковые стеки.</p>
+ </div></div>
+ <input type="hidden" id="bp-mode" value="final_table">
+ <input type="hidden" id="bp-percent" value="100">
+ <div id="bp-scale-label" class="hidden"></div>
  <div id="bp-points-table"></div>
+ <p class="muted">Бонус за выживших (+5 000 на каждого) — отдельно от мест по чистым фишкам. После выдачи стартовых стеков: <strong>Secret Jack +5 000 реальных фишек за выбивание</strong>, затем <strong>+10 000 фишек за каждый голос</strong>. Указанные суммы физически добавляются капитанам. Прежние 130 000 очков за место RED пока не изменены.</p>
+ <div id="bp-help" class="muted"></div>
  <div class="row wrap">
-    <button type="button" id="bp-preview" class="secondary">Сравнить варианты и последствия</button>
-    <button type="button" id="bp-reveal" class="gold" disabled>▶ Показать назначенные очки на экране</button>
-    <span id="bp-progress" class="chip">Доступно после завершения BLUE SHOW</span>
+   <button type="button" id="bp-preview" class="secondary">Просчитать все стеки и проверить последствия</button>
+   <button type="button" id="bp-reveal" class="gold" disabled>▶ Объявить стартовые стеки на экране</button>
+   <span id="bp-progress" class="chip">Сначала заверши BLUE SHOW</span>
  </div>
  <div id="bp-result"></div>
  <form id="bp-confirm" class="hidden">
-   <p><strong>Подтверди выбранный вариант:</strong> числовой результат BLUE будет переведён в общую базу очков перед RED.</p>
-   <label>Причина решения
-     <textarea id="bp-reason" rows="2" maxlength="300">Фиксируем систему очков после BLUE, чтобы сохранить конкуренцию в финале</textarea>
+   <p><strong>Проверь расчёт:</strong> это реальные фишки, которые выдаются капитанам на финальном столе. Результаты BLUE по чистым фишкам не меняются.</p>
+   <label>Причина начисления
+     <textarea id="bp-reason" rows="2" maxlength="300">Перевод чистых фишек BLUE в реальные стартовые стеки финального стола 100 000–1 000 000</textarea>
    </label>
    <label>PIN администратора
-      <input id="bp-pin" type="password" required autocomplete="off">
+     <input id="bp-pin" type="password" required autocomplete="off">
    </label>
-   <button type="submit" class="gold">🔐 Зафиксировать систему очков</button>
+   <button type="submit" class="gold">🔐 Утвердить стартовые стеки</button>
  </form>
 </section>
 <section class="panel" id="red-director">
   <div class="row between wrap">
     <div><div class="eyebrow">BROADCAST 2.0 · RED</div>
       <h2>RED SHOW — финальный штурм</h2>
-      <p class="muted">Общий рейтинг = очки, назначенные после BLUE, + бонус выживших + очки RED. RED по-прежнему: 130 000 за первое место, далее −10 000 за каждое. Secret Jack и голоса раскрываются отдельно.</p>
+      <p class="muted">При новом формате сначала объяви финальные стеки (100 000–1 000 000), затем <strong>раскрой Secret Jack и тайное голосование</strong>, выдай фишки капитанам и проведи RED. Традиционные 130 000 за 1-е место RED и −10 000 за последующие места пока сохранены отдельно.</p>
     </div>
     <a class="button secondary" href="/sochi/preview/red" target="_blank" rel="noopener">Посмотреть демо RED ↗</a>
   </div>
@@ -110,7 +100,7 @@
   </div>
   <p class="muted">После проверки и публикации RED проектор покажет заставку без результатов. «Далее» раскрывает команды по одной от последнего места к первому. Последний шаг — полный рейтинг до Secret Jack и голосов. Повторный показ не начисляет очки.</p>
 </section>
-<section class="panel" id="control-panel"><div class="row between"><div><div class="eyebrow">LIVE CONTROL</div><h2>Пульт эфира</h2><p class="muted">Черновики не появляются на проекторе до публикации.</p></div><div id="live-scene" class="scene-indicator">Заставка</div></div><div id="scene-buttons" class="button-grid"></div><div class="row wrap"><button class="secondary" data-scene="pause">Экран паузы</button><button class="secondary" data-scene="intro">Заставка</button><button class="secondary" data-scene="teams">Команды</button><button class="secondary" data-scene="final">Финальная таблица</button><button class="gold" data-scene="winner">Объявить победителя</button><button id="preview-screen" class="secondary">Предпросмотр данных (JSON)</button></div></section><section class="panel" id="seating-panel"><div class="row between"><div><h2>1. Утверждённая рассадка</h2><p class="muted">Файл JSON содержит столы и боксы: выбери вариант на 10 или 11 команд.</p></div><span id="teamcount" class="chip">Не импортировано</span></div><div class="row wrap"><select id="count"><option value="10">10 команд / 3 стола</option><option value="11">11 команд / 4 стола</option><option value="12">12 команд / 4 стола</option><option value="13">13 команд / 4 стола</option></select><input id="json-file" type="file" accept="application/json,.json"><button id="import">Импортировать вариант</button></div><p id="seats-summary" class="muted"></p><details><summary>Карточки и привязка участников</summary><div id="seats"></div></details></section><section class="panel" id="teams-panel"><h2>2. Команды, капитаны и фотографии</h2><div id="teams"></div><div class="row wrap"><button id="publish-teams" class="gold">Опубликовать все названия</button><button id="publish-captains" class="secondary">Представить капитанов</button><a href="/sochi/preview/captains" target="_blank" rel="noopener" class="button secondary">Демо капитанов ↗</a></div></section><section class="panel" id="scores-panel"><div class="row between wrap"><div><h2>3. Учёт фишек GREEN и BLUE / места RED</h2><p class="muted"><strong>GREEN — промежуточный срез:</strong> стек GREEN − 3 входа − re-entry. <strong>BLUE — окончательный результат по фишкам:</strong> стек BLUE − 3 входа − re-entry − add-on. Места BLUE распределяются только по чистым фишкам. <strong>+5 000 за каждого выжившего</strong> — отдельно к турнирным очкам, на места BLUE не влияет. Вводи итоговый стек команды, а re-entry/add-on — количеством.</p><p class="muted"><strong>Если этап уже опубликован:</strong> для изменения реальных очков и немедленного пересчёта эфира используй <a href="#protected-editor-panel">🔐 Защищённое исправление</a>. Обычная кнопка «✓» сохраняет рабочие поля, но не переписывает ранее опубликованные кадры.</p></div><button type="button" id="open-chips-settings" class="secondary">⚙ Настроить фишки</button></div><p class="chip-rates" id="chips-rates-summary">Нормативы фишек ещё не установлены.</p><div class="scroll"><table id="stages"><thead><tr><th>Команда</th><th>Стек на конец GREEN (вся команда)</th><th>Re-entry, шт.</th><th>Стек на конец BLUE (вся команда)</th><th>Add-on, шт.</th><th>Выжили</th><th>Место RED</th><th>Сохранить</th></tr></thead><tbody></tbody></table></div><div class="row wrap"><button class="green" data-stage="green">Опубликовать GREEN</button><button class="blue" data-stage="blue">Опубликовать BLUE</button><button class="red" data-stage="red">Опубликовать RED</button></div></section><section class="grid-two"><div class="panel" id="secrets-panel"><h2>4. Secret Jacks / SHOW</h2><p class="muted">Назначь три тайные роли. Их имена и фото останутся скрыты до показа. За подтверждённое выбивание +10 000 команде выбившего.</p>
+<section class="panel" id="control-panel"><div class="row between"><div><div class="eyebrow">LIVE CONTROL</div><h2>Пульт эфира</h2><p class="muted">Черновики не появляются на проекторе до публикации.</p></div><div id="live-scene" class="scene-indicator">Заставка</div></div><div id="scene-buttons" class="button-grid"></div><div class="row wrap"><button class="secondary" data-scene="pause">Экран паузы</button><button class="secondary" data-scene="intro">Заставка</button><button class="secondary" data-scene="teams">Команды</button><button class="secondary" data-scene="final">Финальная таблица</button><button class="gold" data-scene="winner">Объявить победителя</button><button id="preview-screen" class="secondary">Предпросмотр данных (JSON)</button></div></section><section class="panel" id="seating-panel"><div class="row between"><div><h2>1. Утверждённая рассадка</h2><p class="muted">Файл JSON содержит столы и боксы: выбери вариант на 10 или 11 команд.</p></div><span id="teamcount" class="chip">Не импортировано</span></div><div class="row wrap"><select id="count"><option value="10">10 команд / 3 стола</option><option value="11">11 команд / 4 стола</option><option value="12">12 команд / 4 стола</option><option value="13">13 команд / 4 стола</option></select><input id="json-file" type="file" accept="application/json,.json"><button id="import">Импортировать вариант</button></div><p id="seats-summary" class="muted"></p><details><summary>Карточки и привязка участников</summary><div id="seats"></div></details></section><section class="panel" id="teams-panel"><h2>2. Команды, капитаны и фотографии</h2><div id="teams"></div><div class="row wrap"><button id="publish-teams" class="gold">Опубликовать все названия</button><button id="publish-captains" class="secondary">Представить капитанов</button><a href="/sochi/preview/captains" target="_blank" rel="noopener" class="button secondary">Демо капитанов ↗</a></div></section><section class="panel" id="scores-panel"><div class="row between wrap"><div><h2>3. Учёт фишек GREEN и BLUE / места RED</h2><p class="muted"><strong>GREEN — промежуточный срез:</strong> стек GREEN − 3 входа − re-entry. <strong>BLUE — окончательный результат по фишкам:</strong> стек BLUE − 3 входа − re-entry − add-on. Места BLUE распределяются только по чистым фишкам. <strong>+5 000 за каждого выжившего</strong> — отдельно к турнирным очкам, на места BLUE не влияет. Вводи итоговый стек команды, а re-entry/add-on — количеством.</p><p class="muted"><strong>Если этап уже опубликован:</strong> для изменения реальных очков и немедленного пересчёта эфира используй <a href="#protected-editor-panel">🔐 Защищённое исправление</a>. Обычная кнопка «✓» сохраняет рабочие поля, но не переписывает ранее опубликованные кадры.</p></div><button type="button" id="open-chips-settings" class="secondary">⚙ Настроить фишки</button></div><p class="chip-rates" id="chips-rates-summary">Нормативы фишек ещё не установлены.</p><div class="scroll"><table id="stages"><thead><tr><th>Команда</th><th>Стек на конец GREEN (вся команда)</th><th>Re-entry, шт.</th><th>Стек на конец BLUE (вся команда)</th><th>Add-on, шт.</th><th>Выжили</th><th>Место RED</th><th>Сохранить</th></tr></thead><tbody></tbody></table></div><div class="row wrap"><button class="green" data-stage="green">Опубликовать GREEN</button><button class="blue" data-stage="blue">Опубликовать BLUE</button><button class="red" data-stage="red">Опубликовать RED</button></div></section><section class="grid-two"><div class="panel" id="secrets-panel"><h2>4. Secret Jacks / SHOW</h2><p class="muted">Три тайные роли. В новой системе после объявления стеков финального стола за выбивание Secret Jack выдаётся <strong>+5 000 реальных фишек</strong> капитану команды выбившего. В старых турнирах остаётся прежний бонус.</p>
 <div id="secret-form"></div>
 <div class="row wrap">
   <a class="button secondary" href="/sochi/preview/secret" target="_blank" rel="noopener">Демо SECRET JACK ↗</a>
@@ -125,7 +115,7 @@
 <p class="muted">«Раскрыть» впервые публикует тайного игрока и его результат. «Далее / Назад» повторяют уже раскрытые сцены без начислений. После третьего Валета нажми «Далее» для общего экрана перед голосованием. Не используй старую сцену вместо режиссёрского пульта.</p>
 </div><div class="panel" id="votes-panel">
   <h2>5. ГОЛОСОВАНИЕ КАПИТАНОВ — ШОУ</h2>
-  <p class="muted">Каждая команда выбирает другую команду. Голоса сохраняются в черновик, а на проекторе открываются по одному после подтверждения публикации.</p>
+  <p class="muted">В новом формате голосование идёт <strong>до RED</strong>. Каждый голос даёт капитану выбранной команды <strong>+10 000 реальных фишек</strong>. Голоса заранее сохраняются закрыто и раскрываются по одному.</p>
   <label>Кому начисляются +10 000
     <select id="vote-mode"><option value="target">Выбранной команде</option><option value="voter">Голосующей команде</option></select>
   </label>
