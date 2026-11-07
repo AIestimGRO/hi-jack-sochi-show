@@ -484,9 +484,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'max_step': available + (1 if available == 3 else 0),
                 'revealed': visible,
                 'summary': step == 4 and available == 3,
-                'jack_chips': 5000 if policy and policy.get('mode')=='final_table' else 10000,
-                'final_table': bool(policy and policy.get('mode')=='final_table'),
             }
+            if policy and policy.get('mode')=='final_table':
+                result['secret_view'].update({'jack_chips':5000,'final_table':True})
             result['secret_show'] = {'step': step, 'revealed_count': available}
             result['revealed_secrets'] = visible
             result['revealed_slots'] = [secret['slot'] for secret in visible]
@@ -511,12 +511,12 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 current['vote_points'] = recipient['votes']
             result['vote_view'] = {
                 'step': step, 'count': count, 'max_step': count + 1,
-                'mode': vote_show['mode'],
-                'final_table': bool(policy and policy.get('mode')=='final_table'),
-                'revealed': visible,
+                'mode': vote_show['mode'], 'revealed': visible,
                 'current': current, 'ranking': ranking,
                 'summary': step == count + 1,
             }
+            if policy and policy.get('mode')=='final_table':
+                result['vote_view']['final_table']=True
             result['vote_show'] = {'step': step, 'count': count, 'max_step': count + 1}
             result['published_votes'] = [{'voter_team_id': r['voter_team_id'],
                                            'target_team_id': r['target_team_id']}
