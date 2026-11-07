@@ -30,8 +30,15 @@ def render_legacy_screen(state):
     if scene in ('teams', 'captains'):
         headline = 'КОМАНДЫ ТУРНИРА' if scene == 'teams' else 'КАПИТАНЫ ФИНАЛА'
         if scene == 'teams':
-            for ident in sorted(names, key=lambda key: int(key)):
-                lines.append(board_row('#' + str(ident), names[ident]))
+            counts = state.get('team_reentries') or {}
+            captains = state.get('team_captains') or {}
+            ordered = sorted(names, key=lambda ident: (int(counts.get(str(ident), 0)), int(ident)))
+            for place, ident in enumerate(ordered, 1):
+                captain = captains.get(str(ident))
+                caption = names[ident] + (' · КАПИТАН: ' + captain if captain else '')
+                lines.append(board_row('#' + str(place), caption,
+                                       'КОМАНДА ' + str(ident) + ' · RE-ENTRY: ' +
+                                       str(int(counts.get(str(ident), 0)))))
         else:
             for captain in state.get('captains') or []:
                 lines.append(board_row('#' + str(captain.get('team_id', '')),
