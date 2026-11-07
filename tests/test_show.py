@@ -380,3 +380,13 @@ def test_chips_ui_is_count_only(client):
     js=client.get('/sochi/static/admin.js').text
     assert "'reentry_count','blue_stack','addon_count'" in js
     assert "api('/sochi/api/admin/chips-settings'" in js
+
+
+def test_projector_assets_and_live_state_are_not_browser_cached(client):
+    """Refreshing a stale projector URL must fetch the latest event code/state."""
+    for path in ('/sochi/screen', '/sochi/admin',
+                 '/sochi/static/screen.js', '/sochi/static/admin.js',
+                 '/sochi/api/public/state'):
+        response = client.get(path)
+        assert response.status_code == 200, path
+        assert 'no-store' in response.headers.get('cache-control', ''), path
