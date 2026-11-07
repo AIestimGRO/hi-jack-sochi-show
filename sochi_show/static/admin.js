@@ -133,8 +133,9 @@ function renderSecretDirector(){
   const show=pub.secret_show;
   const revealed=pub.revealed_slots?.length||0;
   const red=pub.red_show;
-  const redFinished=(pub.published_phases||[]).includes('red') &&
-    (!red||red.step>=((red.ranking?.length||state.team_count||0)+1));
+  const physicalStacks=pub.blue_policy?.mode==='final_table'&&pub.blue_policy?.revealed;
+  const redFinished=physicalStacks||((pub.published_phases||[]).includes('red') &&
+    (!red||red.step>=((red.ranking?.length||state.team_count||0)+1)));
   const configured=state.secrets?.length===3;
   const ready=redFinished&&configured&&!pub.votes_published;
   const current=show?.step??0;
@@ -146,7 +147,7 @@ function renderSecretDirector(){
   $('secret-show-next').textContent=revealed===3&&current===3?'Показать итоги →':'Далее →';
   $('reveal-next').disabled=!show||!ready||current!==revealed||revealed>=3;
   $('reveal-next').textContent=revealed<3?'♠ Раскрыть Jack №'+(revealed+1):'Все три Валета раскрыты';
-  $('secret-show-progress').textContent=!redFinished?'Сначала заверши RED SHOW'
+  $('secret-show-progress').textContent=!redFinished?'Сначала объяви стеки финального стола (либо заверши старый RED)'
     :!configured?'Назначь все 3 роли'
     :pub.votes_published?'Голоса уже опубликованы'
     :!show?'Можно начать шоу'
@@ -157,7 +158,8 @@ function renderRedDirector(){
   const phases=state.published?.published_phases||[];
   const show=state.published?.red_show;
   const completed=phases.includes('red');
-  const hasBonuses=(state.published?.revealed_slots||[]).length>0 || state.published?.votes_published;
+  const hasBonuses=state.published?.blue_policy?.mode==='final_table'?false:
+    ((state.published?.revealed_slots||[]).length>0 || state.published?.votes_published);
   const current=show?.step??0;
   const max=(show?.ranking?.length??state.team_count??0)+1;
   $('red-show-start').disabled=!completed||hasBonuses;
@@ -166,7 +168,9 @@ function renderRedDirector(){
   $('red-show-next').disabled=!show||current>=max||hasBonuses;
   $('red-show-progress').textContent=show
     ?'Шаг '+current+' из '+max+(current>=max?' · RED завершён':' · раскрываем места')
-    :hasBonuses?'Бонусы уже раскрыты':completed?'RED опубликован · можешь начать шоу':'Сначала опубликуй RED';
+    :hasBonuses?'Бонусы уже раскрыты':completed?'RED опубликован · можешь начать шоу':
+     state.published?.blue_policy?.mode==='final_table'?
+     'Сначала объяви стеки, раскрой Secret Jack и голоса, затем занеси места RED':'Сначала опубликуй RED';
 }
 function renderBlueDirector(){
   const phases=state.published?.published_phases||[];
