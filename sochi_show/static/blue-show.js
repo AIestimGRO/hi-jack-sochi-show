@@ -64,13 +64,14 @@ window.BlueShow=(()=>{
     const step=Math.max(0,Math.min(count+1,Number(data.step)||0));
     const intro=step===0,board=step===count+1;
     const converted=!!data.points_revealed;
+    const finalTable=converted&&data.table_mode==='final_table';
     const visible=data.revealed||[];
     // The last revealed row is the current protagonist, including tied scores.
     const latest=visible.length?visible[visible.length-1]:null;
     const winner=latest?.place===1;
     const movement=latest?moveDescription(latest):null;
-    const subtitle=intro?'ВТОРАЯ ВЫСОТА':board?(converted?'ФИНАЛЬНЫЕ ОЧКИ ПОСЛЕ BLUE':'ЧИСТЫЕ ФИШКИ И БОНУСЫ'):'НОВОЕ МЕСТО ПО ЧИСТЫМ ФИШКАМ';
-    const topper=intro?'СМЕНА<br><em>ВЫСОТЫ</em>':board?(converted?'ЗАРАБОТАННЫЕ<br><em>ОЧКИ</em>':'РЕЙТИНГ<br><em>BLUE</em>'):'ГОНКА ЗА<br><em>ВЕРШИНОЙ</em>';
+    const subtitle=intro?'ВТОРАЯ ВЫСОТА':board?(finalTable?'СТАРТОВЫЕ СТЕКИ ФИНАЛЬНОГО СТОЛА':converted?'ФИНАЛЬНЫЕ ОЧКИ ПОСЛЕ BLUE':'ЧИСТЫЕ ФИШКИ И БОНУСЫ'):'НОВОЕ МЕСТО ПО ЧИСТЫМ ФИШКАМ';
+    const topper=intro?'СМЕНА<br><em>ВЫСОТЫ</em>':board?(finalTable?'СТЕКИ<br><em>ФИНАЛА</em>':converted?'ЗАРАБОТАННЫЕ<br><em>ОЧКИ</em>':'РЕЙТИНГ<br><em>BLUE</em>'):'ГОНКА ЗА<br><em>ВЕРШИНОЙ</em>';
     host.className='scene green-show-stage blue-show-stage';
     host.innerHTML=`<div class="green-experience blue-experience bs-${intro?'intro':board?'board':winner?'champion':'reveal'}" data-step="${step}">
       ${window.GreenShow.alpineArt('blue')}
@@ -91,7 +92,7 @@ window.BlueShow=(()=>{
               <div class="bs-intro-footer">НОВЫЕ ПОЗИЦИИ · ${count} КОМАНД</div>`:
             board?
               `<div class="bs-table-head">
-                <span></span><span>№</span><span>КОМАНДА</span><span>К GREEN</span><span>${converted?'ЧИСТЫЕ ФИШКИ':'БОНУС +5К'}</span><span>${converted?'ОЧКИ + БОНУС':'ЧИСТЫЕ ФИШКИ'}</span>
+                <span></span><span>№</span><span>КОМАНДА</span><span>К GREEN</span><span>${converted?'ЧИСТЫЕ ФИШКИ':'БОНУС +5К'}</span><span>${finalTable?'СТЕК + ВЫЖИВШИЕ':converted?'ОЧКИ + БОНУС':'ЧИСТЫЕ ФИШКИ'}</span>
               </div>
               <div class="bs-ranking-list" style="--rank-count:${count}">
                 ${[...visible].sort((a,b)=>a.place-b.place||b.total-a.total||a.team_id-b.team_id).map(r=>rankingRow(r,converted)).join('')}
