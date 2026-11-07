@@ -20,7 +20,8 @@ def start(client,h,n):
         assert call(client,'publish',h,{'action':'blue-show-step','step':step}).status_code==200
     before=client.get('/sochi/api/admin/state').json()['published']
     assert 'red' not in before['published_phases']
-    assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code==409
+    # RED cannot be completed yet: no captain places or approved stacks.
+    assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code in (409,422)
     apply_policy(client,h,{'mode':'final_table'})
     state=client.get('/sochi/api/admin/state').json()
     policy=state['published']['blue_policy']
@@ -81,6 +82,9 @@ def test_real_final_table_before_red_with_jack_and_voting_chips(client,n):
     assert sum(x['secret'] for x in pub['ranking'])==10000
     for x in pub['ranking']:
         assert x['total']==stacks[str(x['team_id'])]+x['survivor_bonus']+x['secret']+x['votes']
+    # RED finishing places are entered after everyone is seated and rewarded.
+    for team_id in range(1,n+1):
+        assert call(client,'stage',h,{'team_id':team_id,'red_place':team_id}).status_code==200
     assert call(client,'publish',h,{'action':'red','show_mode':'cinematic'}).status_code==200
     for step in range(1,n+2):
         assert call(client,'publish',h,{'action':'red-show-step','step':step}).status_code==200
