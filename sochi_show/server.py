@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from starlette.middleware.sessions import SessionMiddleware
 
-from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy
+from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy, FINAL_TABLE_JACK_CHIPS, FINAL_TABLE_VOTE_CHIPS
 from .corrections import correction, rebuild as rebuild_corrected, score_delta
 from .legacy_screen import render_legacy_screen
 
@@ -301,10 +301,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             # public totals to the pre-bonus stack.
             pre_awards=0
             if final_table_ready(p):
-                pre_awards=sum(5000 for x in p.get('revealed_secrets',[])
+                pre_awards=sum(FINAL_TABLE_JACK_CHIPS for x in p.get('revealed_secrets',[])
                                if x.get('confirmed') and x.get('knockout_team_id')==int(team_id))
                 if p.get('votes_published'):
-                    pre_awards+=sum(10000 for x in p.get('published_votes',[])
+                    pre_awards+=sum(FINAL_TABLE_VOTE_CHIPS for x in p.get('published_votes',[])
                        if (x['target_team_id'] if p.get('vote_mode')=='target'
                            else x['voter_team_id'])==int(team_id))
             ranked.append({'team_id': int(team_id), 'name': name,
@@ -365,7 +365,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'receiver_name': p['teams'][str(receiver)],
                 'captain_name': captain.get('name') or 'Капитан команды',
                 'captain_player_id': captain.get('player_id') if captain.get('has_photo') else None,
-                'points': 10000,
+                'points': FINAL_TABLE_VOTE_CHIPS if final_table_ready(p) else 10_000,
             })
         return {'step': 0, 'mode': mode, 'entries': entries, 'base_ranking': base}
 
@@ -530,7 +530,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'summary': step == 4 and available == 3,
             }
             if policy and policy.get('mode')=='final_table':
-                result['secret_view'].update({'jack_chips':5000,'final_table':True})
+                result['secret_view'].update({'jack_chips':FINAL_TABLE_JACK_CHIPS,'final_table':True})
             result['secret_show'] = {'step': step, 'revealed_count': available}
             result['revealed_secrets'] = visible
             result['revealed_slots'] = [secret['slot'] for secret in visible]
@@ -567,7 +567,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 'summary': step == count + 1,
             }
             if policy and policy.get('mode')=='final_table':
-                result['vote_view']['final_table']=True
+                result['vote_view'].update({'final_table':True,'vote_chips':FINAL_TABLE_VOTE_CHIPS})
             result['vote_show'] = {'step': step, 'count': count, 'max_step': count + 1}
             result['published_votes'] = [{'voter_team_id': r['voter_team_id'],
                                            'target_team_id': r['target_team_id']}
