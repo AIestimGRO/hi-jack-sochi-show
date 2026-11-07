@@ -127,6 +127,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         # Non-destructive migration of the existing independent SOCHI database.
         if 'addon_count' not in {row[1] for row in c.execute('PRAGMA table_info(stages)')}:
             c.execute('ALTER TABLE stages ADD COLUMN addon_count INTEGER')
+        # Safe additive migration: never reset players, scores or publication.
+        player_columns = {row[1] for row in c.execute('PRAGMA table_info(players)')}
+        for column in ('reentry_count', 'addon_count'):
+            if column not in player_columns:
+                c.execute(f'ALTER TABLE players ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0')
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)', ('team_count', '0'))
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)', ('vote_mode', 'target'))
         c.execute('INSERT OR IGNORE INTO publication(id,version,payload) VALUES (1,0,?)', (json.dumps(empty_public()),))
@@ -197,6 +202,18 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
 
     def save_public(c, state, action='publication'):
         previous_version, previous_state = get_pub(c)
+        if state.get('teams'):
+            # Publish counters and captain names, NOT unfinished stacks.
+            state['team_reentries'] = {
+                str(row['team_id']): int(row['reentry_count'] or 0)
+                for row in c.execute('SELECT team_id,reentry_count FROM stages')
+                if str(row['team_id']) in state['teams']}
+            state['team_captains'] = {
+                str(row['team_id']): row['name']
+                for row in c.execute(
+                    'SELECT t.team_id,p.name FROM teams t '
+                    'JOIN players p ON p.id=t.captain_player_id')
+                if str(row['team_id']) in state['teams']}
         update_blue_policy_points(state)
         old_places = {r['team_id']: r['place'] for r in previous_state.get('ranking', [])}
         state['ranking'] = published_ranking(
@@ -606,8 +623,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         entries = {}
         for row in c.execute('SELECT * FROM teams ORDER BY team_id'):
             entries[row['team_id']] = rowdict(row)
-        seats = [rowdict(r) for r in c.execute('''SELECT s.*,p.name AS player_name,p.photo_path IS NOT NULL AS has_photo
-                  FROM seats s LEFT JOIN players p ON p.id=s.player_id ORDER BY s.table_no,s.box_no''')]
+        seats = [rowdict(r) for r in c.execute('''SELECT s.*,p.name AS player_name,p.photo_path IS NOT NULL AS has_photo,
+                  COALESCE(p.reentry_count,0) AS player_reentry_count,
+                  COALESCE(p.addon_count,0) AS player_addon_count
+                  FROM seats s LEFT JOIN players p ON p.id=s.player_id ORDER BY s.team_id,s.table_no,s.box_no''')]
         stage = {r['team_id']: rowdict(r) for r in c.execute('SELECT * FROM stages')}
         secret_rows = [rowdict(r) for r in c.execute('''SELECT s.*,p.name AS player_name,st.team_id AS jack_team_id,st.table_no,st.box_no
                   FROM secrets s JOIN players p ON p.id=s.player_id JOIN seats st ON st.player_id=p.id ORDER BY slot''')]
@@ -792,6 +811,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 _,p=get_pub(c)
                 if p.get('published_phases'):
                     raise HTTPException(409,'После публикации очисти игрока через защищённое исправление с PIN')
+                counts = c.execute('SELECT reentry_count,addon_count FROM players WHERE id=?',
+                                   (seat['player_id'],)).fetchone()
+                if counts and (counts['reentry_count'] or counts['addon_count']):
+                    raise HTTPException(409,'У игрока записаны re-entry/add-on. Не отвязывай его: используйте защищённое исправление.')
                 c.execute('UPDATE teams SET captain_player_id=NULL WHERE captain_player_id=?',(seat['player_id'],))
                 c.execute('UPDATE seats SET player_id=NULL WHERE card_id=?',(card_id,))
                 audit(c,'player-unbind',{'card_id':card_id,'player_id':seat['player_id']})
@@ -831,7 +854,70 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         raise HTTPException(422, 'Капитан должен принадлежать этой команде')
                 c.execute('UPDATE teams SET captain_player_id=? WHERE team_id=?', (pid, team_id))
                 audit(c, 'captain-update', {'team_id': team_id, 'player_id': pid})
+                _, p = get_pub(c)
+                if p.get('teams'):
+                    save_public(c, p, action='live-team-captain')
         return {'ok': True}
+
+    @app.post('/sochi/api/admin/player-chips')
+    async def update_player_chips(request: Request):
+        """Record a player's live re-entry/add-on; update team totals atomically."""
+        require_admin(request, True)
+        body = await request.json()
+        pid = strict_int(body.get('player_id'), 'player_id', 1)
+        kind = body.get('kind')
+        if kind not in ('reentry', 'addon'):
+            raise HTTPException(422, 'Нужен reentry или addon')
+        by_delta = 'delta' in body
+        if by_delta == ('count' in body):
+            raise HTTPException(422, 'Укажи delta или count, но не оба')
+        if by_delta:
+            delta = strict_int(body['delta'], 'delta', -COUNT_LIMIT, COUNT_LIMIT)
+            if not delta:
+                raise HTTPException(422, 'Изменение не должно быть нулём')
+        else:
+            target = strict_int(body['count'], 'count', 0, COUNT_LIMIT)
+        field = kind + '_count'
+        phase = 'green' if kind == 'reentry' else 'blue'
+        with connection(write=True) as c:
+            seat = c.execute(
+                'SELECT s.team_id,p.id,p.reentry_count,p.addon_count '
+                'FROM seats s JOIN players p ON p.id=s.player_id '
+                'WHERE s.player_id=?', (pid,)
+            ).fetchone()
+            if not seat:
+                raise HTTPException(404, 'Игрок не привязан к текущей рассадке')
+            _, pub = get_pub(c)
+            if phase in pub['published_phases']:
+                raise HTTPException(409,
+                    f'{phase.upper()} опубликован. Официальные итоги исправляются только с PIN.')
+            previous = seat[field]
+            value = previous + delta if by_delta else target
+            if value < 0 or value > COUNT_LIMIT:
+                raise HTTPException(422, 'Количество от 0 до 1000')
+            stage = c.execute('SELECT * FROM stages WHERE team_id=?',
+                              (seat['team_id'],)).fetchone()
+            if not stage:
+                raise HTTPException(409, 'Не найдена команда в таблице 3')
+            difference = value - previous
+            # Preserve any manual correction made to the team number in table 3.
+            team_total = max(0, int(stage[field] or 0) + difference)
+            if team_total > COUNT_LIMIT:
+                raise HTTPException(422, 'Командное количество больше 1000')
+            if difference:
+                rate = require_chip_setting(c, kind)
+                c.execute(f'UPDATE players SET {field}=? WHERE id=?', (value, pid))
+                c.execute(
+                    f'UPDATE stages SET {field}=?,{kind}_chips=? WHERE team_id=?',
+                    (team_total, team_total * rate, seat['team_id']))
+                audit(c, 'player-' + kind, {
+                    'player_id':pid, 'team_id':seat['team_id'],
+                    'before':previous, 'after':value, 'delta':difference,
+                    'team_total':team_total})
+                if kind == 'reentry' and pub.get('teams'):
+                    save_public(c, pub, action='live-reentry')
+        return {'ok':True,'player_id':pid,'count':value,
+                'team_id':seat['team_id'],'team_total':team_total}
 
     @app.post('/sochi/api/admin/chips-settings')
     async def update_chip_settings(request: Request):
@@ -885,6 +971,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             sets = ','.join(f'{k}=?' for k in fields)
             c.execute(f'UPDATE stages SET {sets} WHERE team_id=?', (*fields.values(), team_id))
             audit(c, 'stage-draft', {'team_id': team_id, 'fields': fields})
+            if 'reentry_count' in fields:
+                _, pub = get_pub(c)
+                if pub.get('teams') and 'green' not in pub['published_phases']:
+                    save_public(c, pub, action='live-reentry-manual')
         return {'ok': True}
 
     @app.post('/sochi/api/admin/stages/bulk')
@@ -928,6 +1018,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 sets = ','.join(f'{key}=?' for key in fields)
                 c.execute(f'UPDATE stages SET {sets} WHERE team_id=?', (*fields.values(), item['team_id']))
             audit(c, 'stage-bulk-draft', {'phase': phase, 'count': count})
+            if phase == 'green':
+                _, pub = get_pub(c)
+                if pub.get('teams') and 'green' not in pub['published_phases']:
+                    save_public(c, pub, action='live-reentry-bulk')
         return {'ok': True}
 
     @app.post('/sochi/api/admin/vote')
