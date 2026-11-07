@@ -287,6 +287,7 @@ async function bulkStage(stage){
   if(!state.team_count)return toast('Сначала импортируй рассадку',true);
   if(!Object.keys(state.published.teams||{}).length)return toast('Сначала опубликуй названия команд',true);
   const rates=state.chip_settings||{};
+  if(stage==='green'&&rates.entry==null)return toast('Сначала сохрани стоимость ВХОДА одного игрока (50 000 по правилам)',true);
   if(stage==='green'&&rates.reentry==null)return toast('Сначала укажи норматив re-entry в настройках фишек',true);
   if(stage==='blue'){
     if(!(state.published.published_phases||[]).includes('green'))return toast('Сначала опубликуй GREEN',true);
@@ -306,7 +307,6 @@ async function bulkStage(stage){
   }
   const preview=state.teams.map(t=>{
     const r=valsTeam(t.team_id);
-    const actualGreen=state.published.stages[String(t.team_id)]?.green_stack_actual??r.green_stack;
     let score,detail;
     if(stage==='green'){
       const chips=r.reentry_count*rates.reentry;
@@ -315,15 +315,18 @@ async function bulkStage(stage){
       detail=`стек ${fmt(r.green_stack)} − 3 × ${fmt(rates.entry||0)} вход − ${r.reentry_count} × ${fmt(rates.reentry)} re-entry`;
     }else if(stage==='blue'){
       const chips=r.addon_count*rates.addon;
-      score=r.blue_stack-actualGreen-chips+5000*r.survivors;
-      detail=`стек ${fmt(r.blue_stack)} − GREEN ${fmt(actualGreen)} − ${r.addon_count} × ${fmt(rates.addon)} (${fmt(chips)} фишек) + ${fmt(5000*r.survivors)} за выживших`;
+      const prev=state.stages[t.team_id]||{};
+      const reentry=(prev.reentry_count||0)*(rates.reentry||0);
+      const entry=3*(rates.entry||0);
+      score=r.blue_stack-entry-reentry-chips;
+      detail=`стек на конец BLUE ${fmt(r.blue_stack)} − входы ${fmt(entry)} − re-entry ${fmt(reentry)} − add-on ${fmt(chips)}; +${fmt(5000*r.survivors)} бонусных ОЧКОВ за выживших (отдельно, на место BLUE не влияет)`;
     }else{
       score=130000-10000*(r.red_place-1);
       detail=`место №${r.red_place}`;
     }
-    return `№${t.team_id} · ${t.display_name}: ${fmt(score)} очков [${detail}]`;
+    return `№${t.team_id} · ${t.display_name}: ${fmt(score)} ${stage==='red'?'очков':'чистых фишек'} [${detail}]`;
   }).join('\n');
-  previewText(`<p>${stage==='blue'?'Проверь очки BLUE. После сохранения на проекторе появится только вступление BLUE. Все места будут скрыты до раскрытия кнопками «Далее» в пульте BLUE SHOW.':stage==='green'?'Проверь очки GREEN. После сохранения начнётся вступление GREEN без раскрытия команд. Далее управляй показом в GREEN SHOW.':stage==='red'?'Проверь места RED (1..N). После публикации на проекторе начнётся вступление RED. Новые места и общий рейтинг будут скрыты до кнопки «Далее» в RED SHOW.':'Проверь расчёты. После подтверждения данные этапа будут опубликованы на проекторе.'}</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
+  previewText(`<p>${stage==='blue'?'Проверь ОКОНЧАТЕЛЬНЫЕ чистые фишки BLUE. Места считаются только по фишкам; бонус выживших +5 000 за человека начисляется к очкам отдельно. После раскрытия мест выбери систему очков для RED в блоке BLUE → POINTS.':stage==='green'?'Проверь ПРОМЕЖУТОЧНЫЕ чистые фишки GREEN. Этот результат не суммируется повторно с итогом BLUE. Далее раскрывай места в GREEN SHOW.':stage==='red'?'Проверь места RED (1..N). После публикации на проекторе начнётся вступление RED. Новые места и общий рейтинг будут скрыты до кнопки «Далее» в RED SHOW.':'Проверь расчёты. После подтверждения данные этапа будут опубликованы на проекторе.'}</p><pre style="white-space:pre-wrap">${esc(preview)}</pre><button id="confirm-pub-stage" class="gold">Сохранить и опубликовать ${stage.toUpperCase()}</button>`);
   $('confirm-pub-stage').onclick=async()=>{
     try{
       await api('/sochi/api/admin/stages/bulk','POST',{phase:stage,teams:rows});
