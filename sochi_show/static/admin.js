@@ -8,6 +8,7 @@ const fmt=v=>new Intl.NumberFormat('ru-RU').format(v??0);
 const MODULES=[
   ['control-panel','ЭФИР','Пульт проектора','Показывай нужную сцену только когда она опубликована.'],
   ['seating-panel','01','Рассадка','Начни с JSON, числа команд и распределения мест.'],
+  ['player-chips-panel','01А','Re-entry / add-on по игрокам','Быстрые кнопки ±1 и командная сумма в таблице №3.'],
   ['teams-panel','02','Игроки и команды','Имена, капитаны, фотографии и публикация команд.'],
   ['scores-panel','03','Результаты GREEN / BLUE / RED','Заполняй этапы последовательно; перед публикацией будет расчёт.'],
   ['secrets-panel','04','Secret Jacks','Три закрытых назначения и поочерёдное раскрытие.'],
@@ -72,6 +73,7 @@ function updateWorkflow(){
     'control-panel':pub.scene?('Сцена: '+pub.scene.toUpperCase()):'Заставка',
     'seating-panel':teamTotal?(teamTotal+' команд · '+assigned+'/'+teamTotal*3+' игроков'):'Не импортировано',
     'teams-panel':teamsDone?'Названия опубликованы':'Не опубликованы',
+    'player-chips-panel': 'Участников: '+assigned+' · живой учёт',
     'scores-panel':phases.length?(phases.join(' / ').toUpperCase()):'Нет результатов',
     'secrets-panel':(pub.revealed_slots||[]).length+'/3 раскрыто',
     'votes-panel':pub.votes_published?'Опубликованы':'Не опубликованы',
@@ -223,6 +225,30 @@ function render(){let pub=state.published;$('status').textContent=`Команд:
 const sceneLabels=[['intro','Заставка'],['teams','Показать команды'],['green','Показать GREEN'],['blue','Показать BLUE'],['captains','Представить капитанов'],['red','Показать RED'],['secrets','Secret Jacks']];$('scene-buttons').innerHTML=sceneLabels.map(([key,label])=>`<button data-scene="${key}" class="${key==='green'||key==='blue'||key==='red'?key:'secondary'}">${label}</button>`).join('');
 const counts={};state.seats.forEach(s=>counts[s.table_no]=(counts[s.table_no]||0)+1);$('seats-summary').textContent=state.team_count?Object.entries(counts).map(([t,n])=>`Стол ${t}: ${n} боксов`).join(' · ')+` · Привязаны ${state.seats.filter(s=>s.player_id).length}/${state.team_count*3} игроков.`+(state.team_count>10?' · ВНИМАНИЕ: более 10 капитанов — формат RED решает организатор, автоматической рассадки нет.':''):'Импортируйте файл hi_jack_sochi_seating_v2.json с оригинальными вариантами 10–13.';
 $('seats').innerHTML=state.seats.map(s=>`<div class="seat-item"><span>Стол ${s.table_no}, бокс ${s.box_no}</span><input data-seat-name="${esc(s.card_id)}" value="${esc(s.player_name||'')}" placeholder="Имя / ник игрока · команда ${s.team_id}"><button class="secondary" data-save-player="${esc(s.card_id)}">Сохранить</button>${s.player_id?`<input type="file" id="seat-photo-${s.player_id}" accept="image/jpeg,image/png,image/webp"><button class="secondary" data-seat-photo="${s.player_id}">Фото${s.has_photo?' ✓':''}</button>${state.published.visible_player_ids?.includes(s.player_id)?`<button class="secondary" data-refresh-photo="${s.player_id}">Фото в эфир</button>`:''}`:''}</div>`).join('');
+const activePlayers=state.seats.filter(x=>x.player_id).sort((a,b)=>
+  a.team_id-b.team_id||a.table_no-b.table_no||a.box_no-b.box_no);
+const teamStats={};
+for(const p of activePlayers){
+  const entry=teamStats[p.team_id]||(teamStats[p.team_id]={reentry:0,addon:0});
+  entry.reentry+=Number(p.player_reentry_count||0);
+  entry.addon+=Number(p.player_addon_count||0);
+}
+$('player-chips-list').innerHTML=activePlayers.length?
+  `<div class="scroll"><table class="player-entry-table"><thead><tr><th>Команда / игрок</th><th>Re-entry</th><th>Add-on</th></tr></thead><tbody>${activePlayers.map(p=>{
+    const team=state.teams.find(t=>t.team_id===p.team_id);
+    const control=kind=>{
+      const count=kind==='reentry'?p.player_reentry_count:p.player_addon_count;
+      const disabled=(state.published?.published_phases||[]).includes(kind==='reentry'?'green':'blue');
+      return `<div class="player-counter"><button type="button" class="secondary" data-pc-action="minus" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>−</button><input type="number" min="0" max="1000" step="1" id="pc-${p.player_id}-${kind}" value="${Number(count||0)}" ${disabled?'disabled':''}><button type="button" class="secondary" data-pc-action="plus" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>+</button><button type="button" data-pc-action="save" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>✓</button></div>`;
+    };
+    return `<tr><td><strong>${esc(team?.display_name||'Команда '+p.team_id)}</strong><small class="player-place">№${p.team_id} · ${esc(p.player_name)} · стол ${p.table_no}, бокс ${p.box_no}</small></td><td>${control('reentry')}</td><td>${control('addon')}</td></tr>`;
+  }).join('')}</tbody></table></div>`:
+  '<p class="muted">В рассадке пока нет привязанных игроков.</p>';
+$('player-team-summary').innerHTML=state.teams.map(t=>{
+  const tracked=teamStats[t.team_id]||{reentry:0,addon:0};
+  const total=state.stages[t.team_id]||{};
+  return `<span class="player-total">${esc(t.display_name)} · re-entry <b>${total.reentry_count??tracked.reentry}</b> (по игрокам ${tracked.reentry}) · add-on <b>${total.addon_count??tracked.addon}</b> (по игрокам ${tracked.addon})</span>`;
+}).join('');
 $('teams').innerHTML=state.teams.map(t=>`<div class="team-entry"><span>${t.team_id}</span><small>${esc(t.original_name)}</small><input id="name-${t.team_id}" value="${esc(t.display_name)}" maxlength="45"><select id="capt-${t.team_id}">${playerOptions(t.team_id,t.captain_player_id)}</select><div class="photo-control"><button class="secondary" data-save-name="${t.team_id}">Имя</button><button class="secondary" data-publish-name="${t.team_id}">В эфир</button><button class="secondary" data-save-capt="${t.team_id}">Капитан</button><input type="file" id="photo-${t.team_id}" accept="image/jpeg,image/png,image/webp"><button class="secondary" data-save-photo="${t.team_id}">Фото</button></div></div>`).join('');
 const rates=state.chip_settings||{};
 $('chips-rates-summary').textContent='Вход: '+(rates.entry==null?'⚠ НЕ НАСТРОЕН · укажи 50 000 перед GREEN':fmt(rates.entry)+' × 3 участника')+' · Re-entry: '+(rates.reentry==null?'не задано':fmt(rates.reentry)+' за 1 шт.')+' · Add-on: '+(rates.addon==null?'не задано':fmt(rates.addon)+' за 1 шт.');
@@ -231,7 +257,9 @@ $('stages').querySelector('tbody').innerHTML=state.teams.map(t=>{
   const keys=['green_stack','reentry_count','blue_stack','addon_count','survivors','red_place'];
   return `<tr><th>${esc(t.display_name)}</th>${keys.map(k=>{
     const kind=k==='reentry_count'?'reentry':k==='addon_count'?'addon':null;
-    const derived=kind?(rates[kind]==null?'Укажи норматив':(r[k]!=null?fmt(r[k]*rates[kind])+' фишек':'— фишек')):'';
+    const tracked=kind?(teamStats[t.team_id]?.[kind]||0):0;
+    const derived=kind?(rates[kind]==null?'Норматив не задан':(r[k]!=null?fmt(r[k]*rates[kind])+' фишек':'— фишек'))+
+       ' · по игрокам: '+tracked:'';
     return `<td><input type="number" min="${k==='red_place'?1:0}" ${k==='survivors'?'max="3"':kind?'max="1000"':''} ${kind?'data-chip-count="'+kind+'"':''} id="s-${t.team_id}-${k}" value="${r[k]??''}" placeholder="—">${kind?'<small class="chips-derived">'+esc(derived)+'</small>':''}</td>`;
   }).join('')}<td><button data-save-stage="${t.team_id}" class="secondary">✓</button></td></tr>`;
 }).join('');
@@ -440,7 +468,24 @@ document.addEventListener('input',event=>{
     ?fmt(count*rate)+' фишек':'Недопустимое количество';
 });
 
-document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить проектор: ${d.scene.toUpperCase()}?`)}if(d.stage){bulkStage(d.stage)}if(d.savePlayer){const s=state.seats.find(x=>x.card_id===d.savePlayer);const name=document.querySelector(`[data-seat-name="${CSS.escape(d.savePlayer)}"]`).value;await change('/sochi/api/admin/player',{card_id:d.savePlayer,name,confirm_rebind:!!s.player_id})}if(d.saveName){let id=Number(d.saveName);await change('/sochi/api/admin/team',{team_id:id,display_name:$(`name-${id}`).value})}if(d.publishName){await publish({action:'name',team_id:Number(d.publishName)},'Опубликовать новое название команды?')}if(d.saveCapt){let id=Number(d.saveCapt),value=$(`capt-${id}`).value;await change('/sochi/api/admin/team',{team_id:id,captain_player_id:value?Number(value):null})}if(d.savePhoto){let id=Number(d.savePhoto),capt=$(`capt-${id}`).value,file=$(`photo-${id}`).files[0];if(!capt||!file)return toast('Выберите капитана и фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+capt,'POST',fd,true);toast('Фото сохранено в закрытом хранилище. Опубликуйте капитанов для эфира.');await refresh()}catch(e){toast(e.message,true)}}if(d.saveStage){let obj=valsTeam(Number(d.saveStage));await change('/sochi/api/admin/stage',obj)}if(d.saveSecret){let slot=Number(d.saveSecret),pid=Number($(`secret-player-${slot}`).value),killer=$(`secret-killer-${slot}`).value,killerPlayer=$(`secret-knockout-player-${slot}`).value,confirmed=$(`secret-confirm-${slot}`).checked;if(!pid)return toast('Сначала привяжите Secret Jack к участнику',true);const data={slot,player_id:pid,knockout_team_id:killer?Number(killer):null,knockout_player_id:killerPlayer?Number(killerPlayer):null,confirmed};const shown=state.published.revealed_slots.includes(slot);if(shown){
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+if(d.pcAction){
+  const player_id=Number(d.pcPlayer),kind=d.pcKind;
+  const input=$('pc-'+player_id+'-'+kind);
+  if(!input)return;
+  const request={player_id,kind};
+  if(d.pcAction==='plus')request.delta=1;
+  else if(d.pcAction==='minus')request.delta=-1;
+  else {
+    if(input.value.trim()===''||!Number.isSafeInteger(Number(input.value))||
+       Number(input.value)<0||Number(input.value)>1000)
+      return toast('Введи целое количество от 0 до 1000',true);
+    request.count=Number(input.value);
+  }
+  await change('/sochi/api/admin/player-chips',request);
+  return;
+}
+if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить проектор: ${d.scene.toUpperCase()}?`)}if(d.stage){bulkStage(d.stage)}if(d.savePlayer){const s=state.seats.find(x=>x.card_id===d.savePlayer);const name=document.querySelector(`[data-seat-name="${CSS.escape(d.savePlayer)}"]`).value;await change('/sochi/api/admin/player',{card_id:d.savePlayer,name,confirm_rebind:!!s.player_id})}if(d.saveName){let id=Number(d.saveName);await change('/sochi/api/admin/team',{team_id:id,display_name:$(`name-${id}`).value})}if(d.publishName){await publish({action:'name',team_id:Number(d.publishName)},'Опубликовать новое название команды?')}if(d.saveCapt){let id=Number(d.saveCapt),value=$(`capt-${id}`).value;await change('/sochi/api/admin/team',{team_id:id,captain_player_id:value?Number(value):null})}if(d.savePhoto){let id=Number(d.savePhoto),capt=$(`capt-${id}`).value,file=$(`photo-${id}`).files[0];if(!capt||!file)return toast('Выберите капитана и фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+capt,'POST',fd,true);toast('Фото сохранено в закрытом хранилище. Опубликуйте капитанов для эфира.');await refresh()}catch(e){toast(e.message,true)}}if(d.saveStage){let obj=valsTeam(Number(d.saveStage));await change('/sochi/api/admin/stage',obj)}if(d.saveSecret){let slot=Number(d.saveSecret),pid=Number($(`secret-player-${slot}`).value),killer=$(`secret-killer-${slot}`).value,killerPlayer=$(`secret-knockout-player-${slot}`).value,confirmed=$(`secret-confirm-${slot}`).checked;if(!pid)return toast('Сначала привяжите Secret Jack к участнику',true);const data={slot,player_id:pid,knockout_team_id:killer?Number(killer):null,knockout_player_id:killerPlayer?Number(killerPlayer):null,confirmed};const shown=state.published.revealed_slots.includes(slot);if(shown){
   toast('Раскрытого Secret Jack исправляй в 🔐 Защищённом редакторе с PIN');
   $('protected-kind').value='secret';
   $('protected-kind').dispatchEvent(new Event('change'));
