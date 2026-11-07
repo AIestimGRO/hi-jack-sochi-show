@@ -983,16 +983,27 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         old=copy.deepcopy(p)
         edit=copy.deepcopy(body)
         edit['_winner_before']=p.get('winner_decision')
+        if edit.get('kind')=='blue_policy':
+            if 'blue' not in p['published_phases']:
+                raise HTTPException(409,'Сначала закончи BLUE и опубликуй чистые фишки')
+            show=p.get('blue_show')
+            if show and show['step']<len(show['ranking'])+1:
+                raise HTTPException(409,'Сначала полностью раскрой результаты BLUE')
+            edit['_policy_before']={k:v for k,v in p.get('blue_policy',{}).items()
+                                    if k in ('mode','percent','place_points')} or None
         if edit.get('kind')=='photo':
             edit['_photo_before']=p.get('visible_photos',{}).get(str(edit.get('player_id')))
         label,before,after=correction(c,edit)
         if edit.get('kind')=='winner':
             p['winner_decision']=after
         if edit.get('kind')=='blue_policy':
-            policy=after.copy()
             previous=p.get('blue_policy') or {}
-            policy['revealed']=bool(previous.get('revealed',False))
-            p['blue_policy']=policy
+            if after is None:
+                p.pop('blue_policy',None)
+            else:
+                policy=after.copy()
+                policy['revealed']=bool(previous.get('revealed',False))
+                p['blue_policy']=policy
         if edit.get('kind')=='seating_import':
             # A physical seating replacement is explicitly destructive.
             # Reset the live scenes, bonuses and rankings; draft players remain
