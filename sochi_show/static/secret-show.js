@@ -14,8 +14,8 @@ window.SecretShow=(()=>{
       src="${window.JackSwordGifB64?'data:image/gif;base64,'+window.JackSwordGifB64:'/sochi/static/hi-jack-logo.svg'}">
     <div class="gs-jack-animation-tagline">ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ</div>
   </div>`;
-  const route=()=>'<div class="gs-route-markers">'+[
-    ['GREEN ✓',true],['BLUE ✓',true],['RED ✓',true],['JACK',true]
+  const route=(table=false)=>'<div class="gs-route-markers">'+[
+    ['GREEN ✓',true],['BLUE ✓',true],[table?'СТЕКИ ✓':'RED ✓',true],['JACK',true]
   ].map(([x,done])=>`<div class="gs-route-marker ${done?'lit':''}"><i></i><span>${x}</span></div>`).join('')+'</div>';
   function demo(){
     const t={'1':'Чуйка VS Диапазоны','2':'Блефую, сучки','3':'Ривер ленд','4':'Мам, это спорт','5':'Паса не имеем','6':'Творческая'};
@@ -88,7 +88,7 @@ window.SecretShow=(()=>{
         <div class="gs-step-label"><span class="gs-live-dot"></span> SECRET JACK / 03</div>
       </header>
       <div class="gs-content"><div class="gs-main">
-        <div class="gs-kicker">ПОСЛЕ RED / ТАЙНОЕ РАСКРЫТИЕ</div>
+        <div class="gs-kicker">${data?.final_table?'ПЕРЕД RED / ТАЙНОЕ РАСКРЫТИЕ':'ПОСЛЕ RED / ТАЙНОЕ РАСКРЫТИЕ'}</div>
         <h1 class="gs-title">${title}</h1>
         <div class="gs-section-rule"></div>
         ${step===0?
@@ -128,7 +128,7 @@ window.SecretShow=(()=>{
       </div>
       <aside class="gs-side">
         ${animatedJack()}
-        <div class="gs-route">${route()}</div>
+        <div class="gs-route">${route(!!data?.final_table)}</div>
         <div class="gs-side-bottom"><b>♠</b><span>SECRET<br>JACK SHOW</span><i>✦</i></div>
       </aside></div>
       <footer class="gs-footer"><span>SECRET JACK / ${step===0?'ТАЙНА':summary?'ИТОГИ':'РАСКРЫТИЕ № '+step}</span>
