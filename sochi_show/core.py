@@ -157,12 +157,13 @@ def blue_points_from_policy(chips: dict[int, int], policy: dict, team_count: int
 def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[dict],
                       votes: list[dict], revealed_slots: list[int], votes_published: bool,
                       vote_recipient: str, team_count: int,
-                      blue_base_points: dict | None = None) -> list[dict]:
+                      blue_base_points: dict | None = None,
+                      final_table_mode: bool = False) -> list[dict]:
     """Only receives frozen published stage data, never draft data."""
     secret_awards = Counter()
     for secret in secrets:
         if int(secret['slot']) in revealed_slots and secret.get('confirmed') and secret.get('knockout_team_id'):
-            secret_awards[int(secret['knockout_team_id'])] += (5_000 if (blue_base_points or {}).get('_final_table') else 10_000)
+            secret_awards[int(secret['knockout_team_id'])] += (5_000 if final_table_mode else 10_000)
     vote_awards = Counter()
     if votes_published:
         for vote in votes:
