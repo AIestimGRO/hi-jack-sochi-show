@@ -6,7 +6,7 @@ No public data is modified on preview (the caller rolls the transaction back).
 import copy
 import sqlite3
 from fastapi import HTTPException
-from .core import green_points, blue_points, red_points, published_ranking, validate_seating
+from .core import green_points, blue_points, red_points, published_ranking, validate_seating, blue_points_from_policy
 
 FIELD_LIMITS = {
     'green_stack': (0, None), 'reentry_count': (0, 1000),
@@ -102,11 +102,12 @@ def correction(c, body):
         return f'Игрок карточки {card}',old,new
     if kind == 'chip_rate':
         rate = body.get('field')
-        if rate not in ('reentry','addon'): fail(422,'Выбери reentry или addon')
+        if rate not in ('entry','reentry','addon'): fail(422,'Выбери entry, reentry или addon')
         old = current_rate(c,rate)
-        new = integer(value,rate,1,1_000_000_000)
+        new = integer(value,rate,0 if rate=='entry' else 1,1_000_000_000)
         c.execute('INSERT OR REPLACE INTO settings(key,value) VALUES (?,?)',(f'{rate}_chips_per_entry',str(new)))
-        c.execute(f'UPDATE stages SET {"reentry" if rate=="reentry" else "addon"}_chips={"reentry" if rate=="reentry" else "addon"}_count * ? WHERE {"reentry" if rate=="reentry" else "addon"}_count IS NOT NULL',(new,))
+        if rate != 'entry':
+            c.execute(f'UPDATE stages SET {rate}_chips={rate}_count * ? WHERE {rate}_count IS NOT NULL',(new,))
         return f'Норматив {rate}, фишек за 1',old,new
     if kind == 'stage':
         tid=team(c,body.get('team_id'))
@@ -188,6 +189,28 @@ def correction(c, body):
         return ('Полная замена схемы рассадки',
                 {'teams':previous_count,'cards':len(old_map),'published_reset':True},
                 {'teams':count,'cards':len(cards),'published_reset':True})
+    if kind == 'blue_policy':
+        previous=body.get('_policy_before')
+        if clear:
+            return 'Система очков после BLUE',previous,None
+        if not isinstance(value,dict) or value.get('mode') not in ('chips','scale','places'):
+            fail(422,'Выбери режим: chips, scale или places')
+        mode=value['mode']
+        percent=value.get('percent',100)
+        places=value.get('place_points',[])
+        if mode=='scale':
+            integer(percent,'Коэффициент, %',1,100)
+        if mode=='places':
+            n=c.execute('SELECT COUNT(*) FROM teams').fetchone()[0]
+            if type(places) is not list or len(places)!=n:
+                fail(422,'Укажи очки для каждого места BLUE')
+            if any(type(x) is not int or not 0<=x<=10000000 for x in places):
+                fail(422,'Очки за места должны быть целыми числами')
+            if any(places[i]>places[i-1] for i in range(1,len(places))):
+                fail(422,'Очки должны убывать по местам')
+        return 'Система очков после BLUE',previous,
+            {'mode':mode,'percent':percent if mode=='scale' else 100,
+             'place_points':places if mode=='places' else []}
     if kind == 'vote_mode':
         old = c.execute("SELECT value FROM settings WHERE key='vote_mode'").fetchone()
         new=str(value or '')
@@ -273,7 +296,7 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             record={}
             if 'green' in p['published_phases']:
                 g=row['green_stack']; re=row['reentry_count']*rate_re
-                record['green']=green_points(g,re)
+                record['green']=green_points(g,re,3*(current_rate(c,'entry') or 0))
                 record['green_stack_actual']=g
             if 'blue' in p['published_phases']:
                 b=row['blue_stack']; add=row['addon_count']*rate_add
@@ -281,6 +304,15 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
             if 'red' in p['published_phases']:
                 record['red']=red_points(row['red_place'],p['team_count'])
             p['stages'][str(tid)]=record
+    if p.get('blue_policy') and 'blue' in p['published_phases']:
+        net={int(k):row['green']+row['blue'] for k,row in p['stages'].items()
+             if 'green' in row and 'blue' in row}
+        try:
+            p['blue_policy']['points']=blue_points_from_policy(net,p['blue_policy'],p['team_count'])
+        except ValueError as exc:
+            fail(422,str(exc))
+    elif 'blue' not in p['published_phases']:
+        p.pop('blue_policy',None)
     for phase in PHASES:
         key=phase+'_show'
         if phase not in p['published_phases']:
@@ -337,13 +369,15 @@ def rebuild(c, p, green_snapshot, blue_snapshot, red_snapshot, final_snapshot, v
     # Private authoritative full leaderboard, independent from the presentation step.
     p['ranking']=published_ranking(
         {int(k):v for k,v in p['teams'].items()},p['stages'],p['revealed_secrets'],
-        p['published_votes'],p['revealed_slots'],p['votes_published'],p['vote_mode'],p['team_count'])
+        p['published_votes'],p['revealed_slots'],p['votes_published'],p['vote_mode'],p['team_count'],
+        p.get('blue_policy',{}).get('points'))
     if 'vote_show' in p:
         old_step=p['vote_show']['step']
         prematch=copy.deepcopy(p)
         prematch['ranking']=published_ranking(
             {int(k):v for k,v in p['teams'].items()},p['stages'],p['revealed_secrets'],
-            [],p['revealed_slots'],False,p['vote_mode'],p['team_count'])
+            [],p['revealed_slots'],False,p['vote_mode'],p['team_count'],
+            p.get('blue_policy',{}).get('points'))
         prematch['votes_published']=False
         p['vote_show']=vote_snapshot(prematch,votes)
         p['vote_show']['step']=min(old_step,len(votes)+1)
