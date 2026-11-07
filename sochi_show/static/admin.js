@@ -401,6 +401,7 @@ function openChipSettings(){
   $('chips-per-addon').disabled=phases.includes('blue');
   $('chips-settings-modal').showModal();
 }
+$('open-chips-settings-inline').onclick=openChipSettings;
 $('green-show-start').onclick=()=>publish({action:'green-show-start'},'Запустить GREEN SHOW на публичном проекторе? Рейтинг будет раскрываться по шагам.');
 $('green-show-next').onclick=async()=>{
   const show=state.published?.green_show;
