@@ -79,7 +79,7 @@ window.RedShow=(()=>{
           <h1 class="gs-title">${banner}</h1>
           <div class="gs-section-rule"></div>
           ${intro?
-            `<div class="rs-intro-copy">Три этапа. Одна вершина.<br>Места RED определены — <strong>но борьба за общий рейтинг продолжается.</strong></div>
+            `<div class="rs-intro-copy">Три этапа. Одна вершина.<br>${finishOrder?'Победитель RED — чемпион всего турнира. <strong>Выбывание капитана закрепляет итоговое место команды.</strong>':'Места RED определены — <strong>но борьба за общий рейтинг продолжается.</strong>'}</div>
                <div class="rs-intro-notice">RED ЗАВЕРШЁН · НАЧИНАЕМ РАСКРЫТИЕ</div>
                <div class="rs-unrevealed">РЕЗУЛЬТАТЫ ЕЩЁ НЕ ОТКРЫТЫ</div>`:
             board?
@@ -108,7 +108,7 @@ window.RedShow=(()=>{
         </aside>
       </div>
       <footer class="gs-footer"><span>RED / ${intro?'ФИНАЛЬНЫЙ ШТУРМ':board?'ОБЩИЙ РЕЙТИНГ':'РАСКРЫТИЕ МЕСТ'}</span>
-        <span>${board?'ДАЛЬШЕ — SECRET JACK':'ВЕРШИНА БЛИЖЕ, ЧЕМ КАЖЕТСЯ'}</span><span>${step} / ${count+1}</span>
+        <span>${board?(finishOrder?'ДАЛЬШЕ — НАГРАЖДЕНИЕ':'ДАЛЬШЕ — SECRET JACK'):'ВЕРШИНА БЛИЖЕ, ЧЕМ КАЖЕТСЯ'}</span><span>${step} / ${count+1}</span>
       </footer>
     </div>`;
   }
