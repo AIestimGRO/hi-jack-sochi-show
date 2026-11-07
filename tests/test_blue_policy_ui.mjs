@@ -15,7 +15,7 @@ assert.match(html,/чистым фишкам BLUE/);
 assert.match(html,/Лучшая команда — ровно 1 000 000, последняя — ровно 100 000/);
 assert.match(html,/5 000 на каждого/);
 assert.match(blue,/net:r\.blue_net_chips/);
-assert.match(blue,/survivors:r\.survivor_bonus\|\|0/);
+assert.match(blue,/survivors:r\.survivor_bonus/);
 assert.match(blue,/900000\*\(r\.net-lo\)/);
 assert.match(blue,/correction\/preview/);
 assert.match(blue,/correction\/apply/);
