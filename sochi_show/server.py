@@ -21,6 +21,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy
 from .corrections import correction, rebuild as rebuild_corrected, score_delta
+from .legacy_screen import render_legacy_screen
 
 HERE = Path(__file__).resolve().parent
 SCENES = {'intro', 'teams', 'green', 'blue', 'captains', 'red', 'secrets', 'votes', 'final', 'winner', 'pause'}
@@ -631,6 +632,15 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
     @app.get('/sochi/screen', response_class=HTMLResponse)
     def public_page():
         return HTMLResponse((HERE / 'static' / 'screen.html').read_text('utf-8'), headers={'Cache-Control': 'no-store, max-age=0'})
+
+    @app.get('/sochi/legacy', response_class=HTMLResponse)
+    def legacy_projector_screen():
+        """No JavaScript: refreshes from the live published state every 5 seconds."""
+        with connection() as c:
+            _version, payload = get_pub(c)
+        return HTMLResponse(render_legacy_screen(public_safe(payload)),
+                            headers={'Cache-Control': 'no-store, max-age=0'})
+
 
     @app.get('/sochi/preview/green', response_class=HTMLResponse)
     def green_preview():
