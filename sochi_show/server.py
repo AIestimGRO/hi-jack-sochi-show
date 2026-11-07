@@ -204,10 +204,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         previous_version, previous_state = get_pub(c)
         if state.get('teams'):
             # Publish counters and captain names, NOT unfinished stacks.
-            state['team_reentries'] = {
-                str(row['team_id']): int(row['reentry_count'] or 0)
-                for row in c.execute('SELECT team_id,reentry_count FROM stages')
-                if str(row['team_id']) in state['teams']}
+            if 'green' not in state.get('published_phases',[]) or not state.get('team_reentries'):
+                state['team_reentries'] = {
+                    str(row['team_id']): int(row['reentry_count'] or 0)
+                    for row in c.execute('SELECT team_id,reentry_count FROM stages')
+                    if str(row['team_id']) in state['teams']}
             state['team_captains'] = {
                 str(row['team_id']): row['name']
                 for row in c.execute(
@@ -905,11 +906,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if team_total > COUNT_LIMIT:
                 raise HTTPException(422, 'Командное количество больше 1000')
             if difference:
-                rate = require_chip_setting(c, kind)
+                rate = chip_setting(c, kind)
                 c.execute(f'UPDATE players SET {field}=? WHERE id=?', (value, pid))
                 c.execute(
                     f'UPDATE stages SET {field}=?,{kind}_chips=? WHERE team_id=?',
-                    (team_total, team_total * rate, seat['team_id']))
+                    (team_total, team_total * rate if rate is not None else None, seat['team_id']))
                 audit(c, 'player-' + kind, {
                     'player_id':pid, 'team_id':seat['team_id'],
                     'before':previous, 'after':value, 'delta':difference,
