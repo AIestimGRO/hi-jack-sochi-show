@@ -211,7 +211,7 @@ const counts={};state.seats.forEach(s=>counts[s.table_no]=(counts[s.table_no]||0
 $('seats').innerHTML=state.seats.map(s=>`<div class="seat-item"><span>Стол ${s.table_no}, бокс ${s.box_no}</span><input data-seat-name="${esc(s.card_id)}" value="${esc(s.player_name||'')}" placeholder="Имя / ник игрока · команда ${s.team_id}"><button class="secondary" data-save-player="${esc(s.card_id)}">Сохранить</button>${s.player_id?`<input type="file" id="seat-photo-${s.player_id}" accept="image/jpeg,image/png,image/webp"><button class="secondary" data-seat-photo="${s.player_id}">Фото${s.has_photo?' ✓':''}</button>${state.published.visible_player_ids?.includes(s.player_id)?`<button class="secondary" data-refresh-photo="${s.player_id}">Фото в эфир</button>`:''}`:''}</div>`).join('');
 $('teams').innerHTML=state.teams.map(t=>`<div class="team-entry"><span>${t.team_id}</span><small>${esc(t.original_name)}</small><input id="name-${t.team_id}" value="${esc(t.display_name)}" maxlength="45"><select id="capt-${t.team_id}">${playerOptions(t.team_id,t.captain_player_id)}</select><div class="photo-control"><button class="secondary" data-save-name="${t.team_id}">Имя</button><button class="secondary" data-publish-name="${t.team_id}">В эфир</button><button class="secondary" data-save-capt="${t.team_id}">Капитан</button><input type="file" id="photo-${t.team_id}" accept="image/jpeg,image/png,image/webp"><button class="secondary" data-save-photo="${t.team_id}">Фото</button></div></div>`).join('');
 const rates=state.chip_settings||{};
-$('chips-rates-summary').textContent='Вход: '+(rates.entry==null?'не настроен (0)':fmt(rates.entry)+' × 3 участника')+' · Re-entry: '+(rates.reentry==null?'не задано':fmt(rates.reentry)+' за 1 шт.')+' · Add-on: '+(rates.addon==null?'не задано':fmt(rates.addon)+' за 1 шт.');
+$('chips-rates-summary').textContent='Вход: '+(rates.entry==null?'⚠ НЕ НАСТРОЕН · укажи 50 000 перед GREEN':fmt(rates.entry)+' × 3 участника')+' · Re-entry: '+(rates.reentry==null?'не задано':fmt(rates.reentry)+' за 1 шт.')+' · Add-on: '+(rates.addon==null?'не задано':fmt(rates.addon)+' за 1 шт.');
 $('stages').querySelector('tbody').innerHTML=state.teams.map(t=>{
   const r=state.stages[t.team_id]||{};
   const keys=['green_stack','reentry_count','blue_stack','addon_count','survivors','red_place'];
@@ -337,7 +337,7 @@ async function bulkStage(stage){
 function openChipSettings(){
   const settings=state.chip_settings||{};
   const phases=state.published.published_phases||[];
-  $('chips-per-entry').value=settings.entry??'';
+  $('chips-per-entry').value=settings.entry??50000;
   $('chips-per-entry').disabled=phases.includes('green');
   $('chips-per-reentry').value=settings.reentry??'';
   $('chips-per-addon').value=settings.addon??'';
