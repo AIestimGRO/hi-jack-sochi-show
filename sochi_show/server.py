@@ -436,7 +436,10 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             if policy:
                 result['blue_view']['points_revealed'] = points_public
             result['blue_show'] = {'step': step, 'max_step': count + 1}
-            if step < count + 1 or (policy and not points_public):
+            if step < count + 1 or ('red' not in result.get('published_phases',[]) and not points_public):
+                # Complete BLUE positions are public; the later point decision
+                # is not. Do not send an apparent cumulative points ranking
+                # until the conductor deliberately reveals assigned points.
                 result['ranking'] = []
                 result['stages'] = {}
                 result['recent_changes'] = []
