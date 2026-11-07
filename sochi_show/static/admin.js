@@ -234,14 +234,20 @@ for(const p of activePlayers){
   entry.addon+=Number(p.player_addon_count||0);
 }
 $('player-chips-list').innerHTML=activePlayers.length?
-  `<div class="scroll"><table class="player-entry-table"><thead><tr><th>Команда / игрок</th><th>Re-entry</th><th>Add-on</th></tr></thead><tbody>${activePlayers.map(p=>{
+  `<div class="scroll"><table class="player-entry-table"><thead><tr><th>Игрок</th><th>Re-entry</th><th>Add-on</th></tr></thead><tbody>${activePlayers.map(p=>{
     const team=state.teams.find(t=>t.team_id===p.team_id);
     const control=kind=>{
       const count=kind==='reentry'?p.player_reentry_count:p.player_addon_count;
       const disabled=(state.published?.published_phases||[]).includes(kind==='reentry'?'green':'blue');
       return `<div class="player-counter"><button type="button" class="secondary" data-pc-action="minus" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>−</button><input type="number" min="0" max="1000" step="1" id="pc-${p.player_id}-${kind}" value="${Number(count||0)}" ${disabled?'disabled':''}><button type="button" class="secondary" data-pc-action="plus" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>+</button><button type="button" data-pc-action="save" data-pc-kind="${kind}" data-pc-player="${p.player_id}" ${disabled?'disabled':''}>✓</button></div>`;
     };
-    return `<tr><td><strong>${esc(team?.display_name||'Команда '+p.team_id)}</strong><small class="player-place">№${p.team_id} · ${esc(p.player_name)} · стол ${p.table_no}, бокс ${p.box_no}</small></td><td>${control('reentry')}</td><td>${control('addon')}</td></tr>`;
+    const captain=team?.captain_player_id===p.player_id;
+    const startsTeam=activePlayers.findIndex(x=>x.team_id===p.team_id)===activePlayers.indexOf(p);
+    return `<tr class="${startsTeam?'player-team-start':''}"><td class="player-main-cell">
+        <strong class="player-main-name">${esc(p.player_name||'Игрок не указан')}</strong>
+        <span class="player-secondary-team">${esc(team?.display_name||'Команда '+p.team_id)}${captain?'<span class="player-captain-flag">КАПИТАН</span>':''}</span>
+        <small class="player-place">Команда №${p.team_id} · стол ${p.table_no}, бокс ${p.box_no}</small>
+      </td><td>${control('reentry')}</td><td>${control('addon')}</td></tr>`;
   }).join('')}</tbody></table></div>`:
   '<p class="muted">В рассадке пока нет привязанных игроков.</p>';
 $('player-team-summary').innerHTML=state.teams.map(t=>{
@@ -312,7 +318,7 @@ $('final-show-next').onclick=async()=>{
   const slot=(state.published.revealed_slots?.length||0)+1;
   if(!state.published.secret_show)return toast('Сначала запусти SECRET JACK SHOW',true);
   if(slot>3)return toast('Все три Валета раскрыты');
-  const bonus=state.published?.blue_policy?.mode==='final_table'?'5 000 фишек':'10 000 очков';
+  const bonus=state.published?.blue_policy?.mode==='final_table'?'10 000 фишек':'10 000 очков';
   publish({action:'reveal',slot},`ВПЕРВЫЕ раскрыть SECRET JACK №${slot} на проекторе? При подтверждённом выбивании начислится +${bonus} один раз.`);
 };
 $('secret-show-start').onclick=()=>publish({action:'secret-show-start'},'Запустить или повторить SECRET JACK SHOW? Это не начисляет дополнительные очки.');
