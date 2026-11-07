@@ -84,6 +84,8 @@ window.VoteShow=(()=>{
     const received=vote?ranking.find(r=>r.team_id===vote.receiver_team_id):null;
     const winner=board?ranking[0]:null;
     const mode=data.mode==='voter'?'ГОЛОСУЮЩЕЙ':'ВЫБРАННОЙ';
+    const unit=data.final_table?'фишек':'очков';
+    const unitBig=data.final_table?'ФИШЕК':'ОЧКОВ';
     const title=intro?'ПОСЛЕДНИЙ<br><em>ХОД</em>':board?'ГОЛОСА<br><em>УЧТЕНЫ</em>':'РЕШЕНИЕ<br><em>КАПИТАНА</em>';
     host.className='scene green-show-stage vote-show-stage';
     host.innerHTML=`<div class="green-experience vote-experience vs-${intro?'intro':board?'board':'reveal'}" data-step="${step}">
@@ -102,11 +104,11 @@ window.VoteShow=(()=>{
           <div class="gs-section-rule"></div>
           ${intro?
             `<div class="vs-intro-text"><strong>${count} КАПИТАНОВ.</strong> У каждого — один голос.<br>
-            Каждый голос стоит <b>10 000 очков</b> и может изменить итоговый рейтинг.</div>
+            Каждый голос даёт <b>10 000 ${unit}</b> и может изменить итоговый рейтинг.</div>
             <div class="vs-intro-stamp">БОНУС ПОЛУЧАЕТ ${mode} КОМАНДА</div>
             <div class="vs-dramatic-word">ПУСТЬ РЕШАТ ГОЛОСА ♠</div>`:
             board?
-              `<div class="vs-summary-label">ИТОГОВЫЙ РЕЙТИНГ ПОСЛЕ ВСЕХ БОНУСОВ · SECRET JACK + ГОЛОСОВАНИЕ</div>
+              `<div class="vs-summary-label">${data.final_table?'СТЕКИ КАПИТАНОВ ПЕРЕД RED · SECRET JACK + ГОЛОСА':'ИТОГОВЫЙ РЕЙТИНГ ПОСЛЕ ВСЕХ БОНУСОВ · SECRET JACK + ГОЛОСОВАНИЕ'}</div>
                 <div class="vs-rank-head"><span></span><span>№</span><span>КОМАНДА</span><span>JACK</span><span>ГОЛОСА</span><span>ИТОГО</span></div>
                 <div class="vs-rank-list" style="--rank-count:${count}">${ranking.map(rankedRow).join('')}</div>
                 <div class="vs-winner-teaser"><strong>ЛИДЕР: ${esc(winner?.name||'—')}</strong><span>ВПЕРЕДИ — ЦЕРЕМОНИЯ ПОБЕДИТЕЛЕЙ</span></div>`:
@@ -123,7 +125,7 @@ window.VoteShow=(()=>{
                   <div class="vs-target">${esc(vote?.target_name||'')}</div>
                 </div>
                 <div class="vs-award">
-                  <div><span>+10 000 ОЧКОВ ПОЛУЧАЕТ</span><strong>${esc(vote?.receiver_name||'')}</strong></div>
+                  <div><span>+10 000 ${unitBig} ПОЛУЧАЕТ</span><strong>${esc(vote?.receiver_name||'')}</strong></div>
                   <div class="vs-award-number">+10 000</div>
                 </div>
                 <div class="vs-change-row">
@@ -139,7 +141,7 @@ window.VoteShow=(()=>{
         </aside>
       </div>
       <footer class="gs-footer"><span>CAPTAINS VOTE / ${intro?'ЗАСТАВКА':board?'ИТОГИ':'ГОЛОС № '+step}</span>
-        <span>${board?'СЛЕДУЮЩИЙ ШАГ — ФИНАЛ':'ПОЛНЫЙ ИТОГ НЕ РАСКРЫТ'}</span><span>${step} / ${count+1}</span>
+        <span>${board?(data.final_table?'СЛЕДУЮЩИЙ ШАГ — RED ФИНАЛЬНЫЙ СТОЛ':'СЛЕДУЮЩИЙ ШАГ — ФИНАЛ'):'ПОЛНЫЙ ИТОГ НЕ РАСКРЫТ'}</span><span>${step} / ${count+1}</span>
       </footer>
     </div>`;
   }
