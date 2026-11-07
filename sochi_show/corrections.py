@@ -208,9 +208,9 @@ def correction(c, body):
                 fail(422,'Очки за места должны быть целыми числами')
             if any(places[i]>places[i-1] for i in range(1,len(places))):
                 fail(422,'Очки должны убывать по местам')
-        return 'Система очков после BLUE',previous,
-            {'mode':mode,'percent':percent if mode=='scale' else 100,
-             'place_points':places if mode=='places' else []}
+        return ('Система очков после BLUE',previous,
+                {'mode':mode,'percent':percent if mode=='scale' else 100,
+                 'place_points':places if mode=='places' else []})
     if kind == 'vote_mode':
         old = c.execute("SELECT value FROM settings WHERE key='vote_mode'").fetchone()
         new=str(value or '')
