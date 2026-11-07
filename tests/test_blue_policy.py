@@ -141,3 +141,46 @@ def test_blue_points_ties_share_place_points():
     chips={1:100000,2:100000,3:50000}
     d=blue_points_from_policy(chips,{'mode':'places','place_points':[130000,120000,110000]},3)
     assert d=={'1':130000,'2':130000,'3':110000}
+
+
+@pytest.mark.parametrize('count',[10,11])
+def test_blue_places_use_only_net_chips_survivor_bonus_applies_after_conversion(client,count):
+    h=auth(client)
+    setup_stages(client,h,count)
+    # GREEN stacks are 110k for team1 and 120k for team2. Make their
+    # raw BLUE results 450k and 460k while team1 earns 3 survivor bonuses.
+    assert call(client,'stage',h,{'team_id':1,'blue_stack':450000,'survivors':3}).status_code==200
+    assert call(client,'stage',h,{'team_id':2,'blue_stack':460000,'survivors':0}).status_code==200
+    assert call(client,'publish',h,{'action':'blue','show_mode':'cinematic'}).status_code==200
+    p=client.get('/sochi/api/admin/state').json()['published']
+    assert p['stages']['1']['blue_net_chips']==450000
+    assert p['stages']['1']['survivor_bonus']==15000
+    assert p['stages']['2']['blue_net_chips']==460000
+    assert p['stages']['2']['survivor_bonus']==0
+    ranked={r['team_id']:r for r in p['blue_show']['ranking']}
+    assert ranked[2]['place']<ranked[1]['place']  # not affected by bonuses
+    assert ranked[1]['award']==465000
+    assert ranked[1]['total']==450000  # on-screen raw NET, not earned points
+    assert ranked[2]['award']==460000
+
+    for step in range(1,count+2):
+        assert call(client,'publish',h,{'action':'blue-show-step','step':step}).status_code==200
+    policy={'mode':'places','place_points':[130000-i*10000 for i in range(count)]}
+    apply_policy(client,h,policy)
+    p=client.get('/sochi/api/admin/state').json()['published']
+    ranked={r['team_id']:r for r in p['blue_show']['ranking']}
+    assert ranked[2]['place']<ranked[1]['place']
+    assert ranked[1]['award']==policy['place_points'][ranked[1]['place']-1]+15000
+    assert ranked[2]['award']==policy['place_points'][ranked[2]['place']-1]
+    assert p['blue_policy']['points']['1']==policy['place_points'][ranked[1]['place']-1]
+    assert next(r for r in p['ranking'] if r['team_id']==1)['total']==ranked[1]['award']
+    assert next(r for r in p['ranking'] if r['team_id']==2)['total']==ranked[2]['award']
+
+    # Already-published BLUE can be corrected without changing chip rankings
+    # through the protected workflow. The 5k is never counted twice.
+    from test_protected_corrections import commit
+    commit(client,h,kind='stage',team_id=1,field='survivors',value=2)
+    corrected=client.get('/sochi/api/admin/state').json()['published']
+    assert corrected['stages']['1']['blue_net_chips']==450000
+    assert corrected['stages']['1']['survivor_bonus']==10000
+    assert next(r for r in corrected['ranking'] if r['team_id']==1)['total']==ranked[1]['award']-5000
