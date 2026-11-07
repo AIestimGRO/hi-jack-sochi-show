@@ -36,7 +36,11 @@ def start(client,h,n):
     assert public['ranking']==[] and public['stages']=={}
     assert all('award' not in row for row in public['blue_view']['revealed'])
     assert call(client,'publish',h,{'action':'secret-show-start'}).status_code==409
+    # Old manual publishing endpoints must not bypass the new reveal order.
+    assert call(client,'publish',h,{'action':'reveal','slot':1}).status_code==409
+    assert call(client,'publish',h,{'action':'votes'}).status_code==409
     assert call(client,'publish',h,{'action':'blue-policy-reveal'}).status_code==200
+    assert call(client,'publish',h,{'action':'votes'}).status_code==409
     public=client.get('/sochi/api/public/state').json()['state']
     assert public['blue_view']['table_mode']=='final_table'
     assert public['blue_view']['points_revealed']
