@@ -19,14 +19,14 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from starlette.middleware.sessions import SessionMiddleware
 
-from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy, FINAL_TABLE_JACK_CHIPS, FINAL_TABLE_VOTE_CHIPS
+from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy, FINAL_TABLE_JACK_CHIPS, FINAL_TABLE_VOTE_CHIPS, GREEN_BOUNTY_CHIPS, BLUE_BOUNTY_CHIPS
 from .corrections import correction, rebuild as rebuild_corrected, score_delta
 from .legacy_screen import render_legacy_screen
 
 HERE = Path(__file__).resolve().parent
 SCENES = {'intro', 'teams', 'green', 'blue', 'captains', 'red', 'secrets', 'votes', 'final', 'winner', 'pause'}
 PHASES = ('green', 'blue', 'red')
-COLUMNS = ('green_stack', 'reentry_count', 'blue_stack', 'addon_count', 'survivors', 'red_place')
+COLUMNS = ('green_stack', 'reentry_count', 'blue_stack', 'addon_count', 'survivors', 'red_place', 'blue_eliminated')
 CHIP_LIMIT = 1_000_000_000
 COUNT_LIMIT = 1000
 
@@ -127,9 +127,11 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         # Non-destructive migration of the existing independent SOCHI database.
         if 'addon_count' not in {row[1] for row in c.execute('PRAGMA table_info(stages)')}:
             c.execute('ALTER TABLE stages ADD COLUMN addon_count INTEGER')
+        if 'blue_eliminated' not in {row[1] for row in c.execute('PRAGMA table_info(stages)')}:
+            c.execute('ALTER TABLE stages ADD COLUMN blue_eliminated INTEGER NOT NULL DEFAULT 0')
         # Safe additive migration: never reset players, scores or publication.
         player_columns = {row[1] for row in c.execute('PRAGMA table_info(players)')}
-        for column in ('reentry_count', 'addon_count'):
+        for column in ('reentry_count', 'addon_count', 'green_bounty_count', 'blue_bounty_count'):
             if column not in player_columns:
                 c.execute(f'ALTER TABLE players ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0')
         c.execute('INSERT OR IGNORE INTO settings(key,value) VALUES (?,?)', ('team_count', '0'))
@@ -188,6 +190,19 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         c.execute('INSERT INTO audit(created_at,action,data) VALUES (?,?,?)',
                   (stamp(), action, json.dumps(data, ensure_ascii=False)))
 
+    def draft_team_bounties(c, count):
+        """Only freeze totals into public state when final table is announced."""
+        result={str(tid):{'green':0,'blue':0,'chips':0} for tid in range(1,count+1)}
+        for r in c.execute("""SELECT s.team_id, SUM(p.green_bounty_count) AS green,
+                               SUM(p.blue_bounty_count) AS blue
+                               FROM seats s JOIN players p ON p.id=s.player_id
+                               GROUP BY s.team_id"""):
+            green,blue=int(r['green'] or 0),int(r['blue'] or 0)
+            result[str(r['team_id'])]={
+                'green':green,'blue':blue,
+                'chips':green*GREEN_BOUNTY_CHIPS+blue*BLUE_BOUNTY_CHIPS}
+        return result
+
     def update_blue_policy_points(p):
         policy=p.get('blue_policy')
         if not policy or 'blue' not in p.get('published_phases',[]):
@@ -222,7 +237,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             state['revealed_secrets'], state['published_votes'], state['revealed_slots'],
             state['votes_published'], state['vote_mode'], state['team_count'],
             state.get('blue_policy', {}).get('points'),
-            state.get('blue_policy', {}).get('mode') == 'final_table')
+            state.get('blue_policy', {}).get('mode') == 'final_table',
+            state.get('team_bounties'))
         # A fully reset seating (or a paused tournament with no published stages)
         # must not invent a leaderboard of all-zero tied scores.
         if state.get('scene') == 'pause' and not state['published_phases'] and not state['revealed_slots'] and not state['votes_published']:
@@ -265,7 +281,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             net = stage.get('blue_net_chips',green+blue)
             survivors = stage.get('survivor_bonus',0)
             policy = p.get('blue_policy') or {}
-            points = policy.get('points',{}).get(team_id,net) + survivors
+            bounty = (p.get('team_bounties') or {}).get(team_id, {}).get('chips',0)
+            points = policy.get('points',{}).get(team_id,net) + survivors + bounty
             ranked.append({'team_id': int(team_id), 'name': name,
                            'green': green, 'blue': blue, 'total': net,
                            'chip_net': net, 'survivor_bonus':survivors,
@@ -295,7 +312,8 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             green, blue, red = (stage[k] for k in PHASES)
             net=stage.get('blue_net_chips',green+blue)
             survivor_bonus=stage.get('survivor_bonus',0)
-            base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)+survivor_bonus
+            bounty=(p.get('team_bounties') or {}).get(team_id, {}).get('chips',0)
+            base=p.get('blue_policy',{}).get('points',{}).get(team_id,net)+survivor_bonus+bounty
             # In new mode RED follows the already-announced Jack and vote chips.
             # Keep their bonuses in every RED scene, rather than reverting the
             # public totals to the pre-bonus stack.
@@ -626,7 +644,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             entries[row['team_id']] = rowdict(row)
         seats = [rowdict(r) for r in c.execute('''SELECT s.*,p.name AS player_name,p.photo_path IS NOT NULL AS has_photo,
                   COALESCE(p.reentry_count,0) AS player_reentry_count,
-                  COALESCE(p.addon_count,0) AS player_addon_count
+                  COALESCE(p.addon_count,0) AS player_addon_count,
+                  COALESCE(p.green_bounty_count,0) AS player_green_bounty_count,
+                  COALESCE(p.blue_bounty_count,0) AS player_blue_bounty_count
                   FROM seats s LEFT JOIN players p ON p.id=s.player_id ORDER BY s.team_id,s.table_no,s.box_no''')]
         stage = {r['team_id']: rowdict(r) for r in c.execute('SELECT * FROM stages')}
         secret_rows = [rowdict(r) for r in c.execute('''SELECT s.*,p.name AS player_name,st.team_id AS jack_team_id,st.table_no,st.box_no
@@ -1412,6 +1432,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                     raise HTTPException(409,'Сначала подготовь стартовые стеки после BLUE')
                 if not blue_show or blue_show['step'] < len(blue_show['ranking'])+1:
                     raise HTTPException(409,'Сначала открой полный итог BLUE по чистым фишкам')
+                p['team_bounties']=draft_team_bounties(c,count)
                 policy['revealed']=True
                 update_blue_policy_points(p)
                 p['blue_show']=blue_snapshot(p)
