@@ -4,6 +4,8 @@ from collections import Counter, defaultdict
 # Actual chip awards before RED in the final-table tournament format.
 FINAL_TABLE_JACK_CHIPS = 10_000
 FINAL_TABLE_VOTE_CHIPS = 20_000
+GREEN_BOUNTY_CHIPS = 2_500
+BLUE_BOUNTY_CHIPS = 5_000
 
 EXPECTED_OCCUPANCY = {10: [10, 10, 10], 11: [8, 8, 8, 9],
                       12: [9, 9, 9, 9], 13: [10, 10, 10, 9]}
@@ -162,7 +164,8 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
                       votes: list[dict], revealed_slots: list[int], votes_published: bool,
                       vote_recipient: str, team_count: int,
                       blue_base_points: dict | None = None,
-                      final_table_mode: bool = False) -> list[dict]:
+                      final_table_mode: bool = False,
+                      team_bounties: dict | None = None) -> list[dict]:
     """Only receives frozen published stage data, never draft data."""
     secret_awards = Counter()
     for secret in secrets:
@@ -186,10 +189,14 @@ def published_ranking(team_names: dict[int, str], stages: dict, secrets: list[di
         survivor_bonus = int(entry.get('survivor_bonus', 0))
         chip_net = entry.get('blue_net_chips', g + b)
         converted = (blue_base_points or {}).get(str(team_id), chip_net)
-        award = converted + survivor_bonus
+        bounty = (team_bounties or {}).get(str(team_id), {}) if final_table_mode else {}
+        bounty_chips = int(bounty.get('chips', 0))
+        award = converted + survivor_bonus + bounty_chips
         result = {'team_id': team_id, 'name': team_names[team_id],
                   'green': g, 'blue': b, 'chip_net': chip_net,
-                  'survivor_bonus': survivor_bonus,
+                  'survivor_bonus': survivor_bonus, 'bounty_chips': bounty_chips,
+                  'bounty_green': int(bounty.get('green', 0)),
+                  'bounty_blue': int(bounty.get('blue', 0)),
                   'base_points': award, 'red': r, 'secret': s, 'votes': v,
                   'total': award + r + s + v}
         if final_table_mode and 'red' in entry:
