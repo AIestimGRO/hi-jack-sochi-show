@@ -164,13 +164,19 @@ def _copy(state, draw):
         "winner": ("ЧЕМПИОН", "HI, SOCHI", "ПЕРВОЕ МЕСТО RED"),
     }
     first, second, caption = labels.get(scene, ("HI, JACK", scene.upper(), "ТУРНИРНЫЙ ЭФИР"))
-    _text(draw, (55, 36), "♠  HI, JACK  —  HI, SOCHI", _font(42, True), CREAM)
+    # Reusable with future club tournaments that supply public event metadata.
+    event_name = _trim(state.get('event_title') or 'HI, JACK — HI, SOCHI', 33)
+    event_tagline = _trim(state.get('event_tagline') or
+                          'ЗАЛЕТАЙ · ЗАЦЕПИСЬ · ЗАВОЮЙ', 56)
+    if scene == 'intro' and state.get('event_title'):
+        first,second = 'HI, JACK',_trim(state['event_title'],22)
+    _text(draw, (55, 36), "♠  " + event_name, _font(37, True), CREAM)
     _text(draw, (58, 93), "HI, JACK CLUB   ·   LIVE BROADCAST", _font(19, True), GOLD)
     _text(draw, (63, 187), first, _font(56, True), CREAM)
     _text(draw, (63, 269), second, _font(64, True), GOLD)
     draw.line((65, 366, 590, 366), fill=GOLD, width=4)
     _text(draw, (65, 392), caption, _font(23, True), WHITE)
-    _text(draw, (62, 855), "ЗАЛЕТАЙ   ·   ЗАЦЕПИСЬ   ·   ЗАВОЮЙ", _font(21, True), CREAM)
+    _text(draw, (62, 855), event_tagline, _font(21, True), CREAM)
     _text(draw, (1145, 852), "WANBO  /  AUTO REFRESH", _font(16, True), MUTED)
 
 
