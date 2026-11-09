@@ -1030,7 +1030,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             previous_blue = c.execute('SELECT blue_eliminated FROM stages WHERE team_id=?',(team_id,)).fetchone()
             if 'blue_eliminated' in fields:
                 _, pub = get_pub(c)
-                if 'blue' in pub['published_phases']:
+                if 'blue' in pub['published_phases'] and fields['blue_eliminated'] != previous_blue['blue_eliminated']:
                     raise HTTPException(409, 'BLUE уже опубликован: статус вылета меняется с PIN')
             eliminated = fields.get('blue_eliminated',previous_blue['blue_eliminated'])
             if eliminated:
@@ -1645,6 +1645,9 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                         if r['addon_chips'] != r['addon_count'] * rate:
                             raise HTTPException(409, 'BLUE: сумма add-on не соответствует настройкам')
                         score = blue_points(p['stages'][team_id]['green_stack_actual'], r['blue_stack'], r['addon_chips'], r['survivors'])
+                        if r['blue_eliminated'] and (r['blue_stack'] != 0 or r['survivors'] != 0):
+                            raise HTTPException(422, 'Полностью выбывшая в BLUE команда должна иметь стек 0 и выживших 0')
+                        p['stages'][team_id]['blue_eliminated'] = bool(r['blue_eliminated'])
                         # Persist the TRUE end-of-BLUE net chips separately
                         # from the 5k-per-survivor award. Neither is added twice.
                         initial_entries=3*(chip_setting(c,'entry') or 0)
