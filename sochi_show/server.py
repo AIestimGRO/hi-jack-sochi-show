@@ -940,6 +940,48 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         return {'ok':True,'player_id':pid,'count':value,
                 'team_id':seat['team_id'],'team_total':team_total}
 
+    @app.post('/sochi/api/admin/player-bounty')
+    async def update_player_bounty(request: Request):
+        """Count a knockout against the player who performed it, award team in RED."""
+        require_admin(request,True)
+        body=await request.json()
+        player_id=strict_int(body.get('player_id'),'player_id',1)
+        kind=body.get('kind')
+        if kind not in ('green','blue'):
+            raise HTTPException(422,'Выбери GREEN или BLUE bounty')
+        has_delta='delta' in body
+        if has_delta == ('count' in body):
+            raise HTTPException(422,'Передай delta или count')
+        if has_delta:
+            delta=strict_int(body['delta'],'delta',-COUNT_LIMIT,COUNT_LIMIT)
+            if delta==0:
+                raise HTTPException(422,'Изменение должно быть ненулевым')
+        else:
+            target=strict_int(body['count'],'count',0,COUNT_LIMIT)
+        with connection(write=True) as c:
+            seat=c.execute('SELECT s.team_id,p.green_bounty_count,p.blue_bounty_count '
+                           'FROM seats s JOIN players p ON p.id=s.player_id WHERE s.player_id=?',
+                           (player_id,)).fetchone()
+            if not seat:
+                raise HTTPException(404,'Игрок не привязан к рассадке')
+            _,pub=get_pub(c)
+            if ((pub.get('blue_policy') or {}).get('revealed')
+                or 'red' in pub['published_phases'] or pub.get('vote_show')
+                or pub.get('secret_show')):
+                raise HTTPException(409,'Стартовые стеки объявлены: исправление бонусов требует PIN')
+            field=kind+'_bounty_count'
+            before=seat[field]
+            after=before+delta if has_delta else target
+            if not 0<=after<=COUNT_LIMIT:
+                raise HTTPException(422,'Количество bounty от 0 до 1000')
+            if before!=after:
+                c.execute(f'UPDATE players SET {field}=? WHERE id=?',(after,player_id))
+                audit(c,'bounty-'+kind,{'player_id':player_id,'team_id':seat['team_id'],
+                                     'before':before,'after':after})
+            team_bounty=draft_team_bounties(c,team_count(c))[str(seat['team_id'])]
+        return {'ok':True,'count':after,'player_id':player_id,
+                'team_id':seat['team_id'],'team_bounty':team_bounty}
+
     @app.post('/sochi/api/admin/chips-settings')
     async def update_chip_settings(request: Request):
         require_admin(request, True)
@@ -976,7 +1018,7 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
             raise HTTPException(422, 'Не переданы поля этапа')
         for k, val in fields.items():
             strict_int(val, k, 1 if k == 'red_place' else 0,
-                       3 if k == 'survivors' else COUNT_LIMIT if k in ('reentry_count', 'addon_count') else None)
+                       1 if k == 'blue_eliminated' else 3 if k == 'survivors' else COUNT_LIMIT if k in ('reentry_count', 'addon_count') else None)
         with connection(write=True) as c:
             team_id = check_team(c, body.get('team_id'))
             if 'red_place' in fields:
@@ -985,6 +1027,17 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                                   (fields['red_place'], team_id)).fetchone()
                 if clash:
                     raise HTTPException(409, f'Место RED уже у команды {clash[0]}')
+            previous_blue = c.execute('SELECT blue_eliminated FROM stages WHERE team_id=?',(team_id,)).fetchone()
+            if 'blue_eliminated' in fields:
+                _, pub = get_pub(c)
+                if 'blue' in pub['published_phases']:
+                    raise HTTPException(409, 'BLUE уже опубликован: статус вылета меняется с PIN')
+            eliminated = fields.get('blue_eliminated',previous_blue['blue_eliminated'])
+            if eliminated:
+                if fields.get('blue_stack',0) not in (0,None) or fields.get('survivors',0) not in (0,None):
+                    raise HTTPException(422,'Полностью выбывшая команда: стек BLUE и выжившие должны быть 0')
+                fields['blue_stack'] = 0
+                fields['survivors'] = 0
             if 'reentry_count' in fields:
                 fields['reentry_chips'] = fields['reentry_count'] * require_chip_setting(c, 'reentry')
             if 'addon_count' in fields:
@@ -1035,6 +1088,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 if phase == 'green':
                     fields['reentry_chips'] = item['reentry_count'] * amount_per_entry
                 elif phase == 'blue':
+                    flag=item.get('blue_eliminated')
+                    if flag is None:
+                        flag=c.execute('SELECT blue_eliminated FROM stages WHERE team_id=?',(item['team_id'],)).fetchone()['blue_eliminated']
+                    strict_int(flag,'blue_eliminated',0,1)
+                    if flag and (item['blue_stack']!=0 or item['survivors']!=0):
+                        raise HTTPException(422,f'Команда {item["team_id"]}: при полном вылете стек BLUE и выжившие = 0')
+                    fields['blue_eliminated'] = flag
                     fields['addon_chips'] = item['addon_count'] * amount_per_entry
                 sets = ','.join(f'{key}=?' for key in fields)
                 c.execute(f'UPDATE stages SET {sets} WHERE team_id=?', (*fields.values(), item['team_id']))
