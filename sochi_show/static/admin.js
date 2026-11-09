@@ -22,6 +22,20 @@ const MODULES=[
   ['protected-editor-panel','PIN','Защищённое исправление','Редактирование уже опубликованных данных.']
 ];
 let guideOpened=false;
+let activeStage=null;
+function setStageView(next){
+  activeStage=next;
+  document.querySelectorAll('#stages [data-phase-column]').forEach(el=>{
+    el.hidden=el.dataset.phaseColumn!==next;
+  });
+  document.querySelectorAll('#scores-panel [data-stage]').forEach(button=>{
+    button.hidden=button.dataset.stage!==next;
+  });
+  document.querySelectorAll('#stage-tabs [data-stage-view]').forEach(button=>{
+    button.classList.toggle('stage-tab-active',button.dataset.stageView===next);
+  });
+}
+
 function installModuleLayout(){
   for(const [id,number,title,description] of MODULES){
     const panel=$(id);
@@ -319,11 +333,17 @@ $('stages').querySelector('tbody').innerHTML=state.teams.map(t=>{
     const tracked=kind?(teamStats[t.team_id]?.[kind]||0):0;
     const derived=kind?(rates[kind]==null?'Норматив не задан':(r[k]!=null?fmt(r[k]*rates[kind])+' фишек':'— фишек'))+
        ' · по игрокам: '+tracked:'';
-    return `<td><input type="number" min="${k==='red_place'?1:0}" ${k==='survivors'?'max="3"':kind?'max="1000"':''} ${kind?'data-chip-count="'+kind+'"':''} id="s-${t.team_id}-${k}" value="${r[k]??''}" placeholder="—">${kind?'<small class="chips-derived">'+esc(derived)+'</small>':''}</td>`;
-  }).join('')}<td class="blue-elim-cell"><label class="blue-elim-label">
+    const phase=['green_stack','reentry_count'].includes(k)?'green':k==='red_place'?'red':'blue';
+    return `<td data-phase-column="${phase}"><input type="number" min="${k==='red_place'?1:0}" ${k==='survivors'?'max="3"':kind?'max="1000"':''} ${kind?'data-chip-count="'+kind+'"':''} id="s-${t.team_id}-${k}" value="${r[k]??''}" placeholder="—">${kind?'<small class="chips-derived">'+esc(derived)+'</small>':''}</td>`;
+  }).join('')}<td class="blue-elim-cell" data-phase-column="blue"><label class="blue-elim-label">
   <input type="checkbox" id="blue-elim-${t.team_id}" ${r.blue_eliminated?'checked':''} ${(pub.published_phases||[]).includes('blue')?'disabled':''}>
   Вылетели все</label></td><td><button data-save-stage="${t.team_id}" class="secondary">✓</button></td></tr>`;
 }).join('');
+if(!activeStage){
+  const phases=pub.published_phases||[];
+  activeStage=phases.includes('blue')?'red':phases.includes('green')?'blue':'green';
+}
+setStageView(activeStage);
 const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2,3].map(slot=>{let sec=state.secrets.find(x=>x.slot===slot),locked=pub.revealed_slots.includes(slot);return `<div class="secret-item"><strong>#${slot}</strong><select id="secret-player-${slot}"><option value="">Не назначен</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id} · стол ${s.table_no}</option>`).join('')}</select><select id="secret-killer-${slot}">${optionTeams(sec?.knockout_team_id)}</select><select id="secret-knockout-player-${slot}"><option value="">Кто выбил?</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.knockout_player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id}</option>`).join('')}</select><div><label><input type="checkbox" id="secret-confirm-${slot}" ${sec?.confirmed?'checked':''}>Выбит</label><button data-save-secret="${slot}" class="secondary">Сохранить</button></div></div>`}).join('');
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}" ${pub.votes_published?'disabled':''}>${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary" ${pub.votes_published?'disabled':''}>✓</button></div>`}).join('');
 let rk=pub.ranking;const finishedByRed=pub.blue_policy?.mode==='final_table'&&(pub.published_phases||[]).includes('red');$('ranking-preview').innerHTML=rk.length?(finishedByRed?'<p><strong>МЕСТА ОПРЕДЕЛЯЕТ ВЫБЫВАНИЕ КАПИТАНОВ RED.</strong> Очки только справочно.</p>':'')+`<table class="ranking-mini"><tr><th>№</th><th>Команда</th><th>GREEN</th><th>BLUE</th><th>RED</th><th>Secret</th><th>Голоса</th><th>Итого</th></tr>${rk.map(r=>`<tr><td>${r.place}</td><td>${esc(r.name)}${r.tied?' · НИЧЬЯ':''}</td>${['green','blue','red','secret','votes','total'].map(k=>`<td>${fmt(r[k])}</td>`).join('')}</tr>`).join('')}</table>`:'<p class="muted">Рейтинг появится после публикации команд.</p>';
@@ -532,6 +552,7 @@ document.addEventListener('input',event=>{
 });
 
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+if(d.stageView){setStageView(d.stageView);return;}
 if(d.bountyAction){
   const player_id=Number(d.bountyPlayer),kind=d.bountyKind;
   const input=$('bounty-'+player_id+'-'+kind);
@@ -565,7 +586,15 @@ if(d.pcAction){
   await change('/sochi/api/admin/player-chips',request);
   return;
 }
-if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить проектор: ${d.scene.toUpperCase()}?`)}if(d.stage){bulkStage(d.stage)}if(d.savePlayer){const s=state.seats.find(x=>x.card_id===d.savePlayer);const name=document.querySelector(`[data-seat-name="${CSS.escape(d.savePlayer)}"]`).value;await change('/sochi/api/admin/player',{card_id:d.savePlayer,name,confirm_rebind:!!s.player_id})}if(d.saveName){let id=Number(d.saveName);await change('/sochi/api/admin/team',{team_id:id,display_name:$(`name-${id}`).value})}if(d.publishName){await publish({action:'name',team_id:Number(d.publishName)},'Опубликовать новое название команды?')}if(d.saveCapt){let id=Number(d.saveCapt),value=$(`capt-${id}`).value;await change('/sochi/api/admin/team',{team_id:id,captain_player_id:value?Number(value):null})}if(d.savePhoto){let id=Number(d.savePhoto),capt=$(`capt-${id}`).value,file=$(`photo-${id}`).files[0];if(!capt||!file)return toast('Выберите капитана и фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+capt,'POST',fd,true);toast('Фото сохранено в закрытом хранилище. Опубликуйте капитанов для эфира.');await refresh()}catch(e){toast(e.message,true)}}if(d.saveStage){let obj=valsTeam(Number(d.saveStage));await change('/sochi/api/admin/stage',obj)}if(d.saveSecret){let slot=Number(d.saveSecret),pid=Number($(`secret-player-${slot}`).value),killer=$(`secret-killer-${slot}`).value,killerPlayer=$(`secret-knockout-player-${slot}`).value,confirmed=$(`secret-confirm-${slot}`).checked;if(!pid)return toast('Сначала привяжите Secret Jack к участнику',true);const data={slot,player_id:pid,knockout_team_id:killer?Number(killer):null,knockout_player_id:killerPlayer?Number(killerPlayer):null,confirmed};const shown=state.published.revealed_slots.includes(slot);if(shown){
+if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить проектор: ${d.scene.toUpperCase()}?`)}if(d.stage){bulkStage(d.stage)}if(d.savePlayer){const s=state.seats.find(x=>x.card_id===d.savePlayer);const name=document.querySelector(`[data-seat-name="${CSS.escape(d.savePlayer)}"]`).value;await change('/sochi/api/admin/player',{card_id:d.savePlayer,name,confirm_rebind:!!s.player_id})}if(d.saveName){let id=Number(d.saveName);await change('/sochi/api/admin/team',{team_id:id,display_name:$(`name-${id}`).value})}if(d.publishName){await publish({action:'name',team_id:Number(d.publishName)},'Опубликовать новое название команды?')}if(d.saveCapt){let id=Number(d.saveCapt),value=$(`capt-${id}`).value;await change('/sochi/api/admin/team',{team_id:id,captain_player_id:value?Number(value):null})}if(d.savePhoto){let id=Number(d.savePhoto),capt=$(`capt-${id}`).value,file=$(`photo-${id}`).files[0];if(!capt||!file)return toast('Выберите капитана и фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+capt,'POST',fd,true);toast('Фото сохранено в закрытом хранилище. Опубликуйте капитанов для эфира.');await refresh()}catch(e){toast(e.message,true)}}if(d.saveStage){
+  const input=valsTeam(Number(d.saveStage));
+  const keys={green:['green_stack','reentry_count'],
+              blue:['blue_stack','addon_count','survivors','blue_eliminated'],
+              red:['red_place']}[activeStage||'green'];
+  const obj={team_id:Number(d.saveStage)};
+  for(const key of keys)if(input[key]!==undefined)obj[key]=input[key];
+  await change('/sochi/api/admin/stage',obj);
+}if(d.saveSecret){let slot=Number(d.saveSecret),pid=Number($(`secret-player-${slot}`).value),killer=$(`secret-killer-${slot}`).value,killerPlayer=$(`secret-knockout-player-${slot}`).value,confirmed=$(`secret-confirm-${slot}`).checked;if(!pid)return toast('Сначала привяжите Secret Jack к участнику',true);const data={slot,player_id:pid,knockout_team_id:killer?Number(killer):null,knockout_player_id:killerPlayer?Number(killerPlayer):null,confirmed};const shown=state.published.revealed_slots.includes(slot);if(shown){
   toast('Раскрытого Secret Jack исправляй в 🔐 Защищённом редакторе с PIN');
   $('protected-kind').value='secret';
   $('protected-kind').dispatchEvent(new Event('change'));
