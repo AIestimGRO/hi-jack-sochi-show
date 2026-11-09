@@ -320,7 +320,9 @@ $('stages').querySelector('tbody').innerHTML=state.teams.map(t=>{
     const derived=kind?(rates[kind]==null?'Норматив не задан':(r[k]!=null?fmt(r[k]*rates[kind])+' фишек':'— фишек'))+
        ' · по игрокам: '+tracked:'';
     return `<td><input type="number" min="${k==='red_place'?1:0}" ${k==='survivors'?'max="3"':kind?'max="1000"':''} ${kind?'data-chip-count="'+kind+'"':''} id="s-${t.team_id}-${k}" value="${r[k]??''}" placeholder="—">${kind?'<small class="chips-derived">'+esc(derived)+'</small>':''}</td>`;
-  }).join('')}<td><button data-save-stage="${t.team_id}" class="secondary">✓</button></td></tr>`;
+  }).join('')}<td class="blue-elim-cell"><label class="blue-elim-label">
+  <input type="checkbox" id="blue-elim-${t.team_id}" ${r.blue_eliminated?'checked':''} ${(pub.published_phases||[]).includes('blue')?'disabled':''}>
+  Вылетели все</label></td><td><button data-save-stage="${t.team_id}" class="secondary">✓</button></td></tr>`;
 }).join('');
 const players=state.seats.filter(s=>s.player_id);$('secret-form').innerHTML=[1,2,3].map(slot=>{let sec=state.secrets.find(x=>x.slot===slot),locked=pub.revealed_slots.includes(slot);return `<div class="secret-item"><strong>#${slot}</strong><select id="secret-player-${slot}"><option value="">Не назначен</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id} · стол ${s.table_no}</option>`).join('')}</select><select id="secret-killer-${slot}">${optionTeams(sec?.knockout_team_id)}</select><select id="secret-knockout-player-${slot}"><option value="">Кто выбил?</option>${players.map(s=>`<option value="${s.player_id}" ${s.player_id===sec?.knockout_player_id?'selected':''}>${esc(s.player_name)} · №${s.team_id}</option>`).join('')}</select><div><label><input type="checkbox" id="secret-confirm-${slot}" ${sec?.confirmed?'checked':''}>Выбит</label><button data-save-secret="${slot}" class="secondary">Сохранить</button></div></div>`}).join('');
 $('vote-mode').value=state.vote_mode;$('vote-mode').disabled=pub.votes_published;$('vote-form').innerHTML=state.teams.map(t=>{let vote=state.votes.find(v=>v.voter_team_id===t.team_id);return `<div class="vote-item"><strong>№${t.team_id}</strong><span>${esc(t.display_name)}</span><select id="vote-${t.team_id}" ${pub.votes_published?'disabled':''}>${optionTeams(vote?.target_team_id,t.team_id)}</select><button data-save-vote="${t.team_id}" class="secondary" ${pub.votes_published?'disabled':''}>✓</button></div>`}).join('');
@@ -393,6 +395,7 @@ function valsTeam(team){
     const value=$(`s-${team}-${k}`).value;
     if(value!=='')obj[k]=Number(value);
   }
+  obj.blue_eliminated=$('blue-elim-'+team).checked?1:0;
   return obj;
 }
 async function bulkStage(stage){
@@ -405,7 +408,7 @@ async function bulkStage(stage){
     if(!(state.published.published_phases||[]).includes('green'))return toast('Сначала опубликуй GREEN',true);
     if(rates.addon==null)return toast('Сначала укажи норматив add-on в настройках фишек',true);
   }
-  const keys={green:['green_stack','reentry_count'],blue:['blue_stack','addon_count','survivors'],red:['red_place']}[stage];
+  const keys={green:['green_stack','reentry_count'],blue:['blue_stack','addon_count','survivors','blue_eliminated'],red:['red_place']}[stage];
   const rows=[];
   for(const t of state.teams){
     const inputs=valsTeam(t.team_id);
@@ -431,7 +434,7 @@ async function bulkStage(stage){
       const reentry=(prev.reentry_count||0)*(rates.reentry||0);
       const entry=3*(rates.entry||0);
       score=r.blue_stack-entry-reentry-chips;
-      detail=`стек на конец BLUE ${fmt(r.blue_stack)} − входы ${fmt(entry)} − re-entry ${fmt(reentry)} − add-on ${fmt(chips)}; +${fmt(5000*r.survivors)} бонусных ОЧКОВ за выживших (отдельно, на место BLUE не влияет)`;
+      detail=`${r.blue_eliminated?'ВЫБЫЛА ЦЕЛИКОМ · ':''}стек на конец BLUE ${fmt(r.blue_stack)} − входы ${fmt(entry)} − re-entry ${fmt(reentry)} − add-on ${fmt(chips)}; +${fmt(5000*r.survivors)} бонусных ОЧКОВ за выживших (отдельно, на место BLUE не влияет)`;
     }else{
       score=130000-10000*(r.red_place-1);
       detail=state.published?.blue_policy?.mode==='final_table'?`финиш RED №${r.red_place} → ИТОГОВОЕ МЕСТО КОМАНДЫ №${r.red_place}`:`место №${r.red_place}`;
@@ -529,6 +532,23 @@ document.addEventListener('input',event=>{
 });
 
 document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+if(d.bountyAction){
+  const player_id=Number(d.bountyPlayer),kind=d.bountyKind;
+  const input=$('bounty-'+player_id+'-'+kind);
+  if(!input)return;
+  const req={player_id,kind};
+  if(d.bountyAction==='plus')req.delta=1;
+  else if(d.bountyAction==='minus')req.delta=-1;
+  else {
+    const n=Number(input.value);
+    if(input.value.trim()===''||!Number.isSafeInteger(n)||n<0||n>1000)
+      return toast('Введи количество bounty от 0 до 1000',true);
+    req.count=n;
+  }
+  await change('/sochi/api/admin/player-bounty',req);
+  return;
+}
+
 if(d.pcAction){
   const player_id=Number(d.pcPlayer),kind=d.pcKind;
   const input=$('pc-'+player_id+'-'+kind);
@@ -554,5 +574,14 @@ if(d.scene){await publish({action:'scene',scene:d.scene},`Переключить
   $('protected-editor-panel').scrollIntoView({behavior:'smooth',block:'start'});
   return;
 }await change('/sochi/api/admin/secret',data)}if(d.seatPhoto){let pid=Number(d.seatPhoto),file=$(`seat-photo-${pid}`).files[0];if(!file)return toast('Выберите фото',true);let fd=new FormData();fd.append('file',file);try{await api('/sochi/api/admin/photo/'+pid,'POST',fd,true);toast('Фото в закрытом хранилище');await refresh()}catch(e){toast(e.message,true)}}if(d.refreshPhoto){await publish({action:'refresh-photo',player_id:Number(d.refreshPhoto)},'Опубликовать обновлённую фотографию игрока?')}if(d.saveVote){let id=Number(d.saveVote),target=Number($(`vote-${id}`).value);if(!target)return toast('Выберите команду',true);await change('/sochi/api/admin/vote',{voter_team_id:id,target_team_id:target})}});
+document.addEventListener('change',e=>{
+  if(!e.target.id||!e.target.id.startsWith('blue-elim-'))return;
+  const teamId=e.target.id.split('-').pop();
+  for(const field of ['blue_stack','survivors']){
+    const el=$('s-'+teamId+'-'+field);
+    if(el&&e.target.checked)el.value='0';
+    if(el)el.readOnly=e.target.checked;
+  }
+});
 installModuleLayout();
 refresh();
