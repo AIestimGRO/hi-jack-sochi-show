@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from starlette.middleware.sessions import SessionMiddleware
@@ -22,6 +22,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from .core import blue_points, green_points, published_ranking, red_points, validate_seating, blue_points_from_policy, FINAL_TABLE_JACK_CHIPS, FINAL_TABLE_VOTE_CHIPS, GREEN_BOUNTY_CHIPS, BLUE_BOUNTY_CHIPS
 from .corrections import correction, rebuild as rebuild_corrected, score_delta
 from .legacy_screen import render_legacy_screen
+from .wanbo import render_png
 
 HERE = Path(__file__).resolve().parent
 SCENES = {'intro', 'teams', 'green', 'blue', 'captains', 'red', 'secrets', 'votes', 'final', 'winner', 'pause'}
@@ -681,6 +682,31 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
         return HTMLResponse(render_legacy_screen(public_safe(payload)),
                             headers={'Cache-Control': 'no-store, max-age=0'})
 
+
+    @app.get('/sochi/wanbo', response_class=HTMLResponse)
+    def wanbo_screen():
+        # Simple HTML5 (no JS), server-side high-resolution PNG and refresh.
+        with connection() as c:
+            version,_ = get_pub(c)
+        page = ("""<!doctype html><html lang="ru"><head><meta charset="utf-8">
+        <meta http-equiv="refresh" content="4">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>HI, JACK — WANBO</title></head>
+        <body style="margin:0;background:#102e37;text-align:center;overflow:hidden">
+        <img alt="HI, JACK — HI, SOCHI" src="/sochi/wanbo/frame.png?v=""" +
+        str(version) + """" style="display:block;width:100vw;height:100vh;object-fit:contain">
+        </body></html>""")
+        return HTMLResponse(page,headers={'Cache-Control':'no-store, max-age=0'})
+
+    @app.get('/sochi/wanbo/frame.png')
+    def wanbo_frame():
+        # This route MUST receive public_safe(), never the raw private snapshot.
+        with connection() as c:
+            _,state=get_pub(c)
+        sanitized=public_safe(state)
+        image=render_png(json.dumps(sanitized,ensure_ascii=False,sort_keys=True))
+        return Response(image,media_type='image/png',
+                        headers={'Cache-Control':'no-store, max-age=0'})
 
     @app.get('/sochi/preview/green', response_class=HTMLResponse)
     def green_preview():
