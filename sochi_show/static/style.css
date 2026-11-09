@@ -256,3 +256,17 @@
  .admin .player-main-name{font-size:21px}
  .admin .player-entry-table td:first-child{width:42%;min-width:220px}
 }
+
+/* Compact stage-by-stage operator entry and an unambiguous workflow. */
+.admin #workflow-modules{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.admin #workflow-modules>.module-accordion{width:100%;box-sizing:border-box}
+.admin #stage-tabs{margin:10px 0 13px;gap:8px}
+.admin #stage-tabs [data-stage-view]{opacity:.62;filter:saturate(.7);min-width:145px}
+.admin #stage-tabs .stage-tab-active{opacity:1;filter:none;box-shadow:0 0 0 3px rgba(192,132,67,.25);font-weight:900}
+.admin #scores-panel [hidden]{display:none!important}
+.admin #scores-panel td,#scores-panel th{vertical-align:middle}
+.admin #scores-panel .blue-elim-cell{min-width:128px}
+.admin #scores-panel .blue-elim-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:750;white-space:normal}
+.admin #scores-panel .blue-elim-label input[type=checkbox]{width:20px;height:20px;flex-shrink:0}
+.admin #scores-panel input[readonly]{background:#f4eee6;color:#755d47}
+.admin #scores-panel button[data-stage]{font-weight:850;min-height:46px}
