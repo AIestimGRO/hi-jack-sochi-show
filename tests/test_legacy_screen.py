@@ -14,7 +14,9 @@ def test_projector_fallback_requires_no_javascript_and_never_caches(client):
     assert 'РЕЗУЛЬТАТЫ ПОКА СКРЫТЫ' in html.text
     main = client.get('/sochi/screen').text
     assert 'window.__sochiPainted' in main
-    assert '/sochi/legacy' in main
+    assert '/sochi/wanbo' in main
+    # Keep the older text fallback available for diagnostics.
+    assert client.get('/sochi/legacy').status_code == 200
     assert client.get('/sochi/static/screen.js').status_code == 200
 
 
