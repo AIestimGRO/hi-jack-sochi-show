@@ -94,6 +94,7 @@ function updateWorkflow(){
     'seating-panel':teamTotal?(teamTotal+' команд · '+assigned+'/'+teamTotal*3+' игроков'):'Не импортировано',
     'teams-panel':teamsDone?'Названия опубликованы':'Не опубликованы',
     'player-chips-panel': 'Участников: '+assigned+' · живой учёт',
+    'blue-points-panel':finalStacksReady?'Стеки объявлены':phases.includes('blue')?'К расчёту':'После BLUE',
     'scores-panel':phases.length?(phases.join(' / ').toUpperCase()):'Нет результатов',
     'secrets-panel':(pub.revealed_slots||[]).length+'/3 раскрыто',
     'votes-panel':pub.votes_published?'Опубликованы':'Не опубликованы',
@@ -275,6 +276,38 @@ $('player-team-summary').innerHTML=state.teams.map(t=>{
   const total=state.stages[t.team_id]||{};
   return `<span class="player-total">${esc(t.display_name)} · re-entry <b>${total.reentry_count??tracked.reentry}</b> (по игрокам ${tracked.reentry}) · add-on <b>${total.addon_count??tracked.addon}</b> (по игрокам ${tracked.addon})</span>`;
 }).join('');
+
+const bountyTotals={};
+for(const p of activePlayers){
+  const t=bountyTotals[p.team_id]||(bountyTotals[p.team_id]={green:0,blue:0});
+  t.green+=Number(p.player_green_bounty_count||0);
+  t.blue+=Number(p.player_blue_bounty_count||0);
+}
+$('bounty-player-summary').innerHTML=state.teams.map(t=>{
+  const x=bountyTotals[t.team_id]||{green:0,blue:0};
+  return `<span class="player-total">${esc(t.display_name)} · GREEN ${x.green} · BLUE ${x.blue} · <b>+${fmt(x.green*2500+x.blue*5000)} фишек</b></span>`;
+}).join('');
+$('bounty-players-list').innerHTML=activePlayers.length?
+  `<div class="scroll"><table class="player-entry-table"><thead>
+  <tr><th>Кто выбил</th><th>GREEN · 2 500</th><th>BLUE · 5 000</th></tr></thead>
+  <tbody>${activePlayers.map(p=>{
+    const team=state.teams.find(t=>t.team_id===p.team_id);
+    const disabled=!!state.published?.blue_policy?.revealed||
+      (state.published?.published_phases||[]).includes('red');
+    const ctrl=kind=>{
+      const n=Number(kind==='green'?p.player_green_bounty_count:p.player_blue_bounty_count)||0;
+      return `<div class="player-counter">
+      <button type="button" class="secondary" data-bounty-action="minus" data-bounty-kind="${kind}" data-bounty-player="${p.player_id}" ${disabled?'disabled':''}>−</button>
+      <input type="number" min="0" max="1000" step="1" value="${n}" id="bounty-${p.player_id}-${kind}" ${disabled?'disabled':''}>
+      <button type="button" class="secondary" data-bounty-action="plus" data-bounty-kind="${kind}" data-bounty-player="${p.player_id}" ${disabled?'disabled':''}>+</button>
+      <button type="button" data-bounty-action="save" data-bounty-kind="${kind}" data-bounty-player="${p.player_id}" ${disabled?'disabled':''}>✓</button>
+      </div>`;
+    };
+    return `<tr><td class="player-main-cell"><strong class="player-main-name">${esc(p.player_name||'Игрок')}</strong>
+     <span class="player-secondary-team">${esc(team?.display_name||('Команда '+p.team_id))}</span></td>
+     <td>${ctrl('green')}</td><td>${ctrl('blue')}</td></tr>`;
+  }).join('')}</tbody></table></div>`:
+  '<p class="muted">Бонусы станут доступны после привязки игроков.</p>';
 $('teams').innerHTML=state.teams.map(t=>`<div class="team-entry"><span>${t.team_id}</span><small>${esc(t.original_name)}</small><input id="name-${t.team_id}" value="${esc(t.display_name)}" maxlength="45"><select id="capt-${t.team_id}">${playerOptions(t.team_id,t.captain_player_id)}</select><div class="photo-control"><button class="secondary" data-save-name="${t.team_id}">Имя</button><button class="secondary" data-publish-name="${t.team_id}">В эфир</button><button class="secondary" data-save-capt="${t.team_id}">Капитан</button><input type="file" id="photo-${t.team_id}" accept="image/jpeg,image/png,image/webp"><button class="secondary" data-save-photo="${t.team_id}">Фото</button></div></div>`).join('');
 const rates=state.chip_settings||{};
 $('chips-rates-summary').textContent='Вход: '+(rates.entry==null?'⚠ НЕ НАСТРОЕН · укажи 50 000 перед GREEN':fmt(rates.entry)+' × 3 участника')+' · Re-entry: '+(rates.reentry==null?'не задано':fmt(rates.reentry)+' за 1 шт.')+' · Add-on: '+(rates.addon==null?'не задано':fmt(rates.addon)+' за 1 шт.');
