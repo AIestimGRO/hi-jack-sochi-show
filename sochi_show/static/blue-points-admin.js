@@ -42,17 +42,26 @@
     if(!list.length||list.length!==count)
       return '<p class="muted">После опубликованного BLUE здесь появятся чистые фишки всех команд.</p>';
     const chipMap=stacks(list);
-    const arr=list.map(r=>({...r,starting:chipMap[r.id]}));
+    const frozen=phase().team_bounties||{};
+    const arr=list.map(r=>{
+      const seats=(state?.seats||[]).filter(p=>p.team_id===r.id);
+      const green=seats.reduce((n,p)=>n+Number(p.player_green_bounty_count||0),0);
+      const blue=seats.reduce((n,p)=>n+Number(p.player_blue_bounty_count||0),0);
+      const snap=frozen[String(r.id)];
+      const bounty=phase().blue_policy?.revealed&&snap?snap.chips:green*2500+blue*5000;
+      const eliminated=!!(phase().stages||{})[String(r.id)]?.blue_eliminated;
+      return {...r,starting:chipMap[r.id],bounty,green,blue,eliminated};
+    });
     return `<div class="bp-summary"><strong>Минимум: 100 000 · Максимум: 1 000 000</strong>
       <span>Пропорциональный диапазон: 900 000 фишек</span>
       <span>Округление до 1 000</span></div>
       <table class="bp-table"><thead><tr><th>Место BLUE</th><th>Команда</th>
         <th>Чистые фишки BLUE</th><th>Стартовый стек RED</th>
-        <th>Выжили · бонус</th><th>К выдаче капитану</th></tr></thead>
+        <th>Выжили · бонус</th><th>Bounty GREEN / BLUE</th><th>К выдаче капитану</th></tr></thead>
       <tbody>${arr.map(r=>`<tr class="${r.place===1?'bp-leading':''}">
-        <td>#${r.place}</td><td>${escapeHTML(r.name)}</td><td>${fmt(r.net)}</td>
-        <td><strong>${fmt(r.starting)}</strong></td><td>+${fmt(r.survivors)}</td>
-        <td><strong>${fmt(r.starting+r.survivors)}</strong></td></tr>`).join('')}</tbody></table>
+        <td>#${r.place}</td><td>${escapeHTML(r.name)}${r.eliminated?' · ВЫБЫЛА':''}</td><td>${fmt(r.net)}</td>
+        <td><strong>${fmt(r.starting)}</strong></td><td>+${fmt(r.survivors)}</td><td>+${fmt(r.bounty)} <small>G:${r.green} B:${r.blue}</small></td>
+        <td><strong>${fmt(r.starting+r.survivors+r.bounty)}</strong></td></tr>`).join('')}</tbody></table>
       <p class="muted"><strong>Важно:</strong> +10 000 за выбитого Secret Jack и +20 000 за голос
         будут добавляться <em>после</em> объявления стартовых стеков. Чистые фишки BLUE и
         места BLUE не меняются.</p>`;
