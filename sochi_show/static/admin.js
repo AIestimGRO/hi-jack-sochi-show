@@ -6,14 +6,20 @@ const fmt=v=>new Intl.NumberFormat('ru-RU').format(v??0);
 
 /* Progressive disclosure: keep the operator's next task visible without hiding controls permanently. */
 const MODULES=[
-  ['control-panel','ЭФИР','Пульт проектора','Показывай нужную сцену только когда она опубликована.'],
-  ['seating-panel','01','Рассадка','Начни с JSON, числа команд и распределения мест.'],
-  ['player-chips-panel','01А','Re-entry / add-on по игрокам','Быстрые кнопки ±1 и командная сумма в таблице №3.'],
-  ['teams-panel','02','Игроки и команды','Имена, капитаны, фотографии и публикация команд.'],
-  ['scores-panel','03','Результаты GREEN / BLUE / RED','Заполняй этапы последовательно; перед публикацией будет расчёт.'],
-  ['secrets-panel','04','Secret Jacks','Три закрытых назначения и поочерёдное раскрытие.'],
-  ['votes-panel','05','Голоса команд','Один голос от каждой команды, затем кинематографическое раскрытие.'],
-  ['review-panel','06','Рейтинг и протокол','Итоговая проверка, история изменений, CSV.']
+  ['seating-panel','01','Рассадка и участники','Сначала импортируй и назначь игроков.'],
+  ['teams-panel','02','Команды и капитаны','Имена, фотографии и публикация команд.'],
+  ['player-chips-panel','03','Учёт игроков и bounty','Re-entry, add-on, GREEN и BLUE bounty.'],
+  ['scores-panel','04','Фишки этапов','Внеси GREEN, BLUE или RED, затем подтверди рядом.'],
+  ['green-director','05','Шоу GREEN','Публикация и раскрытие мест.'],
+  ['blue-director','06','Шоу BLUE','Публикация и раскрытие мест.'],
+  ['blue-points-panel','07','Стартовые стеки RED','Проверь 100 тыс.–1 млн, бонусы и утверди PIN.'],
+  ['secrets-panel','08','Secret Jack','Проверка, сохранение, поочерёдное раскрытие.'],
+  ['votes-panel','09','Голосование','Сохрани и раскрой голоса.'],
+  ['red-director','10','Шоу RED','Раскрытие итоговых мест капитанов.'],
+  ['final-director','11','Церемония','Итоговые места и чемпион.'],
+  ['review-panel','12','Проверка и протокол','История и экспорт результатов.'],
+  ['control-panel','ЭФИР','Ручной пульт','Дополнительное управление проектором.'],
+  ['protected-editor-panel','PIN','Защищённое исправление','Редактирование уже опубликованных данных.']
 ];
 let guideOpened=false;
 function installModuleLayout(){
@@ -27,6 +33,20 @@ function installModuleLayout(){
     head.innerHTML='<span class="module-number">'+number+'</span><span class="module-heading"><strong>'+title+'</strong><small>'+description+'</small></span><span class="module-state" id="state-'+id+'">Ожидание</span>';
     panel.before(module);
     module.append(head,panel);
+  }
+  // Reorder existing controls without changing their IDs or event handlers.
+  const start=$('status');
+  if(start&&!$('workflow-modules')){
+    const ordered=document.createElement('div');
+    ordered.id='workflow-modules';
+    start.after(ordered);
+    for(const [id] of MODULES){
+      const module=$('module-'+id);
+      if(module)ordered.appendChild(module);
+    }
+    document.querySelectorAll('.grid-two').forEach(el=>{
+      if(!el.children.length)el.remove();
+    });
   }
   $('expand-modules').onclick=()=>document.querySelectorAll('.module-accordion').forEach(el=>el.open=true);
   $('collapse-modules').onclick=()=>document.querySelectorAll('.module-accordion').forEach(el=>el.open=false);
