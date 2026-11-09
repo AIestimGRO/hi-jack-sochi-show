@@ -373,8 +373,9 @@ def test_chips_ui_is_count_only(client):
     html=client.get('/sochi/admin').text
     assert 'id="chips-settings-modal"' in html
     assert 'id="open-chips-settings"' in html
-    assert '<th>Re-entry, шт.</th>' in html
-    assert '<th>Add-on, шт.</th>' in html
+    assert '<th data-phase-column="green">Re-entry, шт.</th>' in html
+    assert '<th data-phase-column="blue">Add-on, шт.</th>' in html
+    assert 'id="stage-tabs"' in html
     assert '<th>Re-entry фишки</th>' not in html
     assert '<th>Add-on фишки</th>' not in html
     js=client.get('/sochi/static/admin.js').text
