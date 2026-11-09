@@ -858,10 +858,13 @@ def app_factory(db_path: str | None = None, media_path: str | None = None,
                 _,p=get_pub(c)
                 if p.get('published_phases'):
                     raise HTTPException(409,'После публикации очисти игрока через защищённое исправление с PIN')
-                counts = c.execute('SELECT reentry_count,addon_count FROM players WHERE id=?',
-                                   (seat['player_id'],)).fetchone()
-                if counts and (counts['reentry_count'] or counts['addon_count']):
-                    raise HTTPException(409,'У игрока записаны re-entry/add-on. Не отвязывай его: используйте защищённое исправление.')
+                counts = c.execute(
+                    'SELECT reentry_count,addon_count,green_bounty_count,blue_bounty_count '
+                    'FROM players WHERE id=?',(seat['player_id'],)).fetchone()
+                if counts and any(counts[col] for col in (
+                        'reentry_count','addon_count','green_bounty_count','blue_bounty_count')):
+                    raise HTTPException(409,
+                        'У игрока записаны re-entry/add-on/bounty. Для отвязки используй защищённое исправление с PIN.')
                 c.execute('UPDATE teams SET captain_player_id=NULL WHERE captain_player_id=?',(seat['player_id'],))
                 c.execute('UPDATE seats SET player_id=NULL WHERE card_id=?',(card_id,))
                 audit(c,'player-unbind',{'card_id':card_id,'player_id':seat['player_id']})
